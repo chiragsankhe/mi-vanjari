@@ -1,5 +1,7 @@
 # Going live: Vercel + Railway + Supabase + mivanjari.com
 
+> **Not the chosen setup.** The site uses the free Render setup in [DEPLOY.md](DEPLOY.md). Keep this only if you later want a paid Railway backend.
+
 | Part | Service | Address | Cost (approx., check when signing up) |
 |---|---|---|---|
 | Website (React) | Vercel | `https://mivanjari.com` | Free (Hobby) — see note on payments below |

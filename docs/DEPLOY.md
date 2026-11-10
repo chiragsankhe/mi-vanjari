@@ -1,122 +1,108 @@
-# Putting Mi Vanjari online — free setup (Render, all-in-one)
+# Putting Mi Vanjari online — the chosen setup (₹0 / month)
 
-> **Chosen plan:** Vercel + Railway + Supabase + mivanjari.com → follow [DEPLOY-VERCEL-RAILWAY.md](DEPLOY-VERCEL-RAILWAY.md).
-> This page is the alternative free setup on a single Render service.
+**https://mivanjari.com** → one **Render** service (Singapore) runs the website, the API and live chat together.
+Database **Supabase** (Singapore) · photos **Cloudinary** · login-code emails **Brevo** · **UptimeRobot** keeps it awake.
+Domain bought at **Hostinger**. Monthly cost **₹0**; Razorpay only takes ~2% when someone pays.
 
-One free **Render** service runs everything (website + API + live chat) at one address.
-Around it: free **Neon** database, free **Brevo** email (login codes), free **Cloudinary** photos,
-free **UptimeRobot** ping so the site never sleeps. Cost: **₹0 / month**. Razorpay only takes ~2% when someone pays.
-
-| Service | Used for | Free limit (approx., check when you sign up) |
+| Service | Used for | Free limit (approx.) |
 |---|---|---|
-| GitHub | stores the code, Render deploys from it | free private repos |
-| Render (web service, Singapore) | website + API + chat | 750 hours/month = one site all month |
-| Neon (Postgres, Singapore) | database | 0.5 GB |
+| GitHub (`chiragsankhe/mi-vanjari`) | the code; Render deploys from it | free |
+| Render (free web service, Singapore) | website + API + chat | 750 h/month = one site all month · 0.1 CPU · 512 MB |
+| Supabase (Singapore) | database | 500 MB |
+| Cloudinary | photos & videos | 25 credits/month (~25 GB), videos up to 100 MB |
 | Brevo | login-code emails | 300 emails/day |
-| Cloudinary | photos & videos | ~25 GB storage+traffic / month, videos up to 100 MB |
-| UptimeRobot | keeps the site awake | 50 monitors, every 5 min |
+| UptimeRobot | keeps the site awake, alerts you | free |
 
-Do the steps in order. Keep every key/password private — paste them only into the Render dashboard.
+**Want more speed later?** Render dashboard → the service → **Upgrade to Starter** (~$7/month): 5× CPU, never sleeps.
+Same code, same address, nothing to move.
+
+Collect every value in one Notepad file. **Never send keys or passwords to anyone, never commit them.**
 
 ---
 
-## 1. GitHub — put the code online
+## 1. Supabase — database ✅ (done)
 
-1. Create an account at github.com and a **new private repository** named `mi-vanjari` (no README).
-2. In the project folder (`D:\mi vanjari`):
-   ```bash
-   git init
-   git add .
-   git commit -m "Mi Vanjari"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/mi-vanjari.git
-   git push -u origin main
-   ```
-   `backend/.env` (your passwords) is in `.gitignore` and is **not** uploaded. Check with `git status` before the first commit.
+Project `mi-vanjari`, Singapore, **Data API off**. From **Connect → ORMs → Prisma** you have:
+- `DATABASE_URL` — the port **6543** line ending in `?pgbouncer=true`
+- `DIRECT_URL` — the port **5432** line
+with your database password in place of `[YOUR-PASSWORD]` in both.
 
-## 2. Neon — the database
+## 2. Cloudinary — photos ✅ (cloud name `dcmyvkpl5`)
 
-1. Sign up at neon.tech → **Create project** → name `mi-vanjari`, region **Asia Pacific (Singapore)**, Postgres 16 or newer.
-2. Dashboard → **Connect** → copy the connection string (starts with `postgresql://`, ends with `?sslmode=require`).
-   Use the normal (not "pooled") string. This is your `DATABASE_URL`.
+Settings → **API Keys** → copy the **API Key** and **API Secret**.
 
 ## 3. Brevo — login-code emails
 
-1. Sign up at brevo.com (free plan).
-2. **Senders, domains & dedicated IPs → Senders → Add a sender**: name `Mi Vanjari`, email `mivanjari1111@gmail.com`. Brevo emails a confirmation link — click it.
-3. **SMTP & API → API keys → Generate a new API key** → copy it. This is your `BREVO_API_KEY`.
+1. brevo.com → sign up (free). Website: `https://mivanjari.com`.
+2. **Senders, domains & dedicated IPs → Senders → Add a sender**: `Mi Vanjari`, `mivanjari1111@gmail.com` →
+   click the confirmation link in that Gmail.
+3. **SMTP & API → API keys → Generate a new API key** → copy it (shown once). This is `BREVO_API_KEY`.
 
-Tip: ask the first members to check their **Spam** folder once and mark the email "Not spam". A custom domain (step 9) improves delivery later.
+## 4. Render — put the site online
 
-## 4. Cloudinary — photos
+1. render.com → **Sign up with GitHub** → allow access to `mi-vanjari`.
+2. **New + → Blueprint** → choose `chiragsankhe/mi-vanjari` → Render reads `render.yaml`.
+3. Fill in what it asks for:
+   | Setting | Value |
+   |---|---|
+   | `DATABASE_URL` | Supabase port 6543 line (with password) |
+   | `DIRECT_URL` | Supabase port 5432 line (with password) |
+   | `BREVO_API_KEY` | from step 3 |
+   | `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | from step 2 |
+   | `RAZORPAY_…` (3) | leave empty for now |
+   Paste values **without** the surrounding quotes.
+4. **Apply** → the first build takes ~5–10 minutes (installs, builds the website, creates the database tables,
+   adds the starter content — categories, history, muhurat dates; no demo accounts).
+5. When it shows **Live**, open the address at the top (`https://mi-vanjari….onrender.com`) — the site works.
+   If it fails, **Logs** list exactly which setting is missing.
 
-1. Sign up at cloudinary.com (free).
-2. Dashboard → **Product environment credentials**: copy **Cloud name**, **API key**, **API secret**.
+## 5. Connect mivanjari.com (Hostinger)
 
-## 5. Render — put the site online
-
-1. Sign up at render.com with your GitHub account.
-2. **New → Blueprint** → choose the `mi-vanjari` repository. Render reads `render.yaml`.
-3. Fill in the values it asks for:
-   - `DATABASE_URL` → from step 2
-   - `BREVO_API_KEY` → from step 3
-   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` → from step 4
-   - `RAZORPAY_*` → leave empty for now (step 8)
-4. **Apply**. The first build takes ~5–8 minutes. It builds the website, creates the database tables and adds the
-   starter content (wedding-service categories, history, muhurat dates). No demo accounts are created.
-5. Your site is at `https://mi-vanjari.onrender.com` (or a similar name Render shows).
-
-If the server stops with "Production setup incomplete", the log lists exactly which value is missing.
+1. Render → your service → **Settings → Custom Domains → Add** `mivanjari.com`, then also `www.mivanjari.com`.
+   Render shows the DNS records for each (an **A** record for `mivanjari.com`, a **CNAME** for `www`).
+2. Hostinger → **Domains → mivanjari.com → DNS / Nameservers → DNS records**:
+   - Delete any existing **A** record for `@` and any **CNAME** for `www` (Hostinger's parking defaults).
+   - Add **A** · Name `@` · Points to: the IP Render shows · TTL default.
+   - Add **CNAME** · Name `www` · Target: the value Render shows (e.g. `mi-vanjari.onrender.com`).
+3. Back in Render press **Verify** next to each domain. Usually ready in 10–60 minutes; HTTPS 🔒 is automatic.
 
 ## 6. First checks
 
-1. Open `https://<your-site>/api/v1/health` on your phone. `"ip"` must match your phone's IP
-   (search "what is my ip"). If it shows a different address, Render → Environment → add `TRUST_PROXY` = `2` → save.
-2. Open the site → **Login** → enter your email → the code arrives by email → create your profile.
-3. Admin: open `https://<your-site>/admin/login` → `mivanjari1111@gmail.com` → code by email → create the admin password (10+ characters with letters and numbers). Keep it safe.
-4. Upload a profile photo and check it appears (it is stored in Cloudinary).
-5. Admin → History: upload the history images/videos again (they were only on your computer). Videos must be under 100 MB on Cloudinary's free plan.
+1. `https://mivanjari.com/api/v1/health` on your phone → `"ok":true,"db":true`.
+   `"ip"` should be your phone's IP (search "what is my ip"); if not, Render → Environment → `TRUST_PROXY` = `2`.
+2. `https://mivanjari.com` → **Join** → your email → the code arrives (check Spam once → "Not spam") → create your profile.
+3. `https://mivanjari.com/admin/login` → `mivanjari1111@gmail.com` → emailed code → **create the admin password**
+   (10+ characters, letters and numbers). Keep it safe.
+4. Upload a photo; send a chat message between two accounts.
+5. Admin → History: upload the history images/videos again (under 100 MB each).
 
-## 7. UptimeRobot — keep the site awake
+## 7. UptimeRobot — keep it awake
 
-Render's free plan sleeps after 15 minutes without visitors (the next visitor waits ~1 minute, live chat drops).
-1. Sign up at uptimerobot.com (free) → **New monitor** → type **HTTP(s)**.
-2. URL: `https://<your-site>/api/v1/health`, interval **5 minutes** → Create.
-It also emails you if the site ever goes down.
+uptimerobot.com → **New monitor** → **HTTP(s)** → URL `https://mivanjari.com/api/v1/health` → interval **5 minutes**.
+Render's free plan sleeps after 15 idle minutes; this stops that, keeps the Supabase database active,
+and emails you if the site ever goes down.
 
-## 8. Razorpay — payments (before 1 December)
+## 8. Better email delivery (recommended)
 
-1. Sign up at razorpay.com, complete KYC (PAN, bank account).
-2. **Account & Settings → API keys** → generate → copy Key ID and Key Secret.
-3. **Webhooks → Add**: URL `https://<your-site>/api/v1/payments/webhook`, a secret of your choice,
-   events `payment.captured`, `payment.failed`, `refund.processed`.
-4. Render → Environment → set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` → save (it redeploys).
-   Test with `rzp_test_` keys first, then switch to the live keys.
+Brevo → **Senders, domains → Domains → Add a domain** → `mivanjari.com` → add the records it shows in
+Hostinger DNS → **Authenticate**. Add sender `noreply@mivanjari.com`, then Render → Environment →
+`MAIL_FROM` = `Mi Vanjari <noreply@mivanjari.com>`.
 
-## 9. Optional — your own domain (~₹500–900/year)
+## 9. Payments (before 1 December)
 
-Buy `mivanjari.in` (or similar) → Render service → **Settings → Custom domains → Add** → add the DNS records it shows
-at your domain seller. HTTPS is automatic. Then, in Brevo, authenticate the domain and change `MAIL_FROM` to
-`Mi Vanjari <noreply@mivanjari.in>` for better email delivery.
+Razorpay → KYC (1–3 days) → **API keys** → Key ID + Secret. **Webhooks → Add**:
+`https://mivanjari.com/api/v1/payments/webhook`, a secret you choose, events `payment.captured`, `payment.failed`,
+`refund.processed`. Render → Environment → set the three `RAZORPAY_…` values.
 
 ---
 
-## Updating the site later
+## Later
 
-Change code → `git add . && git commit -m "…" && git push`. Render rebuilds and redeploys automatically (~5 min).
-Database changes (migrations) are applied during the build. **Never** run `npm run db:seed` or `db:setup` against the
-live database — they wipe it. (The seed refuses to run in production.)
+- **Update the site:** `git add . && git commit -m "…" && git push` → Render rebuilds and redeploys (~5 min).
+  Database changes are applied during the build.
+- **Never** run `npm run db:seed` / `db:setup` against Supabase — they wipe data (the seed refuses in production).
+- **Backups (monthly):** `pg_dump "<DIRECT_URL>" --no-owner -Fc -f mivanjari-backup.dump` → keep it safe.
+- Free-plan limits: 300 login emails/day (members stay logged in 30 days), 500 MB database, small server.
+  If pages or photo uploads feel slow as members grow → upgrade Render to Starter.
 
-## Backups (once a month)
-
-Install PostgreSQL tools on your computer, then:
-```bash
-pg_dump "<DATABASE_URL from Neon>" --no-owner -Fc -f mivanjari-backup.dump
-```
-Keep the file somewhere safe (Google Drive). Photos are already safe in Cloudinary.
-
-## What the free plan can't do
-
-- One small server (512 MB memory). Fine for a few hundred members; upgrade Render to Starter (~$7/month) if it gets slow.
-- Brevo: 300 emails a day — about 300 logins a day. Members stay logged in for 30 days, so this is plenty.
-- If Neon's free 0.5 GB ever fills up (very unlikely: photos are not stored there), upgrade Neon.
+*Alternative setup (paid backend): [DEPLOY-VERCEL-RAILWAY.md](DEPLOY-VERCEL-RAILWAY.md) — Vercel + Railway.*

@@ -18,8 +18,8 @@ A community platform for the Vanjari community of Palghar district, Maharashtra.
 
 ## Going live
 
-- **Chosen setup:** [docs/DEPLOY-VERCEL-RAILWAY.md](docs/DEPLOY-VERCEL-RAILWAY.md) — website on Vercel (`mivanjari.com`), backend on Railway (`api.mivanjari.com`), Supabase database, Cloudinary photos, Brevo email login codes.
-- Free alternative: [docs/DEPLOY.md](docs/DEPLOY.md) — everything on one free Render service.
+- **Chosen setup (₹0/month):** [docs/DEPLOY.md](docs/DEPLOY.md) — one Render service in Singapore (website + API + chat) at `mivanjari.com`, Supabase database, Cloudinary photos, Brevo email login codes, UptimeRobot.
+- Alternative (paid backend): [docs/DEPLOY-VERCEL-RAILWAY.md](docs/DEPLOY-VERCEL-RAILWAY.md).
 
 ## Quick start
 

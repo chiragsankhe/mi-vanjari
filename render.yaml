@@ -1,12 +1,13 @@
-# Render Blueprint — one free web service runs the website, the API and live chat together.
-# Render dashboard → New → Blueprint → pick this GitHub repo. Fill in the values marked `sync: false`
-# when Render asks (see docs/DEPLOY.md for where each one comes from).
+# Render Blueprint — ONE free web service runs the website, the API and live chat together
+# at https://mivanjari.com. Database: Supabase (Singapore). Photos: Cloudinary. Login emails: Brevo.
+# Render dashboard → New → Blueprint → pick this GitHub repo → fill in the values marked `sync: false`
+# (see docs/DEPLOY.md for where each one comes from).
 services:
   - type: web
     name: mi-vanjari
     runtime: node
-    plan: free
-    region: singapore # closest Render region to India
+    plan: free # upgrade to "starter" (~$7/month) in the dashboard for more speed and no sleeping
+    region: singapore # same region as the Supabase database → fast queries
     # install → build the website → database tables → starter content (safe to repeat; never deletes data)
     buildCommand: npm ci --include=dev && npm run build && npm run db:generate -w backend && npm run db:deploy -w backend && npm run db:starter -w backend
     startCommand: npm start -w backend
@@ -17,9 +18,17 @@ services:
         value: production
       - key: NODE_VERSION
         value: "22"
-      # Neon → Connection details → the connection string (starts with postgresql://, ends with ?sslmode=require)
+      # Supabase → Connect → ORMs → Prisma. Both with your database password filled in.
+      # DATABASE_URL = the port 6543 line (ends with ?pgbouncer=true), DIRECT_URL = the port 5432 line
       - key: DATABASE_URL
         sync: false
+      - key: DIRECT_URL
+        sync: false
+      # the site's address (Render also allows its own onrender.com address automatically)
+      - key: PUBLIC_API_URL
+        value: https://mivanjari.com
+      - key: CORS_ORIGIN
+        value: https://mivanjari.com,https://www.mivanjari.com
       # login security keys — Render generates long random values
       - key: JWT_ACCESS_SECRET
         generateValue: true
@@ -27,24 +36,24 @@ services:
         generateValue: true
       - key: COOKIE_SAMESITE
         value: lax
-      # admin login
+      - key: TRUST_PROXY
+        value: "1"
+      # admin login at /admin/login
       - key: ADMIN_EMAILS
         value: mivanjari1111@gmail.com
-      - key: ADMIN_PHONES
-        value: ""
       # email (login codes) — Brevo → SMTP & API → API keys
       - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM
         value: Mi Vanjari <mivanjari1111@gmail.com>
-      # photos — Cloudinary dashboard → Product environment credentials
+      # photos — Cloudinary → Settings → API Keys
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false
+        value: dcmyvkpl5
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      # payments — Razorpay dashboard → Account & Settings → API keys / Webhooks (can be added later)
+      # payments — Razorpay (can be added later, before 1 December)
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
