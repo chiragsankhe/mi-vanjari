@@ -253,22 +253,58 @@ export default function ProfileDetail() {
             <>
               {p.bio && (
                 <Reveal className="card p-5 sm:p-6">
-                  <h2 className="mb-2 font-serif text-lg font-semibold">About</h2>
+                  <h2 className="mb-2 font-serif text-lg font-semibold">In {p.fullName?.split(' ')[0] || 'their'}’s words</h2>
                   <p className="text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.bio}</p>
                 </Reveal>
               )}
               <div className="grid gap-5 xl:grid-cols-2">
-                <Section title="Basic details" icon="user">
+                <Section title="About" icon="user">
                   <Row label="Age" value={p.age && `${p.age} years`} />
                   <Row label="Height" value={heightLabel(p.heightCm)} />
                   <Row label="Marital status" value={LABELS[p.maritalStatus]} />
                   <Row label="Lives in" value={`${p.currentCity}, ${p.currentState}`} />
                   <Row label="Native village" value={p.nativeVillage} />
+                  <Row label="Mobile" value={p.phone} />
+                  {p.phoneVisible ? (
+                    <div className="flex gap-2 pt-3">
+                      <a href={telLink(p.phone)} className="btn btn-outline btn-sm flex-1">
+                        <Icon name="phone" size={15} /> Call
+                      </a>
+                      <a href={whatsappLink(p.phone, 'Namaskar! I found your profile on Mi Vanjari.')} target="_blank" rel="noreferrer" className="btn btn-soft btn-sm flex-1">
+                        <Icon name="whatsapp" size={15} /> WhatsApp
+                      </a>
+                    </div>
+                  ) : (
+                    p.phone && <p className="pt-2 text-xs text-muted">{p.canMessage ? 'Mobile is shown once they accept you or follow you back — send a message meanwhile.' : 'Mobile is shown once they accept your follow request, if they allow it.'}</p>
+                  )}
                 </Section>
                 <Section title="Education & career" icon="graduation">
-                  <Row label="Education" value={p.education} />
+                  {p.degrees?.length ? (
+                    <div className="grid grid-cols-[130px_1fr] gap-3 py-2.5 text-sm">
+                      <dt className="text-muted">Education</dt>
+                      <ul className="space-y-1.5">
+                        {p.degrees.map((d, i) => (
+                          <li key={i} className="flex gap-2 text-sm">
+                            <Icon name="graduation" size={15} className="mt-0.5 shrink-0 text-primary" />
+                            <span>
+                              <b className="font-semibold">{d.degree}</b>
+                              {(d.institute || d.year) && <span className="text-muted"> · {[d.institute, d.year].filter(Boolean).join(' · ')}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <Row label="Education" value={p.education} />
+                  )}
                   <Row label="Occupation" value={p.occupation} />
                   <Row label="Annual income" value={p.annualIncome} />
+                  {p.workDetails && (
+                    <div className="pt-2.5">
+                      <span className="text-sm text-muted">More about work</span>
+                      <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.workDetails}</p>
+                    </div>
+                  )}
                 </Section>
                 <Section title="Family" icon="users">
                   <Row label="Gotra" value={p.gotra} />
@@ -290,21 +326,6 @@ export default function ProfileDetail() {
                     <Row label="Location" value={p.prefLocation} />
                   </Section>
                 )}
-                <Section title="Contact" icon="phone">
-                  <Row label="Mobile" value={p.phone} />
-                  {p.phoneVisible ? (
-                    <div className="flex gap-2 pt-3">
-                      <a href={telLink(p.phone)} className="btn btn-outline btn-sm flex-1">
-                        <Icon name="phone" size={15} /> Call
-                      </a>
-                      <a href={whatsappLink(p.phone, 'Namaskar! I found your profile on Mi Vanjari.')} target="_blank" rel="noreferrer" className="btn btn-soft btn-sm flex-1">
-                        <Icon name="whatsapp" size={15} /> WhatsApp
-                      </a>
-                    </div>
-                  ) : (
-                    <p className="py-2 text-xs text-muted">{p.canMessage ? 'This member keeps their number private — send a message instead.' : 'Visible after an accepted follow, if the member allows it.'}</p>
-                  )}
-                </Section>
               </div>
               {/* Family contacts — last section, so families know whom to call after reading the profile */}
               {p.matrimonyLocked ? (

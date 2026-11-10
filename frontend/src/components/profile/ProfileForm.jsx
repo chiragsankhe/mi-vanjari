@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { formatPhone } from '../../lib/utils';
 import { Field, Icon, Segment } from '../ui';
+import { DegreesField, emptyDegree } from './DegreesField';
 import { FamilyContactsSection } from './FamilyContactsSection';
 
 const opt = z.string().trim().optional().or(z.literal(''));
@@ -63,7 +64,16 @@ export const makeProfileSchema = ({ requireEmail = false, requirePhone = false }
     currentCity: z.string().trim().min(2, 'City is required'),
     currentState: z.string().trim().min(2, 'State is required'),
     nativeVillage: opt,
-    education: opt,
+    degrees: z
+      .array(
+        z.object({
+          degree: z.string().trim().max(80, 'Keep it under 80 characters'),
+          institute: opt,
+          year: z.union([z.literal(''), z.coerce.number().int().min(1950, 'Check the year').max(2100, 'Check the year')]).optional(),
+        }),
+      )
+      .optional(),
+    workDetails: z.string().trim().max(1000, 'Keep it under 1000 characters').optional().or(z.literal('')),
     occupation: opt,
     annualIncome: opt,
     isMatrimonial: z.boolean().optional(),
@@ -90,7 +100,7 @@ export const makeProfileSchema = ({ requireEmail = false, requirePhone = false }
       if (!d.dateOfBirth) ctx.addIssue({ code: 'custom', path: ['dateOfBirth'], message: 'Date of birth is required for matrimony' });
       else if ((Date.now() - new Date(d.dateOfBirth).getTime()) / (365.25 * 864e5) < 18) ctx.addIssue({ code: 'custom', path: ['dateOfBirth'], message: 'You must be at least 18 years old' });
       if (!d.gender) ctx.addIssue({ code: 'custom', path: ['gender'], message: 'Please choose' });
-      if (!d.education || d.education.trim().length < 2) ctx.addIssue({ code: 'custom', path: ['education'], message: 'Education is required for matrimony' });
+      if (!(d.degrees || []).some((x) => x.degree?.trim().length >= 2)) ctx.addIssue({ code: 'custom', path: ['degrees', 0, 'degree'], message: 'Add at least one degree for matrimony' });
       if (!d.occupation || d.occupation.trim().length < 2) ctx.addIssue({ code: 'custom', path: ['occupation'], message: 'Occupation is required for matrimony' });
     });
 
@@ -109,6 +119,12 @@ export function cleanProfile(values) {
   ['heightCm', 'siblingsCount', 'prefAgeMin', 'prefAgeMax'].forEach((k) => {
     if (out[k] != null) out[k] = Number(out[k]);
   });
+  if (Array.isArray(values.degrees)) {
+    out.degrees = values.degrees
+      .filter((d) => d.degree?.trim())
+      .map((d) => ({ degree: d.degree.trim(), institute: d.institute?.trim() || null, year: d.year === '' || d.year == null ? null : Number(d.year) }));
+    delete out.education; // the server builds the summary from the degrees
+  }
   if (Array.isArray(values.familyContacts)) {
     out.familyContacts = values.familyContacts.map((c) => ({
       relation: c.relation,
@@ -135,7 +151,12 @@ export function profileDefaults(p = {}) {
     currentCity: p.currentCity || '',
     currentState: p.currentState || 'Maharashtra',
     nativeVillage: p.nativeVillage || '',
-    education: p.education || '',
+    degrees: (Array.isArray(p.degrees) && p.degrees.length ? p.degrees : p.education ? [{ degree: p.education }] : [emptyDegree()]).map((d) => ({
+      degree: d.degree || '',
+      institute: d.institute || '',
+      year: d.year ?? '',
+    })),
+    workDetails: p.workDetails || '',
     occupation: p.occupation || '',
     annualIncome: p.annualIncome || '',
     isMatrimonial: p.isMatrimonial ?? false,
@@ -167,7 +188,7 @@ export function profileDefaults(p = {}) {
 
 export const STEP_FIELDS = [
   ['fullName', 'dateOfBirth', 'gender', 'maritalStatus', 'heightCm', 'bio'],
-  ['currentCity', 'currentState', 'nativeVillage', 'education', 'occupation', 'annualIncome'],
+  ['currentCity', 'currentState', 'nativeVillage', 'degrees', 'occupation', 'annualIncome', 'workDetails'],
   ['gotra', 'subCaste', 'fatherName', 'fatherOccupation', 'motherName', 'siblingsCount', 'familyType', 'timeOfBirth', 'placeOfBirth', 'prefAgeMin', 'prefAgeMax', 'prefEducation', 'prefLocation', 'accountType', 'familyContacts'],
 ];
 
@@ -264,7 +285,7 @@ export function WorkSection({ form, withLocation = true }) {
           <Field label="Native village" placeholder="e.g. Dahanu, Palghar" hint="Helps families from home find you" {...register('nativeVillage')} className="sm:col-span-2" />
         </>
       )}
-      <Field label="Education *" placeholder="e.g. B.E. Computer / M.Sc." error={e.education?.message} {...register('education')} />
+      <DegreesField form={form} required={!!form.watch('isMatrimonial')} />
       <Field label="Occupation *" placeholder="e.g. Software Engineer" error={e.occupation?.message} {...register('occupation')} />
       <Field as="select" label="Annual income (optional)" {...register('annualIncome')}>
         <option value="">Prefer not to say</option>
@@ -272,6 +293,17 @@ export function WorkSection({ form, withLocation = true }) {
           <option key={x}>{x}</option>
         ))}
       </Field>
+      <Field
+        as="textarea"
+        rows={4}
+        label="More about my work (optional)"
+        placeholder="e.g. 9–5 job as an accountant at TCS, and I also run a dairy business with my father on weekends."
+        hint="Job, business, farming, side work — anything that tells families more"
+        maxLength={1000}
+        error={e.workDetails?.message}
+        {...register('workDetails')}
+        className="sm:col-span-2"
+      />
     </div>
   );
 }

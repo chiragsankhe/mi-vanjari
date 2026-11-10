@@ -197,6 +197,10 @@ model Profile {
   // Education & work
   education  String?
   occupation String?
+  /// all degrees: [{ degree, institute?, year? }] — `education` keeps a short summary for search & cards
+  degrees     Json     @default("[]")
+  /// free text: e.g. "9–5 job at TCS, and I run a dairy business on weekends"
+  workDetails String?
   annualIncome String?
 
   // Matrimonial

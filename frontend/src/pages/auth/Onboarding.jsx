@@ -37,7 +37,7 @@ const STEP_INFO = {
 const STEP_FIELDS = {
   contact: ['fullName', 'email', 'phone', 'currentCity', 'currentState', 'nativeVillage'],
   personal: ['dateOfBirth', 'gender', 'maritalStatus', 'heightCm', 'bio'],
-  work: ['education', 'occupation', 'annualIncome'],
+  work: ['degrees', 'occupation', 'annualIncome', 'workDetails'],
   family: ['gotra', 'subCaste', 'fatherName', 'fatherOccupation', 'motherName', 'siblingsCount', 'familyType', 'timeOfBirth', 'placeOfBirth', 'prefAgeMin', 'prefAgeMax', 'prefEducation', 'prefLocation', 'accountType', 'familyContacts'],
 };
 

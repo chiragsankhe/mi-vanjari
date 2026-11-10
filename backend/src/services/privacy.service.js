@@ -155,6 +155,8 @@ export function toProfileDetail(profile, user, rel, extra = {}) {
     nativeVillage: profile.nativeVillage,
     currentCountry: profile.currentCountry,
     annualIncome: profile.annualIncome,
+    degrees: Array.isArray(profile.degrees) && profile.degrees.length ? profile.degrees : profile.education ? [{ degree: profile.education }] : [],
+    workDetails: profile.workDetails,
     isMatrimonial: profile.isMatrimonial,
     subCaste: profile.subCaste,
     fatherName: profile.fatherName,

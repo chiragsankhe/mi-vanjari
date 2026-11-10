@@ -49,6 +49,13 @@ function withAstrology(data, existing) {
 
 function toDbData(input) {
   const data = { ...input };
+  // degrees list ⇄ education summary (search, filters and cards keep using `education`)
+  if (Array.isArray(data.degrees)) {
+    data.degrees = data.degrees.filter((d) => d.degree?.trim()).map((d) => ({ degree: d.degree.trim(), institute: d.institute || null, year: d.year ?? null }));
+    data.education = data.degrees.map((d) => d.degree).join(', ').slice(0, 120) || null;
+  } else if (data.education) {
+    data.degrees = [{ degree: data.education, institute: null, year: null }];
+  }
   if (data.dateOfBirth) data.dateOfBirth = new Date(`${data.dateOfBirth}T00:00:00.000Z`);
   return data;
 }

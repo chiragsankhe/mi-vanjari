@@ -65,6 +65,18 @@ export const profileSchema = z
     nativeVillage: optStr(80),
 
     education: optStr(120),
+    // every degree the member has; `education` (the summary used by search) is built from these
+    degrees: z
+      .array(
+        z.object({
+          degree: z.string().trim().min(1, 'Enter the degree').max(80),
+          institute: optStr(120),
+          year: z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(1950).max(2100).nullable().optional()),
+        }),
+      )
+      .max(10, 'You can add up to 10 degrees')
+      .optional(),
+    workDetails: optStr(1000),
     occupation: optStr(120),
     annualIncome: optStr(40),
 
