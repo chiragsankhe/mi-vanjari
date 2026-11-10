@@ -30,3 +30,5 @@ export function buildDatabaseUrl(e = process.env) {
 
 const url = buildDatabaseUrl();
 if (url) process.env.DATABASE_URL = url;
+// Migrations need a direct (non-pooled) connection. Without a separate one, use the same address.
+if (!process.env.DIRECT_URL && process.env.DATABASE_URL) process.env.DIRECT_URL = process.env.DATABASE_URL;

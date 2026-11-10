@@ -1,4 +1,7 @@
-# Putting Mi Vanjari online — free setup
+# Putting Mi Vanjari online — free setup (Render, all-in-one)
+
+> **Chosen plan:** Vercel + Railway + Supabase + mivanjari.com → follow [DEPLOY-VERCEL-RAILWAY.md](DEPLOY-VERCEL-RAILWAY.md).
+> This page is the alternative free setup on a single Render service.
 
 One free **Render** service runs everything (website + API + live chat) at one address.
 Around it: free **Neon** database, free **Brevo** email (login codes), free **Cloudinary** photos,

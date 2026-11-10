@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { prisma } from './lib/prisma.js';
 import achievers from './modules/achievers/achievers.routes.js';
 import admin from './modules/admin/admin.routes.js';
 import astrology from './modules/astrology/astrology.routes.js';
@@ -20,7 +21,16 @@ import users from './modules/users/users.routes.js';
 const api = Router();
 
 // `ip` is the caller's own address as the server sees it — used to check TRUST_PROXY after deploying
-api.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString(), ip: req.ip }));
+// The tiny database query also keeps a free Supabase database from pausing when UptimeRobot calls this.
+api.get('/health', async (req, res) => {
+  let db = true;
+  try {
+    await Promise.race([prisma.$queryRaw`SELECT 1`, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))]);
+  } catch {
+    db = false;
+  }
+  res.status(db ? 200 : 503).json({ ok: db, db, time: new Date().toISOString(), ip: req.ip });
+});
 
 api.use('/auth', auth);
 api.use('/users', users);

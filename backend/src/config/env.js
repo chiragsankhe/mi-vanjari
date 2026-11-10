@@ -124,6 +124,9 @@ if (env.isProd) {
   }
   const warn = [];
   if (!env.paymentsLive) warn.push('RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET — matrimony payments will be refused');
+  // the website runs on another address (Vercel) → its address must be allowed
+  if (!process.env.RENDER_EXTERNAL_URL && !e.CORS_ORIGIN.split(',').some((o) => o.trim().startsWith('https://')))
+    warn.push('CORS_ORIGIN — set it to your website address, e.g. https://mivanjari.com,https://www.mivanjari.com');
   if (!e.RAZORPAY_WEBHOOK_SECRET) warn.push('RAZORPAY_WEBHOOK_SECRET — payment webhooks will be refused');
   if (warn.length) console.warn(`\n⚠️  Production setup warnings:${list(warn)}\n`);
 }
