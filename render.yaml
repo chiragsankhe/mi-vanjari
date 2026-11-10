@@ -1,0 +1,53 @@
+# Render Blueprint — one free web service runs the website, the API and live chat together.
+# Render dashboard → New → Blueprint → pick this GitHub repo. Fill in the values marked `sync: false`
+# when Render asks (see docs/DEPLOY.md for where each one comes from).
+services:
+  - type: web
+    name: mi-vanjari
+    runtime: node
+    plan: free
+    region: singapore # closest Render region to India
+    # install → build the website → database tables → starter content (safe to repeat; never deletes data)
+    buildCommand: npm ci --include=dev && npm run build && npm run db:generate -w backend && npm run db:deploy -w backend && npm run db:starter -w backend
+    startCommand: npm start -w backend
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      # Neon → Connection details → the connection string (starts with postgresql://, ends with ?sslmode=require)
+      - key: DATABASE_URL
+        sync: false
+      # login security keys — Render generates long random values
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: COOKIE_SAMESITE
+        value: lax
+      # admin login
+      - key: ADMIN_EMAILS
+        value: mivanjari1111@gmail.com
+      - key: ADMIN_PHONES
+        value: ""
+      # email (login codes) — Brevo → SMTP & API → API keys
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: Mi Vanjari <mivanjari1111@gmail.com>
+      # photos — Cloudinary dashboard → Product environment credentials
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # payments — Razorpay dashboard → Account & Settings → API keys / Webhooks (can be added later)
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false

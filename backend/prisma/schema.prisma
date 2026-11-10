@@ -1,0 +1,684 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Mi Vanjari — database schema (PostgreSQL)
+//
+//  Sections:
+//    1. Identity & auth      (User, OtpCode, RefreshToken)
+//    2. Profiles             (Profile, ProfilePhoto, ProfileView, Shortlist)
+//    3. Social graph         (Follow, Report)
+//    4. Chat                 (Conversation, Message)
+//    5. Wedding services     (ServiceCategory, ServiceProvider, ServiceReview, Package)
+//    6. Business directory   (Business)
+//    7. Achievers            (Achievement)
+//    8. Community            (Post, PostLike, HistoryEntry)
+//    9. Astrology            (RashiRecord, MuhuratDate)
+//   10. Notifications        (Notification)
+//
+//  Change workflow:  edit this file  →  `npm run db:migrate` (creates a migration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum Intent {
+  MATRIMONY
+  COMMUNITY
+  BUSINESS
+  SERVICES
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AccountType {
+  PUBLIC
+  PRIVATE
+}
+
+enum FamilyType {
+  NUCLEAR
+  JOINT
+}
+
+enum MaritalStatus {
+  NEVER_MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AchievementType {
+  ACADEMIC
+  PROFESSIONAL
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+}
+
+enum NotificationType {
+  FOLLOW_REQUEST
+  FOLLOW_ACCEPTED
+  MESSAGE
+  LISTING_APPROVED
+  LISTING_REJECTED
+  ACHIEVEMENT_VERIFIED
+  POST_LIKED
+  PROFILE_VIEW
+  SYSTEM
+}
+
+// ── 1. Identity & auth ───────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  phone           String?   @unique // E.164, e.g. +919876543210 (optional only for email-only admin accounts)
+  email           String?   @unique // admin-login email (lower-case)
+  isPhoneVerified Boolean   @default(false)
+  role            Role      @default(USER)
+  intents         Intent[]
+  isBanned        Boolean   @default(false)
+  /// bcrypt hash — admins sign in to the admin panel with OTP + this password (set on first admin login)
+  adminPasswordHash String?
+  lastActiveAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  profile          Profile?
+  refreshTokens    RefreshToken[]
+  payments         Payment[]
+  memberships      Membership[]
+  sentFollows      Follow[]          @relation("FollowSender")
+  receivedFollows  Follow[]          @relation("FollowReceiver")
+  conversationsA   Conversation[]    @relation("ConversationP1")
+  conversationsB   Conversation[]    @relation("ConversationP2")
+  sentMessages     Message[]         @relation("MessageSender")
+  receivedMessages Message[]         @relation("MessageReceiver")
+  notifications    Notification[]
+  businesses       Business[]
+  services         ServiceProvider[]
+  serviceReviews   ServiceReview[]
+  achievements     Achievement[]
+  posts            Post[]
+  postLikes        PostLike[]
+  shortlists       Shortlist[]       @relation("ShortlistOwner")
+  shortlistedBy    Shortlist[]       @relation("ShortlistTarget")
+  viewsGiven       ProfileView[]     @relation("Viewer")
+  viewsReceived    ProfileView[]     @relation("Viewed")
+  reportsFiled     Report[]          @relation("Reporter")
+  rashiRecords     RashiRecord[]
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String // the identifier the code was sent to: a phone number, or an email address for admin login
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  family    String // rotation family – reuse of a revoked token revokes the whole family
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  rotatedAt DateTime? // set when replaced by a newer token (vs. revoked by logout)
+  isAdmin   Boolean   @default(false) // session created through the admin login (OTP + admin password)
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+}
+
+// ── 2. Profiles ──────────────────────────────────────────────────────────────
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal (date of birth, gender, education & occupation are required only for matrimony)
+  fullName            String
+  email               String? // contact email (not the admin-login email on User)
+  dateOfBirth         DateTime?     @db.Date
+  gender              Gender?
+  maritalStatus       MaritalStatus @default(NEVER_MARRIED)
+  heightCm            Int?
+  profilePhotoUrl     String?
+  profilePhotoBlurUrl String?
+  bio                 String?
+
+  // Location
+  currentCity   String
+  currentState  String
+  currentCountry String @default("India")
+  nativeVillage String?
+
+  // Education & work
+  education  String?
+  occupation String?
+  annualIncome String?
+
+  // Matrimonial
+  isMatrimonial    Boolean     @default(false) // opted into the matrimonial listing
+  gotra            String?
+  subCaste         String?
+  fatherName       String?
+  fatherOccupation String?
+  motherName       String?
+  siblingsCount    Int?
+  familyType       FamilyType?
+
+  // Astrology (optional, used for Kundali matching)
+  timeOfBirth  String? // "HH:mm" local (IST)
+  placeOfBirth String?
+  rashi        String?
+  nakshatra    String?
+
+  // Partner preferences
+  prefAgeMin    Int?
+  prefAgeMax    Int?
+  prefEducation String?
+  prefLocation  String?
+
+  // Privacy & status
+  accountType AccountType @default(PUBLIC)
+  showPhone   Boolean     @default(false) // reveal phone to accepted followers
+  isActive    Boolean     @default(true)
+  isVerified  Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos ProfilePhoto[]
+  familyContacts FamilyContact[]
+
+  @@index([isMatrimonial, isActive, gender])
+  @@index([currentCity])
+  @@index([fullName])
+}
+
+/// Family members to call about this profile (matrimony: families usually talk first).
+/// Numbers are shown only to the owner and to accepted connections.
+model FamilyContact {
+  id            String  @id @default(cuid())
+  profileId     String
+  profile       Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  relation      String // FATHER | MOTHER | ELDER_BROTHER | ELDER_SISTER | BROTHER | SISTER | UNCLE | AUNT | GRANDFATHER | GRANDMOTHER | GUARDIAN | OTHER
+  relationLabel String? // free text when relation = OTHER, e.g. "Mama"
+  name          String
+  phone         String // E.164, +91XXXXXXXXXX
+  bestTime      String? // e.g. "Evenings after 7 PM"
+  languages     String? // e.g. "Marathi, Hindi"
+  isPrimary     Boolean @default(false)
+  sortOrder     Int     @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([profileId])
+}
+
+model ProfilePhoto {
+  id        String   @id @default(cuid())
+  profileId String
+  url       String
+  blurUrl   String
+  storageKey String? // cloudinary public_id or local file name (for deletion)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, sortOrder])
+}
+
+model ProfileView {
+  id        String   @id @default(cuid())
+  viewerId  String
+  viewedId  String
+  viewedAt  DateTime @default(now())
+
+  viewer User @relation("Viewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  viewed User @relation("Viewed", fields: [viewedId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, viewedId])
+  @@index([viewedId, viewedAt])
+}
+
+model Shortlist {
+  id           String   @id @default(cuid())
+  userId       String
+  targetUserId String
+  createdAt    DateTime @default(now())
+
+  user   User @relation("ShortlistOwner", fields: [userId], references: [id], onDelete: Cascade)
+  target User @relation("ShortlistTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetUserId])
+}
+
+// ── 3. Social graph ──────────────────────────────────────────────────────────
+
+model Follow {
+  id         String       @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FollowStatus @default(PENDING)
+  /// true once the receiver approved this follower (accepted a request, or followed them back).
+  /// Public profiles auto-accept follows, so this — not status — gates family phone numbers.
+  approvedByOwner Boolean @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  sender   User @relation("FollowSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FollowReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  reporterId   String
+  targetType   String // USER | POST | BUSINESS | SERVICE | MESSAGE
+  targetId     String
+  reason       String
+  details      String?
+  status       ReportStatus @default(OPEN)
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+// ── 4. Chat ──────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id             String   @id @default(cuid())
+  participant1Id String // always the lexicographically smaller user id
+  participant2Id String
+  lastMessageAt  DateTime @default(now())
+  /// true when started from a business / wedding-service listing: the customer may message the owner without a follow
+  enquiry        Boolean  @default(false)
+  contextType    String? // BUSINESS | SERVICE — the listing this chat is about (latest enquiry)
+  contextId      String?
+  contextTitle   String?
+  createdAt      DateTime @default(now())
+
+  participant1 User      @relation("ConversationP1", fields: [participant1Id], references: [id], onDelete: Cascade)
+  participant2 User      @relation("ConversationP2", fields: [participant2Id], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id, lastMessageAt])
+  @@index([participant2Id, lastMessageAt])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([receiverId, isRead])
+}
+
+// ── 5. Wedding services ──────────────────────────────────────────────────────
+
+model ServiceCategory {
+  id          String  @id @default(cuid())
+  name        String
+  nameMr      String?
+  description String?
+  icon        String // icon key used by the frontend icon set
+  slug        String  @unique
+  sortOrder   Int     @default(0)
+
+  providers ServiceProvider[]
+}
+
+model ServiceProvider {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  businessName String
+  categoryId   String
+  category     ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  description String?
+  phone       String
+  whatsapp    String?
+  location    String // areas served, e.g. "Palghar, Boisar, Dahanu"
+  priceFrom   Int? // in INR
+  experienceYears Int?
+  photos      String[]
+
+  status      ListingStatus @default(PENDING)
+  isFeatured  Boolean       @default(false)
+  isActive    Boolean       @default(true)
+  ratingAvg   Float         @default(0)
+  ratingCount Int           @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  packages Package[]
+  reviews  ServiceReview[]
+
+  @@index([categoryId, status, isActive])
+}
+
+model ServiceReview {
+  id         String   @id @default(cuid())
+  providerId String
+  userId     String
+  rating     Int // 1..5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  provider ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, userId])
+}
+
+model Package {
+  id            String   @id @default(cuid())
+  title         String
+  titleMr       String?
+  description   String?
+  price         Int // in INR
+  originalPrice Int?
+  includes      String[]
+  imageUrl      String?
+  isFeatured    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  providers ServiceProvider[]
+}
+
+// ── 6. Business directory ────────────────────────────────────────────────────
+
+model Business {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  category    String // Agriculture, Shop, Transport, Education ...
+  description String?
+  phone       String
+  whatsapp    String?
+  website     String?
+  location    String
+  photos      String[]
+
+  status    ListingStatus @default(APPROVED)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([category, isActive])
+  @@index([location])
+}
+
+// ── 7. Achievers ─────────────────────────────────────────────────────────────
+
+model Achievement {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        AchievementType
+  name        String
+  photoUrl    String?
+  description String?
+
+  // Academic
+  schoolName String?
+  percentage Float?
+  grade      String? // "10th", "12th", "Graduation" ...
+  year       Int?
+  stream     String?
+
+  // Professional
+  role        String?
+  company     String?
+  city        String?
+  linkedinUrl String?
+
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([type, isVerified, year])
+}
+
+// ── 8. Community ─────────────────────────────────────────────────────────────
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  content   String
+  imageUrl  String?
+  likeCount Int      @default(0)
+  isHidden  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes  PostLike[]
+
+  @@index([createdAt])
+  @@index([authorId, createdAt])
+}
+
+model PostLike {
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+}
+
+model HistoryEntry {
+  id          String   @id @default(cuid())
+  era         String
+  yearRange   String
+  title       String
+  titleEn     String?
+  content     String
+  imageUrl    String?
+  videoUrl    String? // uploaded clip (e.g. an AI-generated video) shown on the timeline
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+// ── 9. Astrology ─────────────────────────────────────────────────────────────
+
+model RashiRecord {
+  id           String   @id @default(cuid())
+  userId       String?
+  dateOfBirth  DateTime @db.Date
+  timeOfBirth  String?
+  placeOfBirth String
+  rashi        String
+  nakshatra    String?
+  rulingPlanet String?
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model MuhuratDate {
+  id     String   @id @default(cuid())
+  date   DateTime @db.Date
+  type   String   @default("VIVAH") // VIVAH | GRIHA_PRAVESH | SAKHARPUDA ...
+  title  String
+  notes  String?
+
+  @@unique([date, type])
+  @@index([date])
+}
+
+// ── 10. Notifications ────────────────────────────────────────────────────────
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  type       NotificationType
+  content    String
+  fromUserId String?
+  link       String? // frontend route to open
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Payments & memberships (matrimony: ₹501 / year, from the date in AppSetting)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// One payment attempt. Kept even if the user deletes their account (userId → null, payer snapshot stays).
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  purpose       String        @default("MATRIMONY_ANNUAL")
+  amount        Int // in paise (₹501 = 50100)
+  currency      String        @default("INR")
+  status        PaymentStatus @default(CREATED)
+  provider      String // RAZORPAY | DEV_TEST | ADMIN
+  receipt       String        @unique
+  orderId       String        @unique
+  paymentId     String?       @unique
+  method        String? // upi | card | netbanking | wallet …
+  payerName     String?
+  payerPhone    String?
+  failureReason String?
+  refundId      String?
+  refundedAt    DateTime?
+  refundedById  String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  membership Membership?
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+/// A period of paid (or admin-granted) matrimony access.
+model Membership {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        String    @default("MATRIMONY")
+  startsAt    DateTime
+  expiresAt   DateTime
+  source      String // PAYMENT | ADMIN_GRANT
+  paymentId   String?   @unique
+  payment     Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  grantedById String?
+  note        String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Admin-editable settings (fee, start date…). Values are strings; parsed in settings.service.js.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Who did what in the admin panel, plus blocked attempts to reach it.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorPhone String?
+  action     String // e.g. USER_DELETED, PAYMENT_REFUNDED, ADMIN_LOGIN, ADMIN_ACCESS_DENIED
+  targetType String?
+  targetId   String?
+  details    Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+}

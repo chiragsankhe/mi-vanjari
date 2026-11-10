@@ -1,0 +1,28 @@
+{
+  "name": "mi-vanjari",
+  "private": true,
+  "version": "1.0.0",
+  "author": "Chirag Sankhe",
+  "description": "Mi Vanjari — community platform for the Vanjari community of Palghar",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c auto \"npm:dev -w backend\" \"npm:dev -w frontend\"",
+    "dev:api": "npm run dev -w backend",
+    "dev:web": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "db:setup": "npm run db:setup -w backend",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend",
+    "db:studio": "npm run db:studio -w backend",
+    "lint": "npm run lint -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens (from the Figma "Mi Vanjari" design system)
+   saffron/kesari · deep maroon · turmeric gold · warm ivory · forest green
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-primary: #c8411a;
+  --color-primary-dark: #9e2e0f;
+  --color-primary-light: #f0a07a;
+  --color-primary-soft: #fbe7de;
+  --color-gold: #d4a017;
+  --color-gold-light: #f5d97a;
+  --color-gold-soft: #fff2cd;
+  --color-ivory: #fdf6ec;
+  --color-cream: #fff4e5;
+  --color-sand: #f5efe6;
+  --color-ink: #201c18;
+  --color-muted: #6f675f;
+  --color-line: #e8ddd0;
+  --color-leaf: #2f6a51;
+  --color-leaf-soft: #e5f0e8;
+  --color-night: #241d18;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-deva: "Noto Serif Devanagari", "Noto Serif", serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  --shadow-card: 0 12px 35px rgba(70, 43, 24, 0.07);
+  --shadow-lift: 0 18px 45px rgba(72, 42, 20, 0.12);
+  --shadow-cta: 0 7px 18px rgba(158, 46, 15, 0.18);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-spin-slow: spin 40s linear infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to { background-position: 400px 0; }
+  }
+}
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, [role="button"] { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 3px solid rgba(200, 65, 26, 0.3); outline-offset: 2px; border-radius: 6px; }
+  ::selection { background: #f7d7c6; }
+  input, select, textarea { font: inherit; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-10; }
+
+  .eyebrow {
+    @apply flex items-center gap-2.5 text-[11px] font-bold tracking-[0.16em] text-primary uppercase;
+  }
+  .eyebrow::before { content: ""; @apply h-px w-7 bg-current; }
+  .eyebrow-light { @apply text-[#f1bf76]; }
+
+  .heading-deva { font-family: var(--font-deva); }
+
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2.5 rounded-lg px-5 text-sm font-bold whitespace-nowrap transition-all duration-200 select-none disabled:opacity-50;
+  }
+  .btn-sm { @apply min-h-9 px-4 text-[13px]; }
+  .btn-primary { @apply border border-primary bg-primary text-white shadow-[var(--shadow-cta)] hover:-translate-y-px hover:bg-primary-dark active:translate-y-0; }
+  .btn-outline { @apply border border-primary-dark/35 bg-transparent text-primary-dark hover:bg-white; }
+  .btn-cream { @apply bg-cream text-primary-dark hover:bg-white; }
+  .btn-ghost { @apply text-muted hover:bg-sand hover:text-ink; }
+  .btn-soft { @apply border border-primary/30 bg-[#fff9f5] text-primary hover:bg-primary-soft; }
+  .btn-danger { @apply border border-red-200 bg-red-50 text-red-700 hover:bg-red-100; }
+
+  .card { @apply rounded-xl border border-line bg-white; }
+  .card-hover { @apply transition duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[var(--shadow-lift)]; }
+
+  .field-label { @apply mb-1.5 block text-xs font-semibold text-[#4b4641]; }
+  .field {
+    @apply h-11 w-full rounded-lg border border-line bg-white px-3.5 text-sm text-ink placeholder:text-[#a99d92] transition outline-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10;
+  }
+  textarea.field { @apply h-auto min-h-24 py-3; }
+  .field-error { @apply mt-1 text-xs text-red-600; }
+
+  .chip { @apply rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-[#5b534d] transition hover:border-primary/40; }
+  .chip-on { @apply border-[#e7a18d] bg-primary-soft text-primary; }
+
+  .verified-dot { @apply inline-grid size-4 shrink-0 place-items-center rounded-full bg-leaf text-white align-middle; }
+
+  .skeleton {
+    background: linear-gradient(90deg, #f3ebe1 0%, #fbf6ef 40%, #f3ebe1 80%);
+    background-size: 800px 100%;
+    @apply animate-shimmer rounded-lg;
+  }
+
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Diamond lattice used across the hero and page headers */
+  .lattice::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    pointer-events: none;
+    background-image:
+      linear-gradient(30deg, var(--color-primary) 12%, transparent 12.5%, transparent 87%, var(--color-primary) 87.5%, var(--color-primary)),
+      linear-gradient(150deg, var(--color-primary) 12%, transparent 12.5%, transparent 87%, var(--color-primary) 87.5%, var(--color-primary));
+    background-size: 70px 120px;
+  }
+
+  /* Privacy deterrence for sensitive content (chat / profile) */
+  .protected { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .protected img { -webkit-user-drag: none; pointer-events: none; }
+  body.privacy-blur #root,
+  body.privacy-blur .privacy-portal { filter: blur(14px); transition: filter 0.1s; }
+}
+
+/* Safe-area padding for the mobile bottom nav */
+.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 76px); }
+@media (min-width: 768px) { .pb-safe { padding-bottom: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ── Dual-thumb range slider (RangeSlider in components/ui) ──
+   Two native range inputs stacked on one track: only the thumbs receive pointer events,
+   so each thumb can be dragged independently while keyboard / screen-reader support stays native. */
+.range-dual { position: relative; height: 28px; touch-action: none; }
+.range-dual .track, .range-dual .fill { position: absolute; top: 50%; height: 6px; margin-top: -3px; border-radius: 999px; }
+.range-dual .track { inset-inline: 0; background: #eadfd3; }
+.range-dual .fill { background: var(--color-primary); }
+.range-dual input[type='range'] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  appearance: none; -webkit-appearance: none; background: transparent; pointer-events: none; outline: none;
+}
+.range-dual input[type='range']::-webkit-slider-runnable-track { background: transparent; height: 100%; }
+.range-dual input[type='range']::-moz-range-track { background: transparent; }
+.range-dual input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto; cursor: grab;
+  width: 22px; height: 22px; margin-top: 3px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--color-primary); box-shadow: 0 2px 6px rgb(0 0 0 / 0.18);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.range-dual input[type='range']::-moz-range-thumb {
+  pointer-events: auto; cursor: grab; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--color-primary); box-shadow: 0 2px 6px rgb(0 0 0 / 0.18);
+}
+.range-dual input[type='range']:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.15); }
+.range-dual input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+.range-dual input[type='range']:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent); }
