@@ -36,9 +36,9 @@ services:
         generateValue: true
       - key: COOKIE_SAMESITE
         value: lax
-      # Render has two proxies in front of the server → real visitor IP for rate limits
+      # Render = Cloudflare + load balancer + Render proxy in front of the server → 3 hops to the real visitor IP
       - key: TRUST_PROXY
-        value: "2"
+        value: "3"
       # admin login at /admin/login
       - key: ADMIN_EMAILS
         value: mivanjari1111@gmail.com
