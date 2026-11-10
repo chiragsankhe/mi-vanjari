@@ -4,6 +4,8 @@
 >
 > Made by **Chirag Sankhe**.
 
+Mi Vanjari is a community site I have made for our community, where people can find a partner for themselves — and connect with the samaj, its businesses and wedding services.
+
 A community platform for the Vanjari community of Palghar district, Maharashtra. It connects members who now live across cities, states and countries, and brings matrimony, wedding services, a business directory, achievers, astrology tools and our shared history into one trusted, privacy-first place.
 
 | | |
