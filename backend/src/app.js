@@ -96,8 +96,10 @@ export function createApp() {
       }),
     );
     // every other page address (/matrimonial, /profile/123 …) is handled by the React app
-    app.get(/^\/(?!api\/|uploads\/|socket\.io\/).*/, (req, res, next) => {
-      if (!req.accepts('html')) return next();
+    // Missing build files (e.g. an old page file requested by a tab opened before a deploy) must be a real
+    // 404 — answering with the HTML page makes the browser fail silently and show a blank page.
+    app.get(/^\/(?!api\/|uploads\/|socket\.io\/|assets\/).*/, (req, res, next) => {
+      if (/\.[a-z0-9]{1,8}$/i.test(req.path) || !req.accepts('html')) return next();
       res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(WEB_DIR, 'index.html'));
     });

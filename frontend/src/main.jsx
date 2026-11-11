@@ -6,6 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import { queryClient } from './lib/queryClient';
+import { watchForNewVersion } from './lib/freshVersion';
+
+watchForNewVersion();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

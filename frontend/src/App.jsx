@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Component, lazy, Suspense, useEffect } from 'react';
+import { Component, Suspense, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthModal } from './components/auth/AuthModal';
@@ -9,42 +9,47 @@ import { Footer, MobileNav } from './components/layout/Shell';
 import { EmptyState, PageLoader } from './components/ui';
 import { useRealtime, useScrollTop } from './hooks';
 import { refreshSession } from './lib/api';
+import { isStaleVersionError, lazyPage, reloadForNewVersion } from './lib/freshVersion';
 import { AdminGate } from './pages/admin/AdminGate';
 import { useAuth } from './store/auth';
 import { useUI } from './store/ui';
 
 // Lazy-loaded pages (code-split per route)
-const Home = lazy(() => import('./pages/Home'));
-const Onboarding = lazy(() => import('./pages/auth/Onboarding'));
-const Browse = lazy(() => import('./pages/matrimonial/Browse'));
-const ProfileDetail = lazy(() => import('./pages/matrimonial/ProfileDetail'));
-const Requests = lazy(() => import('./pages/matrimonial/Requests'));
-const Messages = lazy(() => import('./pages/chat/Messages'));
-const Notifications = lazy(() => import('./pages/chat/Notifications'));
-const Community = lazy(() => import('./pages/community/Community'));
-const Services = lazy(() => import('./pages/services/Services'));
-const CategoryList = lazy(() => import('./pages/services/CategoryList'));
-const ProviderDetail = lazy(() => import('./pages/services/ProviderDetail'));
-const Combos = lazy(() => import('./pages/services/Combos'));
-const ServiceForm = lazy(() => import('./pages/services/ServiceForm'));
-const BusinessDirectory = lazy(() => import('./pages/business/BusinessDirectory'));
-const BusinessDetail = lazy(() => import('./pages/business/BusinessDetail'));
-const BusinessForm = lazy(() => import('./pages/business/BusinessForm'));
-const Achievers = lazy(() => import('./pages/achievers/Achievers'));
-const AddAchiever = lazy(() => import('./pages/achievers/AddAchiever'));
-const Astrology = lazy(() => import('./pages/astrology/Astrology'));
-const MyProfile = lazy(() => import('./pages/profile/MyProfile'));
-const EditProfile = lazy(() => import('./pages/profile/EditProfile'));
-const Settings = lazy(() => import('./pages/profile/Settings'));
-const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
-const Admin = lazy(() => import('./pages/admin/Admin'));
-const Info = lazy(() => import('./pages/misc/Info'));
-const NotFound = lazy(() => import('./pages/misc/NotFound'));
+const Home = lazyPage(() => import('./pages/Home'));
+const Onboarding = lazyPage(() => import('./pages/auth/Onboarding'));
+const Browse = lazyPage(() => import('./pages/matrimonial/Browse'));
+const ProfileDetail = lazyPage(() => import('./pages/matrimonial/ProfileDetail'));
+const Requests = lazyPage(() => import('./pages/matrimonial/Requests'));
+const Messages = lazyPage(() => import('./pages/chat/Messages'));
+const Notifications = lazyPage(() => import('./pages/chat/Notifications'));
+const Community = lazyPage(() => import('./pages/community/Community'));
+const Services = lazyPage(() => import('./pages/services/Services'));
+const CategoryList = lazyPage(() => import('./pages/services/CategoryList'));
+const ProviderDetail = lazyPage(() => import('./pages/services/ProviderDetail'));
+const Combos = lazyPage(() => import('./pages/services/Combos'));
+const ServiceForm = lazyPage(() => import('./pages/services/ServiceForm'));
+const BusinessDirectory = lazyPage(() => import('./pages/business/BusinessDirectory'));
+const BusinessDetail = lazyPage(() => import('./pages/business/BusinessDetail'));
+const BusinessForm = lazyPage(() => import('./pages/business/BusinessForm'));
+const Achievers = lazyPage(() => import('./pages/achievers/Achievers'));
+const AddAchiever = lazyPage(() => import('./pages/achievers/AddAchiever'));
+const Astrology = lazyPage(() => import('./pages/astrology/Astrology'));
+const MyProfile = lazyPage(() => import('./pages/profile/MyProfile'));
+const EditProfile = lazyPage(() => import('./pages/profile/EditProfile'));
+const Settings = lazyPage(() => import('./pages/profile/Settings'));
+const AdminLogin = lazyPage(() => import('./pages/admin/AdminLogin'));
+const Admin = lazyPage(() => import('./pages/admin/Admin'));
+const Info = lazyPage(() => import('./pages/misc/Info'));
+const NotFound = lazyPage(() => import('./pages/misc/NotFound'));
 
 class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) {
     return { error };
+  }
+  componentDidCatch(error) {
+    // a new version went live while this tab was open → reload into it instead of showing an error
+    if (isStaleVersionError(error)) reloadForNewVersion();
   }
   componentDidUpdate(prev) {
     if (prev.resetKey !== this.props.resetKey && this.state.error) this.setState({ error: null });
