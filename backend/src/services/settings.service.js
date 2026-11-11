@@ -4,12 +4,12 @@ import { prisma } from '../lib/prisma.js';
  * Admin-editable settings with safe defaults. Stored as strings in AppSetting; cached for 30 s.
  *   matrimonyFee        ₹ per membership period (default 501)
  *   membershipDays      length of one paid period (default 365)
- *   matrimonyPaidFrom   YYYY-MM-DD — before this date matrimony is free for everyone (default 2026-12-01)
+ *   matrimonyPaidFrom   YYYY-MM-DD — before this date matrimony is free for everyone (default 2027-01-01)
  */
 export const DEFAULT_SETTINGS = {
   matrimonyFee: 501,
   membershipDays: 365,
-  matrimonyPaidFrom: '2026-12-01',
+  matrimonyPaidFrom: '2027-01-01',
 };
 
 const PARSE = {

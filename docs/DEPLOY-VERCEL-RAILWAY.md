@@ -126,7 +126,7 @@ Brevo → **Senders, domains → Domains → Add a domain** → `mivanjari.com` 
 add them in Namecheap Advanced DNS → **Authenticate**. Then Railway → Variables:
 `MAIL_FROM=Mi Vanjari <noreply@mivanjari.com>` (add `noreply@mivanjari.com` as a sender in Brevo first).
 
-## 10. Payments (before 1 December)
+## 10. Payments (before 1 January 2027)
 
 Razorpay → KYC → **API keys** → copy Key ID + Secret. **Webhooks → Add**: URL
 `https://api.mivanjari.com/api/v1/payments/webhook`, a secret you choose, events `payment.captured`,

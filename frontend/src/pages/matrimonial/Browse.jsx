@@ -16,12 +16,12 @@ const HEIGHT_IN = { min: 54, max: 78 }; // 4′6″ – 6′6″
 /** Shown until the paid period starts: matrimony is free now, ₹fee/year from the start date. */
 function EarlyBanner({ m }) {
   const { pay, busy, dialog } = useMembershipCheckout();
-  const from = new Date(m.paidFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
+  const from = new Date(m.paidFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   return (
     <div className="border-b border-gold/30 bg-[#fff8e6]">
       <div className="container-page flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
         <span>
-          <b>Matrimony is free until {new Date(new Date(m.paidFrom).getTime() - 86400_000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}.</b> From {from}, membership is ₹{m.fee} per year. Pay early and your year starts on {from}.
+          <b>Matrimony is free until {new Date(new Date(m.paidFrom).getTime() - 86400_000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}.</b> From {from}, membership is ₹{m.fee} per year. Pay early and your year starts on {from}.
         </span>
         <button className="btn btn-outline btn-sm shrink-0" onClick={pay} disabled={busy}>
           {busy ? 'Opening…' : `Become a member · ₹${m.fee}`}

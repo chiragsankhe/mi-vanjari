@@ -3,7 +3,7 @@ import { getSettings, paidFromDate } from './settings.service.js';
 
 /**
  * Matrimony membership rules
- *  • Before `matrimonyPaidFrom` (1 Dec 2026 by default) matrimony is free for everyone.
+ *  • Before `matrimonyPaidFrom` (1 Jan 2027 by default) matrimony is free for everyone.
  *  • From then on a member needs an active membership (₹501 / 365 days) to browse matches,
  *    see matrimony details (family contacts, preferences, Kundali) and to be listed in search.
  *  • Admins and moderators always have access.

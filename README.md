@@ -138,7 +138,7 @@ mi vanjari/
   - **🛡 Security:** blocked attempts, admin logins and a full audit log of admin actions.
   - Members who open `/admin` see a warning, and the attempt is logged.
   - Admin numbers are set in `ADMIN_PHONES` in `backend/.env`.
-- **Matrimony membership: ₹501 per year, from 1 December 2026.** The fee, validity and start date can be changed in Admin → Settings.
+- **Matrimony membership: ₹501 per year, from 1 January 2027.** The fee, validity and start date can be changed in Admin → Settings.
   - **Locked without membership:** browsing matches, family contacts, partner preferences, Kundali match, shortlist and "who viewed me". Unpaid members are also not listed in search.
   - **Paying early:** the year starts on the start date, so no free days are lost.
   - **Payments** go through **Razorpay**:

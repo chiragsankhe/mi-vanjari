@@ -88,7 +88,7 @@ Brevo → **Senders, domains → Domains → Add a domain** → `mivanjari.com` 
 Hostinger DNS → **Authenticate**. Add sender `noreply@mivanjari.com`, then Render → Environment →
 `MAIL_FROM` = `Mi Vanjari <noreply@mivanjari.com>`.
 
-## 9. Payments (before 1 December)
+## 9. Payments (before 1 January 2027)
 
 Razorpay → KYC (1–3 days) → **API keys** → Key ID + Secret. **Webhooks → Add**:
 `https://mivanjari.com/api/v1/payments/webhook`, a secret you choose, events `payment.captured`, `payment.failed`,
