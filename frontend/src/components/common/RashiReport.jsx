@@ -1,25 +1,73 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { NAKSHATRA_INFO, RASHI_INFO } from '../../lib/rashiInfo';
 import { cn } from '../../lib/utils';
 import { Icon, Modal } from '../ui';
 import { DownloadCardButton } from './DownloadCard';
-import { RashiShareCard } from './ShareCards';
 
 const slug = (s) => String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'my';
 
-export function RashiDownloadButton({ rashi, nakshatra, pada, name, className, label = 'Download report' }) {
+/** Downloads the whole report as one image: the rashi box and every section below it. */
+export function RashiDownloadButton({ rashi, nakshatra, pada, name, note, className, label = 'Download report' }) {
   return (
     <DownloadCardButton
       className={className}
       label={label}
       filename={`rashi-${slug(rashi)}${name ? `-${slug(name)}` : ''}.png`}
-      card={() => <RashiShareCard rashi={rashi} nakshatra={nakshatra} pada={pada} name={name} />}
+      card={() => <RashiFullReportCard rashi={rashi} nakshatra={nakshatra} pada={pada} name={name} note={note} />}
     />
   );
 }
 
+/** Inside the downloaded image: no fade-in animation (it would be captured half-faded) and fixed columns. */
+const StillContext = createContext(false);
+
+/** Fixed-width version of the on-screen report, used for the PNG download. */
+export function RashiFullReportCard({ rashi, nakshatra, pada, name, note }) {
+  const r = RASHI_INFO[rashi];
+  const n = NAKSHATRA_INFO[nakshatra];
+  if (!r) return null;
+  return (
+    <StillContext.Provider value>
+      <div style={{ width: 820 }} className="bg-[#fdf6ec] p-8 font-sans text-[#2b211b]">
+        <div className="rounded-2xl bg-primary-dark p-8 text-white">
+          <div className="flex items-center gap-7">
+            <div className="grid size-32 shrink-0 place-items-center rounded-full border-2 border-gold/60 bg-white/10 text-6xl">{r.symbol}</div>
+            <div>
+              <p className="text-[12px] font-semibold tracking-[0.16em] text-[#f1bf76] uppercase">{name ? `${name}’s rashi` : 'Your rashi'}</p>
+              <h3 className="heading-deva mt-1 text-5xl leading-[1.3] font-bold">{r.mr}</h3>
+              <p className="font-serif text-xl text-[#f1d9cf]">
+                {rashi} · {r.en}
+              </p>
+            </div>
+          </div>
+          <div className="mt-7 grid grid-cols-4 gap-3">
+            {[
+              ['Nakshatra', n ? n.mr : nakshatra || '—', n ? `${nakshatra}${pada ? ` · Pada ${pada}` : ''}` : ''],
+              ['Ruling planet', r.lord, n ? `Nakshatra lord: ${n.lord}` : r.lordMr],
+              ['Element', r.element, r.quality],
+              ['Lucky colour', r.lucky.colour, n ? `Gana: ${n.gana}` : ''],
+            ].map(([k, a, b]) => (
+              <div key={k} className="rounded-xl bg-white/10 p-4">
+                <small className="text-[10px] tracking-[0.12em] text-[#f1bf76] uppercase">{k}</small>
+                <b className="heading-deva mt-1 block text-lg leading-snug">{a}</b>
+                <small className="text-[11px] text-[#e1c7bd]">{b}</small>
+              </div>
+            ))}
+          </div>
+          {note && <p className="mt-5 text-[11px] text-[#e1c7bd]">{note}</p>}
+        </div>
+        <div className="mt-5">
+          <RashiDetails rashi={rashi} nakshatra={nakshatra} pada={pada} />
+        </div>
+        <p className="mt-6 text-center text-[11px] text-[#6f675f]">mivanjari.com · Made by Chirag Sankhe</p>
+      </div>
+    </StillContext.Provider>
+  );
+}
+
 function Section({ icon, title, mr, tone = 'plain', children, delay = 0 }) {
+  const still = useContext(StillContext);
   const tones = {
     plain: 'border-line bg-white',
     good: 'border-leaf/20 bg-leaf-soft/60',
@@ -27,7 +75,7 @@ function Section({ icon, title, mr, tone = 'plain', children, delay = 0 }) {
     gold: 'border-gold/40 bg-gold-soft/50',
   };
   return (
-    <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className={cn('rounded-xl border p-5', tones[tone])}>
+    <motion.section initial={still ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className={cn('rounded-xl border p-5', tones[tone])}>
       <h4 className="mb-2.5 flex items-center gap-2 font-semibold">
         <Icon name={icon} size={17} className={tone === 'good' ? 'text-leaf' : tone === 'warn' ? 'text-primary' : 'text-[#b0876a]'} />
         {title} {mr && <span className="heading-deva text-sm font-normal text-muted">· {mr}</span>}
@@ -39,6 +87,9 @@ function Section({ icon, title, mr, tone = 'plain', children, delay = 0 }) {
 
 /** Detailed rashi + nakshatra reading. Works from names alone, so it can be shown for any profile. */
 export function RashiDetails({ rashi, nakshatra, pada }) {
+  const still = useContext(StillContext);
+  const two = still ? 'grid-cols-2' : 'md:grid-cols-2';
+  const four = still ? 'grid-cols-4' : 'grid-cols-2 sm:grid-cols-4';
   const r = RASHI_INFO[rashi];
   const n = NAKSHATRA_INFO[nakshatra];
   if (!r) return null;
@@ -53,7 +104,7 @@ export function RashiDetails({ rashi, nakshatra, pada }) {
         </div>
       </Section>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={cn('grid gap-4', two)}>
         <Section icon="check" title="Strengths" mr="गुण" tone="good" delay={0.05}>
           <ul className="space-y-1.5 text-sm">
             {r.strengths.map((s) => (
@@ -70,7 +121,7 @@ export function RashiDetails({ rashi, nakshatra, pada }) {
         </Section>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={cn('grid gap-4', two)}>
         <Section icon="briefcase" title="Career" mr="करिअर" delay={0.15}>
           <div className="flex flex-wrap gap-1.5">
             {r.career.map((c) => (
@@ -94,7 +145,7 @@ export function RashiDetails({ rashi, nakshatra, pada }) {
       </div>
 
       <Section icon="star" title="Lucky for you" mr="शुभ गोष्टी" tone="gold" delay={0.25}>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <dl className={cn('grid gap-x-4 gap-y-3', four)}>
           {[
             ['Ruling planet', `${r.lord} · ${r.lordMr}`],
             ['Element', r.element],
@@ -122,7 +173,7 @@ export function RashiDetails({ rashi, nakshatra, pada }) {
       {n && (
         <Section icon="moon" title={`Nakshatra: ${nakshatra}`} mr={n.mr} delay={0.3}>
           <p className="text-sm">{n.trait}</p>
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          <dl className={cn('mt-3 grid gap-x-4 gap-y-3', four)}>
             {[
               ['Deity', n.deity],
               ['Symbol', n.symbol],

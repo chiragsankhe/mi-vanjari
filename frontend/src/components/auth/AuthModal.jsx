@@ -15,6 +15,32 @@ const INTENTS = [
   ['SERVICES', 'tent', 'List my wedding services', 'माझ्या लग्न सेवा नोंदवा'],
 ];
 
+const PENDING_KEY = 'mv_login_pending';
+const PENDING_MINUTES = 10; // same as the code's validity
+function readPending() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null');
+    if (p?.email && Date.now() - p.sentAt < PENDING_MINUTES * 60_000) return p;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+function savePending(email, redirect) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify({ email, redirect: redirect || null, sentAt: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+function clearPending() {
+  try {
+    localStorage.removeItem(PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 const slide = {
   initial: { opacity: 0, x: 30 },
   animate: { opacity: 1, x: 0, transition: { duration: 0.35 } },
@@ -119,6 +145,22 @@ export function AuthModal() {
     }
   }, [open]);
 
+  // Came back after the page reloaded (e.g. while reading the code in the email app)? Continue at the code step.
+  const status = useAuth((s) => s.status);
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || status === 'loading') return;
+    restored.current = true;
+    const pending = readPending();
+    if (!pending) return;
+    if (status === 'authed') return clearPending();
+    setEmail(pending.email);
+    setStep(2);
+    setOtp('');
+    setCooldown(Math.max(0, 30 - Math.floor((Date.now() - pending.sentAt) / 1000)));
+    useUI.getState().openAuth(pending.redirect);
+  }, [status]);
+
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
@@ -130,6 +172,7 @@ export function AuthModal() {
     setError('');
     try {
       const res = await post('/auth/send-otp', who());
+      if (!devPhone) savePending(email.trim().toLowerCase(), redirect);
       setDevOtp(res.devOtp || null);
       setStep(2);
       setCooldown(30);
@@ -153,6 +196,7 @@ export function AuthModal() {
     setError('');
     try {
       const res = await post('/auth/verify-otp', { ...who(), otp: code });
+      clearPending();
       useAuth.getState().setSession(res.accessToken, res.user);
       if (res.isNewUser || !res.user.intents?.length) {
         setStep(3);
@@ -183,7 +227,14 @@ export function AuthModal() {
 
 
   return (
-    <Modal open={open} onClose={close} label="Join Mi Vanjari">
+    <Modal
+      open={open}
+      onClose={() => {
+        clearPending();
+        close();
+      }}
+      label="Join Mi Vanjari"
+    >
       <div className="px-6 pt-7 pb-8 sm:px-8">
         <div className="mb-5 flex items-center gap-3">
           <BrandMark size={42} />
@@ -242,8 +293,14 @@ export function AuthModal() {
             <motion.div key="s2" {...slide}>
               <h2 className="font-serif text-[28px] font-semibold">Enter verification code</h2>
               <p className="mt-2 text-sm text-muted">
-                We emailed a 6-digit code to <b className="break-all text-ink">{email.trim().toLowerCase()}</b>. Check your inbox (and Spam folder).{' '}
-                <button className="font-semibold text-primary" onClick={() => setStep(1)}>
+                We emailed a 6-digit code to <b className="break-all text-ink">{email.trim().toLowerCase()}</b>. Check your inbox (and Spam folder). You can switch to your email app — this page remembers you for 10 minutes.{' '}
+                <button
+                  className="font-semibold text-primary"
+                  onClick={() => {
+                    clearPending();
+                    setStep(1);
+                  }}
+                >
                   Change
                 </button>
               </p>

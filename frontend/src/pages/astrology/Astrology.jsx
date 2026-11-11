@@ -160,6 +160,7 @@ function RashiCalculator() {
               nakshatra={r.nakshatra.name}
               pada={r.nakshatra.pada}
               name={v.name}
+              note={`Moon at ${r.degreeInSign}° in ${r.rashi.name} (sidereal, Lahiri). Nadi: ${r.nakshatra.nadiName} · Yoni: ${r.nakshatra.yoni}`}
               className="absolute top-4 right-4 z-10 border-white/40 bg-white/10 text-white hover:bg-white/20"
             />
             <motion.div className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full border border-white/10" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 60, ease: 'linear' }} />
