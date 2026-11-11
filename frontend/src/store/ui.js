@@ -3,9 +3,9 @@ import { create } from 'zustand';
 const LANG_KEY = 'mv_lang';
 const readLang = () => {
   try {
-    return localStorage.getItem(LANG_KEY) || 'mr';
+    return localStorage.getItem(LANG_KEY) || 'en';
   } catch {
-    return 'mr';
+    return 'en';
   }
 };
 

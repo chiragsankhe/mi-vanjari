@@ -70,14 +70,14 @@ export function MobileNav() {
     ['/', 'home', t('nav_home')],
     ['/matrimonial', 'heart', t('nav_matches')],
     ['/messages', 'chat', t('nav_messages'), unread.messages],
-    ['/notifications', 'bell', t('nav_alerts'), (unread.notifications || 0) + (unread.requests || 0)],
+    ['/astrology', 'zodiac', t('nav_rashi_short')],
     ['/me', 'user', t('nav_profile')],
   ];
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-line bg-[rgba(255,251,246,0.96)] px-1 pt-1.5 pb-[max(8px,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden" aria-label="Mobile">
       {items.map(([to, icon, label, count]) => {
-        const needsAuth = to !== '/' && status !== 'authed';
+        const needsAuth = !['/', '/astrology'].includes(to) && status !== 'authed'; // Rashi & Kundali is open to everyone
         return (
           <NavLink
             key={to}

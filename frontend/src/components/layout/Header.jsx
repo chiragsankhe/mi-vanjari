@@ -24,11 +24,11 @@ export const NAV_LINKS = [
 
 export function Brand({ inverse = false }) {
   return (
-    <Link to="/" className="flex items-center gap-3 text-left" aria-label="Mi Vanjari home">
+    <Link to="/" className="flex shrink-0 items-center gap-2.5 text-left sm:gap-3" aria-label="Mi Vanjari home">
       <BrandMark size={40} inverse={inverse} />
       <span>
         <b className={cn('heading-deva block text-[17px] leading-tight font-bold md:text-lg', inverse && 'text-white')}>मी वंजारी</b>
-        <small className={cn('block text-[9px] tracking-[0.06em]', inverse ? 'text-[#bcaea3]' : 'text-muted')}>आपली माणसं, आपलं जग</small>
+        <small className={cn('block text-[9px] tracking-[0.06em] whitespace-nowrap', inverse ? 'text-[#bcaea3]' : 'text-muted')}>आपली माणसं, आपलं जग</small>
       </span>
     </Link>
   );
@@ -74,7 +74,7 @@ function UserMenu() {
         <Avatar src={user?.profile?.photoUrl} name={user?.profile?.fullName || 'Me'} size={32} />
         <span className="hidden max-w-[110px] truncate text-[13px] font-semibold lg:block">{user?.profile?.fullName?.split(' ')[0] || 'Account'}</span>
         <Icon name="chevron-down" size={14} className="text-muted" />
-        {total > 0 && <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-white ring-2 ring-ivory">{total > 99 ? '99+' : total}</span>}
+        {total > 0 && <span className="absolute -top-1 -right-1 hidden min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-white ring-2 ring-ivory md:grid">{total > 99 ? '99+' : total}</span>}
       </button>
       <AnimatePresence>
         {open && (
@@ -101,6 +101,19 @@ function UserMenu() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** Alerts bell in the top bar on phones (the bottom bar has no room for it). Shows unread alerts + follow requests. */
+function AlertsBell() {
+  const user = useAuth((s) => s.user);
+  const t = useT();
+  const count = (user?.unread?.notifications || 0) + (user?.unread?.requests || 0);
+  return (
+    <Link to="/notifications" className="relative grid size-9 place-items-center rounded-full border border-line bg-white text-ink md:hidden" aria-label={`${t('nav_alerts')}${count ? ` (${count} new)` : ''}`}>
+      <Icon name="bell" size={18} />
+      {count > 0 && <span className="absolute -top-1 -right-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold text-white ring-2 ring-white">{count > 9 ? '9+' : count}</span>}
+    </Link>
   );
 }
 
@@ -131,7 +144,7 @@ export function Header() {
 
   return (
     <header className={cn('sticky top-0 z-40 border-b border-line bg-[rgba(253,246,236,0.92)] backdrop-blur-xl transition-shadow', scrolled && 'shadow-[0_6px_24px_rgba(60,35,18,0.06)]')}>
-      <div className="container-page flex h-[66px] items-center gap-4 md:h-[78px]">
+      <div className="container-page flex h-[66px] items-center gap-2 sm:gap-4 md:h-[78px]">
         <Brand />
         <nav className="mx-auto hidden h-full items-stretch gap-6 xl:flex" aria-label="Main">
           {NAV_LINKS.map(([to, key]) => (
@@ -145,8 +158,9 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-3 xl:ml-0">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3 xl:ml-0">
           <LangToggle className="hidden sm:block" />
+          {status === 'authed' && <AlertsBell />}
           {status === 'authed' ? (
             <UserMenu />
           ) : status === 'guest' ? (
@@ -154,8 +168,9 @@ export function Header() {
               <button className="btn btn-outline btn-sm hidden sm:inline-flex" onClick={() => openAuth()}>
                 {t('login')}
               </button>
-              <button className="btn btn-primary btn-sm" onClick={() => openAuth()}>
-                {t('join')}
+              <button className="btn btn-primary btn-sm !min-h-8 !gap-1 !px-3 !text-xs sm:!min-h-9 sm:!px-4 sm:!text-[13px]" onClick={() => openAuth()}>
+                <span className="sm:hidden">{t('join_short')}</span>
+                <span className="hidden sm:inline">{t('join')}</span>
               </button>
             </>
           ) : (
