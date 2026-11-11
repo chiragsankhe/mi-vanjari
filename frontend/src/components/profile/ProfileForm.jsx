@@ -58,7 +58,7 @@ export const makeProfileSchema = ({ requireEmail = false, requirePhone = false }
         : z.string().trim().refine((v) => !v || isPhone(v), 'Enter a valid 10-digit mobile number').optional(),
       dateOfBirth: opt,
       gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional().or(z.literal('')),
-    maritalStatus: z.enum(['NEVER_MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
+    maritalStatus: z.enum(['NEVER_MARRIED', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
     heightCm: optNum,
     bio: opt,
     currentCity: z.string().trim().min(2, 'City is required'),
@@ -216,9 +216,11 @@ export function BasicSection({ form, withName = true }) {
         {e.gender && <span className="field-error">{e.gender.message}</span>}
       </div>
       <Field as="select" label="Marital status" {...register('maritalStatus')}>
-        <option value="NEVER_MARRIED">Never married</option>
+        <option value="NEVER_MARRIED">Single</option>
+        <option value="MARRIED">Married</option>
         <option value="DIVORCED">Divorced</option>
-        <option value="WIDOWED">Widowed</option>
+        {/* not offered any more, but a member who chose it earlier keeps seeing their value */}
+        {watch('maritalStatus') === 'WIDOWED' && <option value="WIDOWED">Widowed</option>}
       </Field>
       <Field label="Height (cm)" type="number" inputMode="numeric" placeholder="e.g. 165" {...register('heightCm')} />
       <Field as="textarea" label="About me" placeholder="A few lines about you, your values and interests…" maxLength={600} {...register('bio')} className="sm:col-span-2" />

@@ -55,7 +55,7 @@ export const profileSchema = z
       .nullable()
       .or(z.literal('').transform(() => null)),
     gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional().nullable(),
-    maritalStatus: z.enum(['NEVER_MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
+    maritalStatus: z.enum(['NEVER_MARRIED', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
     heightCm: optInt(120, 230),
     bio: optStr(600),
 

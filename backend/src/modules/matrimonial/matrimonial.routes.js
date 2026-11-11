@@ -17,7 +17,7 @@ const browseQuery = z.object({
   heightMax: z.coerce.number().int().min(100).max(250).optional(), // cm
   city: z.string().trim().max(60).optional(),
   education: z.enum(['GRADUATE', 'MASTERS', 'PROFESSIONAL']).optional(),
-  maritalStatus: z.enum(['NEVER_MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
+  maritalStatus: z.enum(['NEVER_MARRIED', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional(),
   verified: z.enum(['true', 'false']).optional(),
   q: z.string().trim().max(60).optional(),
   sort: z.enum(['active', 'newest']).optional(),

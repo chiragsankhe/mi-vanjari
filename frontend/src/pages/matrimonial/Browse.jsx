@@ -39,7 +39,7 @@ const EDU = [
   ['PROFESSIONAL', 'Professional'],
 ];
 
-function Filters({ value, onChange, onReset, total, onApply }) {
+function Filters({ value, onChange, onReset, total, onApply, showGender = true }) {
   const set = (k, v) => onChange({ ...value, [k]: v });
   return (
     <div className="space-y-5">
@@ -49,7 +49,7 @@ function Filters({ value, onChange, onReset, total, onApply }) {
           Reset
         </button>
       </div>
-      <div>
+      <div className={cn(!showGender && 'hidden')}>
         <span className="field-label">I am looking for</span>
         <Segment
           id="lookfor"
@@ -98,9 +98,9 @@ function Filters({ value, onChange, onReset, total, onApply }) {
         <span className="field-label">Marital status</span>
         <select className="field" value={value.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}>
           <option value="">Any</option>
-          <option value="NEVER_MARRIED">Never married</option>
+          <option value="NEVER_MARRIED">Single</option>
+          <option value="MARRIED">Married</option>
           <option value="DIVORCED">Divorced</option>
-          <option value="WIDOWED">Widowed</option>
         </select>
       </div>
       <label className="flex items-center gap-2 text-sm">
@@ -182,6 +182,27 @@ export default function Browse() {
           </aside>
 
           <section>
+            {/* Phones: two big tabs — Groom / Bride (computers have the same switch in the side panel) */}
+            <div className="mb-4 grid grid-cols-2 gap-1.5 rounded-xl bg-white p-1.5 shadow-[var(--shadow-card)] lg:hidden" role="tablist" aria-label="Looking for">
+              {[
+                ['MALE', 'Groom', 'वर'],
+                ['FEMALE', 'Bride', 'वधू'],
+              ].map(([v, en, mr]) => {
+                const on = filters.gender === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setFilters((f) => ({ ...f, gender: v }))}
+                    className={cn('flex h-11 items-center justify-center gap-2 rounded-lg text-[15px] font-bold transition', on ? 'bg-primary text-white shadow-[var(--shadow-cta)]' : 'text-[#5b534d] hover:bg-sand')}
+                  >
+                    {en} <span className="heading-deva text-sm font-semibold opacity-80">· {mr}</span>
+                  </button>
+                );
+              })}
+            </div>
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <motion.b key={total} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="block font-serif text-xl font-semibold">
@@ -238,7 +259,7 @@ export default function Browse() {
             <div className="absolute inset-0 bg-black/40" onClick={() => setSheet(false)} />
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320 }} className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl bg-white p-5 pb-8">
               <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" />
-              <Filters value={filters} onChange={setFilters} onReset={() => setFilters(defaults)} total={total} onApply={() => setSheet(false)} />
+              <Filters value={filters} onChange={setFilters} onReset={() => setFilters(defaults)} total={total} onApply={() => setSheet(false)} showGender={false} />
             </motion.div>
           </motion.div>
         )}

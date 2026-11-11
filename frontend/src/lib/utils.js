@@ -83,7 +83,8 @@ export const heightLabel = (cm) => {
 };
 
 export const LABELS = {
-  NEVER_MARRIED: 'Never married',
+  NEVER_MARRIED: 'Single',
+  MARRIED: 'Married',
   DIVORCED: 'Divorced',
   WIDOWED: 'Widowed',
   NUCLEAR: 'Nuclear family',

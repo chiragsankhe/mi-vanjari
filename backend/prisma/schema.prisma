@@ -60,9 +60,10 @@ enum FamilyType {
 }
 
 enum MaritalStatus {
-  NEVER_MARRIED
+  NEVER_MARRIED // shown as "Single"
+  MARRIED
   DIVORCED
-  WIDOWED
+  WIDOWED // kept for older profiles; no longer offered
 }
 
 enum FollowStatus {
