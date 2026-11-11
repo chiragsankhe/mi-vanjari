@@ -11,23 +11,23 @@ import { Brand, LangToggle } from './Header';
 export function Footer() {
   const t = useT();
   return (
-    <footer className="bg-night text-white">
-      <div className="container-page grid gap-10 py-12 md:grid-cols-[1.2fr_1fr_1fr_1fr] md:py-14">
-        <div>
+    <footer className="bg-night pb-[68px] text-white md:pb-0">
+      <div className="container-page grid grid-cols-2 gap-x-6 gap-y-5 py-6 md:grid-cols-[1.2fr_1fr_1fr_1fr] md:gap-10 md:py-14">
+        <div className="col-span-2 md:col-span-1">
           <Brand inverse />
-          <p className="heading-deva mt-6 text-lg text-[#d8c8ba]">{t('footer_tagline')}</p>
-          <p className="mt-3 max-w-xs text-xs leading-relaxed text-[#9d8f84]">
+          <p className="heading-deva mt-3 text-[15px] text-[#d8c8ba] md:mt-6 md:text-lg">{t('footer_tagline')}</p>
+          <p className="mt-2 hidden max-w-xs text-xs leading-relaxed text-[#9d8f84] md:mt-3 md:block">
             Built for the community — connecting Vanjari families of Palghar across cities, states and countries.
           </p>
         </div>
         <FooterCol title="Explore" links={[['/matrimonial', t('nav_matrimonial')], ['/community', t('nav_community')], ['/achievers', t('nav_achievers')], ['/astrology', t('nav_astrology')]]} />
         <FooterCol title="Grow" links={[['/services', t('nav_services')], ['/services/combos', 'Combo packages'], ['/business', t('nav_business')], ['/business/new', 'List your business']]} />
-        <FooterCol title="Trust" links={[['/info/privacy', t('privacy')], ['/info/safety', t('safety')], ['/info/contact', t('contact')]]}>
+        <FooterCol row className="col-span-2 md:col-span-1" title="Trust" links={[['/info/privacy', t('privacy')], ['/info/safety', t('safety')], ['/info/contact', t('contact')]]}>
           <LangToggle className="mt-2 text-[#bcaea3] [&_span]:!text-inherit" />
         </FooterCol>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-page flex flex-col items-center justify-between gap-2 py-5 text-[11px] text-[#8d7f74] md:flex-row">
+        <div className="container-page flex flex-col items-center justify-between gap-1 py-3 text-[10px] text-[#8d7f74] md:flex-row md:gap-2 md:py-5 md:text-[11px]">
           <span>© {new Date().getFullYear()} Mi Vanjari · मी वंजारी</span>
           <span>
             {MADE_BY} · <span className="text-[#b9a99c]">Palghar</span>
@@ -38,14 +38,14 @@ export function Footer() {
   );
 }
 
-function FooterCol({ title, links, children }) {
+function FooterCol({ title, links, children, className, row = false }) {
   return (
-    <div>
-      <h4 className="mb-4 text-[11px] font-bold tracking-[0.16em] text-gold uppercase">{title}</h4>
-      <ul className="space-y-2.5">
+    <div className={className}>
+      <h4 className="mb-2.5 text-[11px] font-bold tracking-[0.16em] text-gold uppercase md:mb-4">{title}</h4>
+      <ul className={cn('space-y-1 md:space-y-2.5', row && 'flex flex-wrap gap-x-5 gap-y-1 space-y-0 md:block md:space-y-2.5')}>
         {links.map(([to, label]) => (
           <li key={to}>
-            <Link to={to} className="text-sm text-[#bcaea3] transition hover:text-white">
+            <Link to={to} className="text-[13px] text-[#bcaea3] transition hover:text-white md:text-sm">
               {label}
             </Link>
           </li>
