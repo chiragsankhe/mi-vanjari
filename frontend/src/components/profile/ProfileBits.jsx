@@ -128,15 +128,12 @@ export function ProfileCard({ p, showShortlist = true }) {
           src={p.photoUrl}
           alt={p.fullName}
           fallbackIcon="user"
-          className={cn('size-full object-cover object-top transition duration-700 group-hover:scale-105', p.locked && 'scale-110 blur-[10px]')}
+          className="size-full object-cover object-top transition duration-700 group-hover:scale-105"
         />
         {p.locked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[rgba(63,47,40,0.3)] text-white">
-            <motion.span initial={{ scale: 0.7 }} whileInView={{ scale: 1 }} className="grid size-11 place-items-center rounded-full bg-white/20 backdrop-blur">
-              <Icon name="lock" />
-            </motion.span>
-            <span className="text-xs font-semibold">{t('private_profile')}</span>
-          </div>
+          <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur">
+            <Icon name="lock" size={11} /> {t('private_profile')}
+          </span>
         )}
         {showShortlist && <ShortlistButton userId={p.userId} initial={p.shortlisted} className="absolute top-2.5 right-2.5" />}
         {p.matchScore != null && <span className="absolute top-2.5 left-2.5 rounded-full border border-[#e9c360] bg-[#fff5da] px-2.5 py-1 text-[10px] font-bold text-[#8c6100]">{p.matchScore}% {t('match')}</span>}
@@ -152,11 +149,7 @@ export function ProfileCard({ p, showShortlist = true }) {
         <dl className="my-3.5 space-y-1.5">
           <CardFact icon="ruler" label={t('height')} value={cmToFeet(p.heightCm)} />
           <CardFact icon="map" label={t('location')} value={[p.currentCity, p.currentState].filter(Boolean).join(', ')} />
-          {p.locked ? (
-            <CardFact icon="briefcase" label={t('job')} value={t('hidden_until_accepted')} muted />
-          ) : (
-            <CardFact icon="briefcase" label={t('job')} value={p.occupation} />
-          )}
+          <CardFact icon="briefcase" label={t('job')} value={p.occupation} />
         </dl>
         <span className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-primary/35 bg-[#fff9f5] text-[11px] font-bold text-primary transition group-hover:bg-primary group-hover:text-white">
           {p.locked ? (p.followStatus === 'PENDING' ? t('requested') : t('send_request')) : t('view_profile')} <Icon name="arrow" size={15} />

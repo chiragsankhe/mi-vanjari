@@ -4,6 +4,8 @@ import { prisma } from '../../lib/prisma.js';
 import { optionalAuth } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { computeBirthChart, gunaMilan } from '../../services/astrology/engine.js';
+import { computeKundali } from '../../services/astrology/chart.js';
+import { PLACE_NAMES } from '../../services/astrology/places.js';
 import { monthPanchang } from '../../services/astrology/panchang.js';
 import { NAKSHATRAS, RASHIS } from '../../services/astrology/tables.js';
 import { h } from '../../utils/http.js';
@@ -48,6 +50,20 @@ router.post(
     res.json({ ...chart, input: { dob, tob: tob ?? null, place: place ?? null } });
   }),
 );
+
+/** POST /astrology/kundali { dob, tob?, place? } → Janma Kundali (North Indian chart): Lagna, 9 grahas, 12 houses */
+router.post(
+  '/kundali',
+  validate({ body: birth }),
+  h(async (req, res) => {
+    const year = Number(req.body.dob.slice(0, 4));
+    if (year < 1900 || year > 2100) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Date of birth must be between 1900 and 2100' } });
+    res.json(computeKundali(req.body));
+  }),
+);
+
+/** GET /astrology/places → birthplace suggestions for the form */
+router.get('/places', (_req, res) => res.json(PLACE_NAMES));
 
 /** POST /astrology/match { boy: {dob,tob}, girl: {dob,tob} } → Ashtakoota score */
 router.post(

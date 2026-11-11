@@ -211,10 +211,10 @@ export function PhotoGallery({ photos, locked, alt, watermark, children }) {
       >
         <AnimatePresence initial={false}>
           <motion.div key={index} initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
-            <Img src={photos[index]?.url} alt={alt} fallbackIcon="user" className={cn('size-full object-cover object-top', locked && 'scale-110 blur-xl')} />
+            <Img src={photos[index]?.url} alt={alt} fallbackIcon="user" className="size-full object-cover object-top" />
           </motion.div>
         </AnimatePresence>
-        {!locked && watermark && <Watermark text={watermark} />}
+        {watermark && <Watermark text={watermark} />}
 
         {multi && (
           <>

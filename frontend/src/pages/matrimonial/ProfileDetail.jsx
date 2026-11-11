@@ -148,12 +148,12 @@ export default function ProfileDetail() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden p-2.5 shadow-[var(--shadow-card)]">
             <PhotoGallery photos={photos} locked={p.locked} alt={p.fullName} watermark={watermark}>
               {p.locked && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/25 p-6 text-center text-white">
-                  <span className="grid size-14 place-items-center rounded-full bg-white/20 backdrop-blur">
-                    <Icon name="lock" size={26} />
-                  </span>
-                  <b className="text-sm">Private profile</b>
-                  <small className="text-xs text-white/85">Photos and details are visible after {p.fullName} accepts your follow request.</small>
+                <div className="absolute inset-x-3 bottom-3 z-10 flex items-center gap-2 rounded-lg bg-black/60 px-3 py-2 text-white backdrop-blur">
+                  <Icon name="lock" size={15} className="shrink-0" />
+                  <small className="text-[11px] leading-snug">
+                    <b>Private profile</b>
+                    {p.hiddenPhotoCount > 0 ? ` · ${p.hiddenPhotoCount} more ${p.hiddenPhotoCount === 1 ? 'photo' : 'photos'}` : ''} after {p.fullName?.split(' ')[0]} accepts your request
+                  </small>
                 </div>
               )}
               {p.matchScore != null && <span className="absolute top-5 left-3 z-10 rounded-full border border-[#e9c360] bg-[#fff5da] px-2.5 py-1 text-[11px] font-bold text-[#8c6100]">{p.matchScore}% match</span>}
@@ -229,19 +229,33 @@ export default function ProfileDetail() {
 
           {p.locked ? (
             <Reveal className="card overflow-hidden">
-              <div className="space-y-3 p-6 blur-[3px] select-none" aria-hidden="true">
-                {['Education', 'Occupation', 'Family', 'Partner preferences'].map((x) => (
-                  <div key={x} className="flex justify-between border-b border-line pb-3 text-sm">
-                    <span className="text-muted">{x}</span>
-                    <span>•••••• ••••</span>
-                  </div>
-                ))}
+              <div className="grid gap-5 p-5 sm:p-6 xl:grid-cols-2">
+                <div>
+                  <h2 className="mb-1 flex items-center gap-2 font-serif text-lg font-semibold">
+                    <Icon name="user" size={18} className="text-primary" /> About
+                  </h2>
+                  <Row label="Age" value={p.age && `${p.age} years`} />
+                  <Row label="Height" value={heightLabel(p.heightCm)} />
+                  <Row label="Marital status" value={LABELS[p.maritalStatus]} />
+                  <Row label="Lives in" value={[p.currentCity, p.currentState].filter(Boolean).join(', ')} />
+                  <Row label="Native village" value={p.nativeVillage} />
+                  <Row label="Gotra" value={p.gotra} />
+                </div>
+                <div>
+                  <h2 className="mb-1 flex items-center gap-2 font-serif text-lg font-semibold">
+                    <Icon name="graduation" size={18} className="text-primary" /> Education & career
+                  </h2>
+                  <Row label="Education" value={p.degrees?.length ? p.degrees.map((d) => d.degree).join(', ') : p.education} />
+                  <Row label="Occupation" value={p.occupation} />
+                </div>
               </div>
               <div className="border-t border-line bg-[#fffaf3] p-5 text-center">
-                <p className="text-sm">
-                  <b>Gotra:</b> {p.gotra || '—'} · <b>City:</b> {p.currentCity}
+                <p className="flex items-center justify-center gap-1.5 text-sm font-semibold">
+                  <Icon name="lock" size={14} className="text-primary" /> Private profile
                 </p>
-                <p className="mt-1 text-xs text-muted">Send a follow request to view the full profile.</p>
+                <p className="mt-1 text-xs text-muted">
+                  More photos, family details, contact numbers, partner preferences and Kundali are shown after {p.fullName?.split(' ')[0]} accepts your follow request.
+                </p>
                 {p.familyContactCount > 0 && (
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold text-primary">
                     <Icon name="users" size={12} /> {p.familyContactCount} family {p.familyContactCount === 1 ? 'contact' : 'contacts'} available once they accept

@@ -3,12 +3,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { BirthChartShareCard, KundaliChart, PlanetTable } from '../../components/astrology/KundaliChart';
+import { DownloadCardButton } from '../../components/common/DownloadCard';
 import { KundaliResult } from '../../components/common/KundaliResult';
 import { RashiDetails, RashiDownloadButton } from '../../components/common/RashiReport';
 import { Badge, Field, Icon, PageHeader, Reveal, Spinner, Tabs } from '../../components/ui';
 import { errorMessage, get, post } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
+import { useUI } from '../../store/ui';
 
 function BirthFields({ value, onChange, title }) {
   const set = (k) => (e) => onChange({ ...value, [k]: e.target.value });
@@ -20,8 +23,108 @@ function BirthFields({ value, onChange, title }) {
         <Field label="Date of birth *" type="date" required value={value.dob} onChange={set('dob')} />
         <Field label="Time of birth" type="time" value={value.tob} onChange={set('tob')} />
       </div>
-      <Field label="Place of birth" placeholder="e.g. Palghar" value={value.place} onChange={set('place')} />
+      <Field label="Place of birth" placeholder="e.g. Boisar, Palghar" list="mv-birth-places" autoComplete="off" value={value.place} onChange={set('place')} />
+      <PlaceList />
     </fieldset>
+  );
+}
+
+/** Birthplace suggestions (Palghar district first). */
+function PlaceList() {
+  const { data = [] } = useQuery({ queryKey: ['birth-places'], queryFn: () => get('/astrology/places'), staleTime: Infinity });
+  return (
+    <datalist id="mv-birth-places">
+      {data.map((n) => (
+        <option key={n} value={n} />
+      ))}
+    </datalist>
+  );
+}
+
+const fileName = (name) => `kundali-${(name || 'birth-chart').toLowerCase().replace(/\s+/g, '-')}.png`;
+
+/** Janma Kundali: North Indian chart with Lagna, nine grahas and houses. */
+function BirthChart() {
+  const me = useAuth((s) => s.user?.profile);
+  const lang = useUI((s) => s.lang);
+  const [v, setV] = useState({ name: me?.fullName || '', dob: me?.dateOfBirth || '', tob: me?.timeOfBirth || '', place: me?.placeOfBirth || '' });
+  const m = useMutation({ mutationFn: () => post('/astrology/kundali', { dob: v.dob, tob: v.tob || undefined, place: v.place || undefined }), onError: (e) => toast.error(errorMessage(e)) });
+  const r = m.data;
+  return (
+    <div className="grid gap-6 py-8 lg:grid-cols-[380px_1fr]">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          m.mutate();
+        }}
+        className="card h-max p-6"
+      >
+        <h2 className="mb-1 font-serif text-xl font-semibold">Janma Kundali · जन्म कुंडली</h2>
+        <p className="mb-5 text-xs text-muted">Your birth chart in the North Indian style: Lagna, the nine grahas and the twelve houses.</p>
+        <BirthFields value={v} onChange={setV} />
+        <button className="btn btn-primary mt-5 w-full" disabled={!v.dob || m.isPending}>
+          {m.isPending ? <Spinner size={16} /> : <>Make my Kundali <Icon name="zodiac" size={17} /></>}
+        </button>
+        <p className="mt-3 text-[11px] text-muted">Time is Indian Standard Time. The exact birth time and place decide the Lagna. Without a time you get a Chandra Kundali (Moon sign as house 1).</p>
+      </form>
+
+      <AnimatePresence mode="wait">
+        {r ? (
+          <motion.div key={`${r.input.dob}-${r.input.tob}-${r.place.name}`} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="min-w-0 space-y-5">
+            <div className="card p-5 sm:p-6">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold tracking-[0.14em] text-primary uppercase">{r.chartType === 'LAGNA' ? 'Lagna Kundali' : 'Chandra Kundali'}</p>
+                  <h3 className="font-serif text-xl font-semibold">{v.name || 'Birth chart'}</h3>
+                  <p className="text-xs text-muted">
+                    {r.input.dob}
+                    {r.input.tob ? ` · ${r.input.tob} IST` : ' · time not given'} · {r.place.name}
+                    {v.place && !r.place.matched && ' (place not found, using Palghar)'}
+                  </p>
+                </div>
+                <DownloadCardButton filename={fileName(v.name)} card={() => <BirthChartShareCard data={r} name={v.name} />} />
+              </div>
+              <div className="grid gap-5 md:grid-cols-[minmax(0,420px)_1fr] md:items-start">
+                <KundaliChart data={r} lang={lang} className="mx-auto w-full max-w-[420px]" />
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-1">
+                  {[
+                    ['Lagna', r.lagna ? `${r.lagna.rashi} · ${r.lagna.rashiMr}` : 'Add birth time', r.lagna ? `${Math.floor(r.lagna.degree)}° · ${r.lagna.nakshatra}` : 'needed for the Lagna'],
+                    ['Rashi (Moon)', `${r.moonRashi} · ${r.moonRashiMr}`, 'Chandra rashi'],
+                    ['Nakshatra', r.nakshatra, `Pada ${r.pada}`],
+                    ['Ayanamsa', `Lahiri ${r.ayanamsa.toFixed(2)}°`, 'sidereal zodiac'],
+                  ].map(([k, a, b]) => (
+                    <div key={k} className="rounded-xl bg-sand/70 p-3">
+                      <small className="text-[10px] tracking-[0.12em] text-primary uppercase">{k}</small>
+                      <b className="mt-0.5 block text-[15px]">{a}</b>
+                      <small className="text-[11px] text-muted">{b}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-4 text-[11px] text-muted">
+                Numbers inside the houses are rashi numbers (1 Mesh … 12 Meen). ℞ = retrograde.{' '}
+                {lang === 'mr' ? 'सू सूर्य · चं चंद्र · मं मंगळ · बु बुध · गु गुरु · शु शुक्र · श शनि · रा राहू · के केतू' : 'Su Sun · Mo Moon · Ma Mars · Me Mercury · Ju Jupiter · Ve Venus · Sa Saturn · Ra Rahu · Ke Ketu'}
+              </p>
+            </div>
+            <div className="card p-5 sm:p-6">
+              <h3 className="mb-3 font-serif text-lg font-semibold">Planet positions · ग्रहस्थिती</h3>
+              <PlanetTable data={r} lang={lang} />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid place-items-center rounded-2xl border border-dashed border-line bg-white/60 p-10 text-center">
+            <div>
+              <svg viewBox="0 0 100 100" className="mx-auto size-28 text-primary/50" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="2" width="96" height="96" />
+                <path d="M2 2 98 98M98 2 2 98M50 2 98 50 50 98 2 50Z" />
+              </svg>
+              <p className="heading-deva mt-5 text-xl">तुमची जन्म कुंडली</p>
+              <p className="mt-1 text-sm text-muted">Enter date, time and place of birth to draw your Kundali.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -441,12 +544,14 @@ export default function Astrology() {
           onChange={(v) => setParams({ tab: v }, { replace: true })}
           tabs={[
             { value: 'rashi', label: 'राशी शोधा · Rashi' },
+            { value: 'chart', label: 'जन्म कुंडली · Birth chart' },
             { value: 'kundali', label: 'कुंडली जुळणी · Kundali match' },
             { value: 'muhurat', label: 'मुहूर्त · Muhurat' },
           ]}
         />
         <Reveal key={tab} y={12}>
           {tab === 'rashi' && <RashiCalculator />}
+          {tab === 'chart' && <BirthChart />}
           {tab === 'kundali' && <KundaliMatch />}
           {tab === 'muhurat' && <MuhuratCalendar />}
         </Reveal>

@@ -27,7 +27,7 @@ function RequestRow({ r, kind }) {
   return (
     <motion.li layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -40 }} className="flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap">
       <Link to={`/profile/${u.userId}`} className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar src={u.photoUrl} name={u.fullName} size={52} blur={u.locked} />
+        <Avatar src={u.photoUrl} name={u.fullName} size={52} />
         <span className="min-w-0">
           <b className="flex items-center gap-1.5 text-sm">
             <span className="truncate">{u.fullName}</span> {u.isVerified && <VerifiedDot size={14} />}

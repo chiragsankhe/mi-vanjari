@@ -88,7 +88,7 @@ function Viewers() {
       {items.map((v) => (
         <li key={v.userId}>
           <Link to={`/profile/${v.userId}`} className="flex items-center gap-3 py-3 hover:bg-[#fffaf5]">
-            <Avatar src={v.photoUrl} name={v.fullName} size={44} blur={v.locked} />
+            <Avatar src={v.photoUrl} name={v.fullName} size={44} />
             <span className="flex-1">
               <b className="block text-sm">{v.fullName}</b>
               <small className="text-xs text-muted">

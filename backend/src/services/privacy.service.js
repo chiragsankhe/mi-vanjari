@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import { ageFromDob, ageRange, firstName, formatPhone, maskPhone, toDateString } from '../utils/format.js';
+import { ageFromDob, formatPhone, maskPhone, toDateString } from '../utils/format.js';
 
 /**
  * Privacy rules (single source of truth):
@@ -79,14 +79,16 @@ export function toProfileCard(profile, { full, followStatus = 'NONE', matchScore
     locked: !full,
   };
   if (!full) {
+    // Private profile, not connected yet: the main photo and the basics are visible so families can decide
+    // whether to send a request. Other photos, family, contacts, preferences and Kundali stay hidden.
     return {
       ...base,
-      fullName: firstName(profile.fullName),
-      age: null,
-      ageRange: ageRange(age),
-      photoUrl: profile.profilePhotoBlurUrl || null,
-      education: null,
-      occupation: null,
+      fullName: profile.fullName,
+      age,
+      ageRange: null,
+      photoUrl: profile.profilePhotoUrl || null,
+      education: profile.education,
+      occupation: profile.occupation,
     };
   }
   return {
@@ -139,6 +141,12 @@ export function toProfileDetail(profile, user, rel, extra = {}) {
       ...card,
       phone: maskPhone(user.phone),
       phoneVisible: false,
+      // basics a private profile shares before connecting
+      maritalStatus: profile.maritalStatus,
+      nativeVillage: profile.nativeVillage,
+      degrees: Array.isArray(profile.degrees) && profile.degrees.length ? profile.degrees : profile.education ? [{ degree: profile.education }] : [],
+      photos: profile.profilePhotoUrl ? [{ id: 'main', url: profile.profilePhotoUrl }] : [],
+      hiddenPhotoCount: Math.max(0, (profile.photos || []).length - 1),
       // locked profile: only say that family contacts exist, nothing about who they are
       familyContactCount: (profile.familyContacts || []).length,
       canMessage: rel.connected,
