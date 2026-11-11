@@ -107,10 +107,21 @@ function UserMenu() {
 /** Alerts bell in the top bar on phones (the bottom bar has no room for it). Shows unread alerts + follow requests. */
 function AlertsBell() {
   const user = useAuth((s) => s.user);
+  const status = useAuth((s) => s.status);
+  const openAuth = useUI((s) => s.openAuth);
   const t = useT();
   const count = (user?.unread?.notifications || 0) + (user?.unread?.requests || 0);
+  const className = 'relative grid size-9 shrink-0 place-items-center rounded-full border border-line bg-white text-ink md:hidden';
+  // visitors see the bell too — tapping it asks them to log in, then opens Alerts
+  if (status !== 'authed') {
+    return (
+      <button type="button" onClick={() => openAuth('/notifications')} className={className} aria-label={t('nav_alerts')}>
+        <Icon name="bell" size={18} />
+      </button>
+    );
+  }
   return (
-    <Link to="/notifications" className="relative grid size-9 place-items-center rounded-full border border-line bg-white text-ink md:hidden" aria-label={`${t('nav_alerts')}${count ? ` (${count} new)` : ''}`}>
+    <Link to="/notifications" className={className} aria-label={`${t('nav_alerts')}${count ? ` (${count} new)` : ''}`}>
       <Icon name="bell" size={18} />
       {count > 0 && <span className="absolute -top-1 -right-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold text-white ring-2 ring-white">{count > 9 ? '9+' : count}</span>}
     </Link>
@@ -160,7 +171,7 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2 sm:gap-3 xl:ml-0">
           <LangToggle className="hidden sm:block" />
-          {status === 'authed' && <AlertsBell />}
+          {status !== 'loading' && <AlertsBell />}
           {status === 'authed' ? (
             <UserMenu />
           ) : status === 'guest' ? (
