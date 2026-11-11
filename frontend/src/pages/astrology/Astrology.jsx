@@ -530,31 +530,66 @@ function MuhuratCalendar() {
   );
 }
 
+const SECTIONS = [
+  { value: 'rashi', icon: 'zodiac', mr: 'राशी शोधा', en: 'Rashi', desc: 'Moon sign & nakshatra' },
+  { value: 'chart', icon: 'grid', mr: 'जन्म कुंडली', en: 'Birth chart', desc: 'Lagna & 9 grahas' },
+  { value: 'kundali', icon: 'heart', mr: 'कुंडली जुळणी', en: 'Kundali match', desc: '36 guna milan' },
+  { value: 'muhurat', icon: 'calendar', mr: 'मुहूर्त', en: 'Calendar', desc: 'Muhurat & panchang' },
+];
+
 export default function Astrology() {
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') || 'rashi';
+  const contentRef = useRef(null);
+  const choose = (v, scroll = false) => {
+    setParams({ tab: v }, { replace: true });
+    // on phones the cards sit above the content: bring the chosen section into view
+    if (scroll) requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
   return (
     <>
       <PageHeader eyebrow="Rashi & Kundali" title="राशी आणि कुंडली" subtitle="Traditional astrological guidance — calculated precisely, explained simply." icon="zodiac" />
       <div className="container-page">
-        <Tabs
-          id="astro"
-          className="mt-4"
-          value={tab}
-          onChange={(v) => setParams({ tab: v }, { replace: true })}
-          tabs={[
-            { value: 'rashi', label: 'राशी शोधा · Rashi' },
-            { value: 'chart', label: 'जन्म कुंडली · Birth chart' },
-            { value: 'kundali', label: 'कुंडली जुळणी · Kundali match' },
-            { value: 'muhurat', label: 'मुहूर्त · Muhurat' },
-          ]}
-        />
-        <Reveal key={tab} y={12}>
-          {tab === 'rashi' && <RashiCalculator />}
-          {tab === 'chart' && <BirthChart />}
-          {tab === 'kundali' && <KundaliMatch />}
-          {tab === 'muhurat' && <MuhuratCalendar />}
-        </Reveal>
+        {/* Phones: all four sections as a 2 × 2 grid of cards */}
+        <div className="mt-4 grid grid-cols-2 gap-3 md:hidden" role="tablist" aria-label="Rashi & Kundali sections">
+          {SECTIONS.map((x) => {
+            const on = tab === x.value;
+            return (
+              <button
+                key={x.value}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => choose(x.value, true)}
+                className={cn(
+                  'flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left transition',
+                  on ? 'border-primary bg-primary text-white shadow-[var(--shadow-cta)]' : 'border-line bg-white text-ink active:bg-sand',
+                )}
+              >
+                <span className={cn('grid size-9 place-items-center rounded-full', on ? 'bg-white/20 text-white' : 'bg-primary-soft text-primary')}>
+                  <Icon name={x.icon} size={18} />
+                </span>
+                <span>
+                  <b className="heading-deva block text-[15px] leading-tight">{x.mr}</b>
+                  <span className={cn('block text-xs font-semibold', on ? 'text-white/90' : 'text-primary')}>{x.en}</span>
+                  <small className={cn('mt-0.5 block text-[11px] leading-snug', on ? 'text-white/75' : 'text-muted')}>{x.desc}</small>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {/* Tablets & computers: tabs */}
+        <div className="mt-4 hidden md:block">
+          <Tabs id="astro" value={tab} onChange={(v) => choose(v)} tabs={SECTIONS.map((x) => ({ value: x.value, label: `${x.mr} · ${x.en}` }))} />
+        </div>
+        <div ref={contentRef} className="scroll-mt-20">
+          <Reveal key={tab} y={12}>
+            {tab === 'rashi' && <RashiCalculator />}
+            {tab === 'chart' && <BirthChart />}
+            {tab === 'kundali' && <KundaliMatch />}
+            {tab === 'muhurat' && <MuhuratCalendar />}
+          </Reveal>
+        </div>
       </div>
     </>
   );
