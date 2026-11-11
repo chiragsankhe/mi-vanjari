@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
@@ -166,16 +167,18 @@ export function Header() {
         </div>
       </div>
 
+      {/* Rendered into <body>: the header's backdrop-filter would otherwise make `fixed` relative to the header bar */}
+      {createPortal(
       <AnimatePresence>
         {drawer && (
-          <motion.div className="fixed inset-0 z-50 xl:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/40" onClick={() => setDrawer(false)} />
+          <motion.div className="fixed inset-0 z-[80] xl:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-black/50" onClick={() => setDrawer(false)} />
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-              className="absolute top-0 right-0 flex h-full w-[min(320px,86vw)] flex-col bg-ivory p-5"
+              className="absolute top-0 right-0 flex h-full w-[min(320px,86vw)] flex-col overflow-y-auto border-l border-line bg-[#fdf6ec] p-5 shadow-[-12px_0_40px_rgba(40,20,10,0.25)]"
             >
               <div className="mb-6 flex items-center justify-between">
                 <Brand />
@@ -210,7 +213,9 @@ export function Header() {
             </motion.aside>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
     </header>
   );
 }
