@@ -99,7 +99,6 @@ function Filters({ value, onChange, onReset, total, onApply, showGender = true }
         <select className="field" value={value.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}>
           <option value="">Any</option>
           <option value="NEVER_MARRIED">Single</option>
-          <option value="MARRIED">Married</option>
           <option value="DIVORCED">Divorced</option>
         </select>
       </div>

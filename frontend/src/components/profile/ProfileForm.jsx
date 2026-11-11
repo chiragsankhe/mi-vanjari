@@ -222,6 +222,9 @@ export function BasicSection({ form, withName = true }) {
         {/* not offered any more, but a member who chose it earlier keeps seeing their value */}
         {watch('maritalStatus') === 'WIDOWED' && <option value="WIDOWED">Widowed</option>}
       </Field>
+      {watch('maritalStatus') === 'MARRIED' && (
+        <p className="-mt-2 text-xs text-muted sm:col-span-2">Married members are not shown in Matches. You can still use the community, business and services sections.</p>
+      )}
       <Field label="Height (cm)" type="number" inputMode="numeric" placeholder="e.g. 165" {...register('heightCm')} />
       <Field as="textarea" label="About me" placeholder="A few lines about you, your values and interests…" maxLength={600} {...register('bio')} className="sm:col-span-2" />
     </div>

@@ -99,7 +99,8 @@ export async function browse(viewerId, q) {
     user: { isBanned: false, ...(await listedOwnerFilter()) },
     ...(gender && { gender }),
     ...(q.city && { OR: [{ currentCity: { contains: q.city, mode: 'insensitive' } }, { currentState: { contains: q.city, mode: 'insensitive' } }] }),
-    ...(q.maritalStatus && { maritalStatus: q.maritalStatus }),
+    // Married members are not looking for a partner: they never appear in Matches (they stay in the Community directory)
+    maritalStatus: q.maritalStatus && q.maritalStatus !== 'MARRIED' ? q.maritalStatus : { not: 'MARRIED' },
     ...(q.verified === 'true' && { isVerified: true }),
     ...((q.ageMin || q.ageMax) && { dateOfBirth: dobBoundsForAge(Number(q.ageMin) || null, Number(q.ageMax) || null) }),
     // Height (cm). Profiles without a height are left out once a height range is chosen.
@@ -118,7 +119,7 @@ export async function browse(viewerId, q) {
 /** Public showcase for the landing page — only public, verified, matrimonial profiles. */
 export async function featured(viewerId) {
   const rows = await prisma.profile.findMany({
-    where: { isMatrimonial: true, isActive: true, accountType: 'PUBLIC', isVerified: true, profilePhotoUrl: { not: null }, user: { isBanned: false, ...(await listedOwnerFilter()) } },
+    where: { isMatrimonial: true, isActive: true, maritalStatus: { not: 'MARRIED' }, accountType: 'PUBLIC', isVerified: true, profilePhotoUrl: { not: null }, user: { isBanned: false, ...(await listedOwnerFilter()) } },
     orderBy: { updatedAt: 'desc' },
     take: 6,
   });
