@@ -5,6 +5,7 @@ import { optionalAuth } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { computeBirthChart, gunaMilan } from '../../services/astrology/engine.js';
 import { computeKundali } from '../../services/astrology/chart.js';
+import { computeDay, computeMonth } from '../../services/astrology/daily.js';
 import { resolveBirthPlace, searchPlaces, utcOffsetHours } from '../../services/astrology/lookup.js';
 import { placesLimiter } from '../../middleware/rateLimit.js';
 import { monthPanchang } from '../../services/astrology/panchang.js';
@@ -72,6 +73,56 @@ router.post(
     if (year < 1900 || year > 2100) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Date of birth must be between 1900 and 2100' } });
     const { where, offset } = await birthContext(req.body);
     res.json(computeKundali({ dob: req.body.dob, tob: req.body.tob, where, utcOffsetHours: offset }));
+  }),
+);
+
+const dayQuery = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  purpose: z.enum(['vivah', 'general']).default('vivah'),
+  place: z.string().trim().max(120).optional(),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lon: z.coerce.number().min(-180).max(180).optional(),
+  tz: z.string().trim().max(60).optional(),
+});
+const monthQuery = dayQuery.omit({ date: true }).extend({ year: z.coerce.number().int().min(1950).max(2100), month: z.coerce.number().int().min(1).max(12) });
+
+const muhuratCache = new Map(); // key → result (the sky does not change, so results can be kept)
+async function muhuratPlace(q, date) {
+  const where = await resolveBirthPlace({ place: q.place, lat: q.lat, lon: q.lon, tz: q.tz });
+  return { where, offset: utcOffsetHours(where.tz, date, '12:00') };
+}
+async function cached(key, make) {
+  if (muhuratCache.has(key)) return muhuratCache.get(key);
+  const value = await make();
+  if (muhuratCache.size > 3000) muhuratCache.delete(muhuratCache.keys().next().value);
+  muhuratCache.set(key, value);
+  return value;
+}
+
+/** GET /astrology/muhurat/day?date=2026-11-21&purpose=vivah&place=Palghar → timeline for one day */
+router.get(
+  '/muhurat/day',
+  placesLimiter,
+  validate({ query: dayQuery }),
+  h(async (req, res) => {
+    const { where, offset } = await muhuratPlace(req.query, req.query.date);
+    const key = `d|${req.query.date}|${req.query.purpose}|${where.lat.toFixed(2)}|${where.lon.toFixed(2)}|${offset}`;
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json({ place: where, ...(await cached(key, async () => computeDay({ date: req.query.date, lat: where.lat, lon: where.lon, utcOffset: offset, purpose: req.query.purpose }))) });
+  }),
+);
+
+/** GET /astrology/muhurat/month?year=2026&month=11&purpose=vivah&place=Palghar → one headline per day */
+router.get(
+  '/muhurat/month',
+  placesLimiter,
+  validate({ query: monthQuery }),
+  h(async (req, res) => {
+    const date = `${req.query.year}-${String(req.query.month).padStart(2, '0')}-15`;
+    const { where, offset } = await muhuratPlace(req.query, date);
+    const key = `m|${req.query.year}|${req.query.month}|${req.query.purpose}|${where.lat.toFixed(2)}|${where.lon.toFixed(2)}|${offset}`;
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json({ place: where, ...(await cached(key, async () => computeMonth({ year: req.query.year, month: req.query.month, lat: where.lat, lon: where.lon, utcOffset: offset, purpose: req.query.purpose }))) });
   }),
 );
 

@@ -1,15 +1,16 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BirthChartShareCard, KundaliChart, PlanetTable } from '../../components/astrology/KundaliChart';
 import { DownloadCardButton } from '../../components/common/DownloadCard';
+import { MuhuratPlanner } from '../../components/astrology/MuhuratPlanner';
 import { PlaceInput } from '../../components/common/PlaceInput';
 import { KundaliResult } from '../../components/common/KundaliResult';
 import { RashiDetails, RashiDownloadButton } from '../../components/common/RashiReport';
 import { Badge, Field, Icon, PageHeader, Reveal, Spinner, Tabs } from '../../components/ui';
-import { errorMessage, get, post } from '../../lib/api';
+import { errorMessage, post } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 import { useUI } from '../../store/ui';
@@ -245,283 +246,6 @@ function KundaliMatch() {
   );
 }
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const TYPE_STYLE = { VIVAH: 'bg-primary text-white', GRIHA_PRAVESH: 'bg-leaf text-white', SAKHARPUDA: 'bg-gold text-white' };
-const TYPE_LABEL = { VIVAH: 'Vivah', GRIHA_PRAVESH: 'Griha pravesh', SAKHARPUDA: 'Sakharpuda' };
-const TYPE_INFO = {
-  VIVAH: { mr: 'विवाह', about: 'Auspicious for weddings' },
-  GRIHA_PRAVESH: { mr: 'गृहप्रवेश', about: 'Auspicious for moving into a new home' },
-  SAKHARPUDA: { mr: 'साखरपुडा', about: 'Auspicious for engagement (sakharpuda)' },
-};
-
-/** Small marker under the date for special tithis. */
-function TithiMark({ info, onColour }) {
-  if (!info) return null;
-  const i = info.tithi.index;
-  if (i === 14) return <span className={cn('absolute bottom-1 size-1.5 rounded-full', onColour ? 'bg-white' : 'bg-gold')} title="Purnima" />;
-  if (i === 29) return <span className={cn('absolute bottom-1 size-1.5 rounded-full border', onColour ? 'border-white' : 'border-ink/60')} title="Amavasya" />;
-  if (info.observances.length) return <span className={cn('absolute bottom-1 size-1 rounded-full', onColour ? 'bg-white/80' : 'bg-primary/60')} />;
-  return null;
-}
-
-/** Hover / tap card with the day's basic panchang and muhurat. */
-function DayCard({ date, info, events, isToday }) {
-  return (
-    <div className="text-left">
-      <div className="flex items-start justify-between gap-2 border-b border-line pb-2">
-        <div>
-          <b className="block text-sm">{date.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
-          {info && <span className="heading-deva text-xs text-muted">{info.weekdayMr}</span>}
-        </div>
-        {isToday && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">Today</span>}
-      </div>
-      {info ? (
-        <dl className="mt-2 space-y-1.5 text-xs">
-          <div className="flex gap-2">
-            <dt className="w-[72px] shrink-0 text-muted">Tithi</dt>
-            <dd>
-              <b>
-                {info.paksha.name.split(' ')[0]} {info.tithi.name}
-              </b>{' '}
-              <span className="heading-deva text-muted">· {info.paksha.mr.split(' ')[0]} {info.tithi.mr}</span>
-              <span className="block text-[10px] text-muted">{info.paksha.note}</span>
-            </dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="w-[72px] shrink-0 text-muted">Nakshatra</dt>
-            <dd>
-              <b>{info.nakshatra.name}</b> <span className="heading-deva text-muted">· {info.nakshatra.mr}</span>
-            </dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="w-[72px] shrink-0 text-muted">Moon in</dt>
-            <dd>
-              {info.moonRashi.symbol} <b>{info.moonRashi.name}</b> <span className="heading-deva text-muted">· {info.moonRashi.mr}</span>
-            </dd>
-          </div>
-        </dl>
-      ) : (
-        <p className="mt-2 text-xs text-muted">Loading panchang…</p>
-      )}
-      {info?.observances.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-1">
-          {info.observances.map((o) => (
-            <span key={o.name} className="rounded-full bg-gold-soft px-2 py-0.5 text-[11px] font-semibold text-[#8c6100]">
-              {o.name} · <span className="heading-deva">{o.mr}</span>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="mt-2.5 border-t border-line pt-2">
-        {events?.length ? (
-          <ul className="space-y-1.5">
-            {events.map((e) => (
-              <li key={e.id} className="flex items-start gap-2 text-xs">
-                <span className={cn('mt-0.5 size-2.5 shrink-0 rounded-sm', TYPE_STYLE[e.type] || 'bg-primary')} />
-                <span>
-                  <b>{e.title}</b>
-                  <span className="block text-[11px] text-muted">
-                    {TYPE_INFO[e.type]?.about || 'Shubh muhurat'}
-                    {e.notes ? ` · ${e.notes}` : ''}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-[11px] text-muted">No listed muhurat on this day.</p>
-        )}
-      </div>
-      <p className="mt-2 text-[10px] text-muted">Panchang at sunrise (≈6:30 AM IST) — confirm timings with your priest.</p>
-    </div>
-  );
-}
-
-function MuhuratCalendar() {
-  const now = new Date();
-  const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
-  const [active, setActive] = useState(null); // day number whose card is open
-  const pointer = useRef('mouse');
-  const gridRef = useRef(null);
-  const { data = [], isLoading } = useQuery({ queryKey: ['muhurat', ym.y, ym.m], queryFn: () => get('/astrology/muhurat', { year: ym.y, month: ym.m + 1 }) });
-  const { data: panchang = [] } = useQuery({
-    queryKey: ['panchang', ym.y, ym.m],
-    queryFn: () => get('/astrology/panchang', { year: ym.y, month: ym.m + 1 }),
-    staleTime: Infinity,
-  });
-  const byDay = useMemo(() => {
-    const map = {};
-    data.forEach((d) => (map[Number(d.date.slice(8, 10))] ||= []).push(d));
-    return map;
-  }, [data]);
-  const observances = panchang.filter((p) => p.observances.length);
-  const first = new Date(ym.y, ym.m, 1).getDay();
-  const days = new Date(ym.y, ym.m + 1, 0).getDate();
-  const shift = (n) => {
-    setActive(null);
-    setYm(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
-  };
-
-  // On touch screens the card opens on tap — close it when tapping anywhere outside the calendar
-  useEffect(() => {
-    if (active == null) return;
-    const close = (e) => !gridRef.current?.contains(e.target) && setActive(null);
-    document.addEventListener('pointerdown', close);
-    return () => document.removeEventListener('pointerdown', close);
-  }, [active]);
-
-  return (
-    <div className="grid gap-6 py-8 lg:grid-cols-[1fr_320px]">
-      <div className="card p-4 sm:p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <button className="grid size-10 place-items-center rounded-full hover:bg-sand" onClick={() => shift(-1)} aria-label="Previous month">
-            <Icon name="chevron-left" />
-          </button>
-          <AnimatePresence mode="wait">
-            <motion.h3 key={`${ym.y}-${ym.m}`} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="font-serif text-xl font-semibold">
-              {MONTHS[ym.m]} {ym.y}
-            </motion.h3>
-          </AnimatePresence>
-          <button className="grid size-10 place-items-center rounded-full hover:bg-sand" onClick={() => shift(1)} aria-label="Next month">
-            <Icon name="chevron-right" />
-          </button>
-        </div>
-        <p className="-mt-3 mb-4 text-center text-[11px] text-muted">
-          <span className="hidden sm:inline">Hover over</span>
-          <span className="sm:hidden">Tap</span> any date for tithi, nakshatra and muhurat details
-        </p>
-        <div ref={gridRef} className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold tracking-wider text-muted uppercase sm:gap-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <span key={d} className="py-1">
-              {d}
-            </span>
-          ))}
-          {Array.from({ length: first }).map((_, i) => (
-            <span key={`b${i}`} />
-          ))}
-          {Array.from({ length: days }).map((_, i) => {
-            const d = i + 1;
-            const ev = byDay[d];
-            const info = panchang[i];
-            const today = ym.y === now.getFullYear() && ym.m === now.getMonth() && d === now.getDate();
-            const col = (first + i) % 7;
-            const row = Math.floor((first + i) / 7);
-            const open = active === d;
-            return (
-              <motion.div
-                key={`${ym.y}-${ym.m}-${d}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.008 }}
-                className={cn('relative', open && 'z-30')}
-                onPointerEnter={(e) => e.pointerType === 'mouse' && setActive(d)}
-                onPointerLeave={(e) => e.pointerType === 'mouse' && setActive((a) => (a === d ? null : a))}
-              >
-                <button
-                  type="button"
-                  onPointerDown={(e) => (pointer.current = e.pointerType)}
-                  onClick={() => setActive((a) => (a === d && pointer.current !== 'mouse' ? null : d))}
-                  onFocus={() => setActive(d)}
-                  aria-expanded={open}
-                  aria-label={`${d} ${MONTHS[ym.m]}${ev ? ` — ${ev.map((e) => e.title).join(', ')}` : ''}${info ? ` — ${info.paksha.name} ${info.tithi.name}` : ''}`}
-                  className={cn(
-                    'relative flex aspect-square w-full flex-col items-center justify-center rounded-lg text-sm font-normal normal-case transition',
-                    ev ? `${TYPE_STYLE[ev[0].type]} font-bold shadow-sm` : 'text-ink hover:bg-sand',
-                    today && !ev && 'ring-2 ring-primary/40',
-                    open && 'ring-2 ring-primary ring-offset-1',
-                  )}
-                >
-                  {d}
-                  {ev?.length > 1 ? <span className="absolute bottom-1 size-1 rounded-full bg-white" /> : <TithiMark info={info} onColour={Boolean(ev)} />}
-                </button>
-                <AnimatePresence>
-                  {open && (
-                    <motion.div
-                      role="tooltip"
-                      initial={{ opacity: 0, y: row <= 1 ? -6 : 6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className={cn(
-                        'absolute z-30 w-64 rounded-xl border border-line bg-white p-3 font-normal tracking-normal text-ink normal-case shadow-[0_18px_40px_rgba(40,25,15,0.18)]',
-                        row <= 1 ? 'top-full mt-2' : 'bottom-full mb-2',
-                        col <= 1 ? 'left-0' : col >= 5 ? 'right-0' : 'left-1/2 -translate-x-1/2',
-                      )}
-                    >
-                      <DayCard date={new Date(ym.y, ym.m, d)} info={info} events={ev} isToday={today} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </div>
-        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs">
-          {Object.entries(TYPE_LABEL).map(([k, l]) => (
-            <span key={k} className="flex items-center gap-1.5">
-              <span className={cn('size-3 rounded', TYPE_STYLE[k])} /> {l}
-            </span>
-          ))}
-          <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-gold" /> Purnima
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full border border-ink/60" /> Amavasya
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-1 rounded-full bg-primary/60" /> Ekadashi / Chaturthi / Pradosh
-          </span>
-        </div>
-      </div>
-      <div className="space-y-5">
-        <div className="card h-max p-5">
-          <h3 className="font-serif text-lg font-semibold">Shubh dates this month</h3>
-          {isLoading ? (
-            <div className="py-8 text-center text-primary">
-              <Spinner />
-            </div>
-          ) : data.length === 0 ? (
-            <p className="mt-3 text-sm text-muted">No listed muhurat dates this month.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {data.map((d) => (
-                <li key={d.id} className="flex items-center gap-3 rounded-lg bg-sand/70 p-2.5">
-                  <span className={cn('grid size-10 shrink-0 place-items-center rounded-lg text-sm font-bold', TYPE_STYLE[d.type])}>{Number(d.date.slice(8, 10))}</span>
-                  <span className="text-sm">
-                    <b className="block">{d.title}</b>
-                    <small className="text-[11px] text-muted">{new Date(d.date).toLocaleDateString('en-IN', { weekday: 'long' })}</small>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-4 text-[11px] leading-relaxed text-muted">Dates are indicative and maintained by the Mi Vanjari team. Always confirm the exact muhurat time with your family priest or local panchang.</p>
-        </div>
-        {observances.length > 0 && (
-          <div className="card h-max p-5">
-            <h3 className="font-serif text-lg font-semibold">
-              Vrat &amp; tithi <span className="heading-deva text-sm font-normal text-muted">· व्रत</span>
-            </h3>
-            <ul className="mt-3 space-y-1.5">
-              {observances.map((p) => (
-                <li key={p.date} className="flex items-center gap-3 text-sm">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gold-soft text-xs font-bold text-[#8c6100]">{Number(p.date.slice(8, 10))}</span>
-                  <span className="min-w-0">
-                    <b className="block truncate text-[13px]">{p.observances[0].name}</b>
-                    <small className="heading-deva text-[11px] text-muted">
-                      {p.observances[0].mr} · {p.weekdayMr}
-                    </small>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 const SECTIONS = [
   { value: 'rashi', icon: 'zodiac', mr: 'राशी शोधा', en: 'Rashi', desc: 'Moon sign & nakshatra' },
   { value: 'chart', icon: 'grid', mr: 'जन्म कुंडली', en: 'Birth chart', desc: 'Lagna & 9 grahas' },
@@ -579,7 +303,7 @@ export default function Astrology() {
             {tab === 'rashi' && <RashiCalculator />}
             {tab === 'chart' && <BirthChart />}
             {tab === 'kundali' && <KundaliMatch />}
-            {tab === 'muhurat' && <MuhuratCalendar />}
+            {tab === 'muhurat' && <MuhuratPlanner />}
           </Reveal>
         </div>
       </div>
