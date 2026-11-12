@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'motion/react';
 import { Component, Suspense, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -99,22 +98,15 @@ function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={location.pathname}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="pb-safe flex-1"
-        >
-          <ErrorBoundary resetKey={location.pathname}>
-            <Suspense fallback={<PageLoader />}>
-              <Outlet />
-            </Suspense>
-          </ErrorBoundary>
-        </motion.main>
-      </AnimatePresence>
+      {/* Plain CSS fade-in (see .page-in): the page is visible by default, so a page can never get stuck invisible
+          the way it could with a JS "wait for the old page to leave" animation while its code was still loading. */}
+      <main key={location.pathname} className="page-in pb-safe flex-1">
+        <ErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
+      </main>
       {!fullBleed && <Footer />}
       <MobileNav />
       <ChatDock />

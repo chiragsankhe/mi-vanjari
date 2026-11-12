@@ -135,6 +135,13 @@
 .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 76px); }
 @media (min-width: 768px) { .pb-safe { padding-bottom: 0; } }
 
+/* Page change: a short fade/slide. Only ever plays on top of a visible page (never starts hidden). */
+@keyframes page-in {
+  from { opacity: 0.01; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.page-in { animation: page-in 0.22s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
