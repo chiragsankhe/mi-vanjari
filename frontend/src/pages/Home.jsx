@@ -257,7 +257,7 @@ function ComboBanner() {
 
 function HowItWorks() {
   const steps = [
-    ['phone', 'Verify your mobile', 'Sign in with a one-time code. No passwords, no fake accounts.'],
+    ['phone', 'Sign up in a minute', 'Use Google, your email or mobile number. A one-time code, no passwords.'],
     ['user', 'Create your profile', 'Add family, education and preferences. Choose public or private.'],
     ['users', 'Connect with trust', 'Send follow requests, chat after approval, and involve your family.'],
   ];
