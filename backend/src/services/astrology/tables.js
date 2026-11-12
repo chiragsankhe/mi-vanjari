@@ -75,15 +75,27 @@ export const VASHYA_POINTS = [
   [1, 1, 1, 0, 2],
 ];
 
-/** Sworn-enemy yoni pairs (0 points). */
-export const YONI_ENEMIES = [
-  ['Horse', 'Buffalo'],
-  ['Elephant', 'Lion'],
-  ['Sheep', 'Monkey'],
-  ['Serpent', 'Mongoose'],
-  ['Dog', 'Deer'],
-  ['Cat', 'Rat'],
-  ['Cow', 'Tiger'],
+/**
+ * Yoni compatibility, 14 × 14 (symmetric). Order: Horse, Elephant, Sheep, Serpent, Dog, Cat, Rat,
+ * Cow, Buffalo, Tiger, Deer, Monkey, Mongoose, Lion. Diagonal = 4 (same yoni); the seven 0s are the
+ * sworn enemies: Horse–Buffalo, Elephant–Lion, Sheep–Monkey, Serpent–Mongoose, Dog–Deer, Cat–Rat, Cow–Tiger.
+ */
+export const YONI_ORDER = ['Horse', 'Elephant', 'Sheep', 'Serpent', 'Dog', 'Cat', 'Rat', 'Cow', 'Buffalo', 'Tiger', 'Deer', 'Monkey', 'Mongoose', 'Lion'];
+export const YONI_POINTS = [
+  [4, 2, 2, 3, 2, 2, 2, 1, 0, 1, 3, 3, 2, 1],
+  [2, 4, 3, 3, 2, 2, 2, 2, 3, 1, 2, 3, 2, 0],
+  [2, 3, 4, 2, 1, 2, 1, 3, 3, 1, 2, 0, 3, 1],
+  [3, 3, 2, 4, 2, 1, 1, 1, 1, 2, 2, 2, 0, 2],
+  [2, 2, 1, 2, 4, 2, 1, 2, 2, 1, 0, 2, 1, 1],
+  [2, 2, 2, 1, 2, 4, 0, 2, 2, 1, 3, 3, 2, 1],
+  [2, 2, 1, 1, 1, 0, 4, 2, 2, 2, 2, 2, 1, 2],
+  [1, 2, 3, 1, 2, 2, 2, 4, 3, 0, 3, 2, 2, 1],
+  [0, 3, 3, 1, 2, 2, 2, 3, 4, 1, 2, 2, 2, 1],
+  [1, 1, 1, 2, 1, 1, 2, 0, 1, 4, 1, 1, 2, 1],
+  [3, 2, 2, 2, 0, 3, 2, 3, 2, 1, 4, 2, 2, 2],
+  [3, 3, 0, 2, 2, 3, 2, 2, 2, 1, 2, 4, 3, 2],
+  [2, 2, 3, 0, 1, 2, 1, 2, 2, 2, 2, 3, 4, 2],
+  [1, 0, 1, 2, 1, 1, 2, 1, 1, 1, 2, 2, 2, 4],
 ];
 
 /** Boy gana (row) × Girl gana (column) points: D, M, R. */

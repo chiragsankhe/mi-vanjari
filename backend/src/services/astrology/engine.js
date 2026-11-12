@@ -8,66 +8,30 @@ import {
   VARNA_NAMES,
   VASHYA_ORDER,
   VASHYA_POINTS,
-  YONI_ENEMIES,
+  YONI_ORDER,
+  YONI_POINTS,
 } from './tables.js';
+import { EclipticGeoMoon, MakeTime } from 'astronomy-engine';
 import { explainMatch } from './interpret.js';
 
 /**
  * Self-contained Vedic astrology engine — no third-party API required.
  *
- *  • Moon's tropical longitude: truncated ELP-2000/82 series (Meeus, "Astronomical Algorithms", ch. 47),
- *    accurate to roughly ±0.05° — far finer than the 13°20′ width of a nakshatra.
+ *  • Moon's tropical longitude from astronomy-engine (full lunar theory, arc-second accuracy).
  *  • Sidereal conversion with the Lahiri (Chitrapaksha) ayanamsa.
  *  • Ashtakoota (Guna Milan) matching on the classic 36-point scale.
  */
 
-const DEG = Math.PI / 180;
 const norm = (x) => ((x % 360) + 360) % 360;
-const sin = (d) => Math.sin(d * DEG);
-
-// [D, M, M', F, coefficient (1e-6 degrees)]
-const LONGITUDE_TERMS = [
-  [0, 0, 1, 0, 6288774], [2, 0, -1, 0, 1274027], [2, 0, 0, 0, 658314], [0, 0, 2, 0, 213618],
-  [0, 1, 0, 0, -185116], [0, 0, 0, 2, -114332], [2, 0, -2, 0, 58793], [2, -1, -1, 0, 57066],
-  [2, 0, 1, 0, 53322], [2, -1, 0, 0, 45758], [0, 1, -1, 0, -40923], [1, 0, 0, 0, -34720],
-  [0, 1, 1, 0, -30383], [2, 0, 0, -2, 15327], [0, 0, 1, 2, -12528], [0, 0, 1, -2, 10980],
-  [4, 0, -1, 0, 10675], [0, 0, 3, 0, 10034], [4, 0, -2, 0, 8548], [2, 1, -1, 0, -7888],
-  [2, 1, 0, 0, -6766], [1, 0, -1, 0, -5163], [1, 1, 0, 0, 4987], [2, -1, 1, 0, 4036],
-  [2, 0, 2, 0, 3994], [4, 0, 0, 0, 3861], [2, 0, -3, 0, 3665], [0, 1, -2, 0, -2689],
-  [2, 0, -1, 2, -2602], [2, -1, -2, 0, 2390], [1, 0, 1, 0, -2348], [2, -2, 0, 0, 2236],
-  [0, 1, 2, 0, -2120], [0, 2, 0, 0, -2069], [2, -2, -1, 0, 2048], [2, 0, 1, -2, -1773],
-  [2, 0, 0, 2, -1595], [4, -1, -1, 0, 1215], [0, 0, 2, 2, -1110], [3, 0, -1, 0, -892],
-  [2, 1, 1, 0, -810], [4, -1, -2, 0, 759], [0, 2, -1, 0, -713], [2, 2, -1, 0, -700],
-  [2, 1, -2, 0, 691], [2, -1, 0, -2, 596], [4, 0, 1, 0, 549], [0, 0, 4, 0, 537],
-  [4, -1, 0, 0, 520], [1, 0, -2, 0, -487], [2, 1, 0, -2, -399], [0, 0, 2, -2, -381],
-  [1, 1, 1, 0, 351], [3, 0, -2, 0, -340], [4, 0, -3, 0, 330], [2, -1, 2, 0, 327],
-  [0, 2, 1, 0, -323], [1, 1, -1, 0, 299], [2, 0, 3, 0, 294],
-];
 
 /** Julian Day for a UTC Date. */
 export function julianDay(date) {
   return date.getTime() / 86400000 + 2440587.5;
 }
 
-/** Tropical (sayana) ecliptic longitude of the Moon, degrees. */
+/** Tropical (sayana) ecliptic longitude of the Moon (true ecliptic of date), degrees. */
 export function moonTropicalLongitude(jd) {
-  const T = (jd - 2451545.0) / 36525;
-  const Lp = norm(218.3164477 + 481267.88123421 * T - 0.0015786 * T * T + (T ** 3) / 538841 - (T ** 4) / 65194000);
-  const D = norm(297.8501921 + 445267.1114034 * T - 0.0018819 * T * T + (T ** 3) / 545868 - (T ** 4) / 113065000);
-  const M = norm(357.5291092 + 35999.0502909 * T - 0.0001536 * T * T + (T ** 3) / 24490000);
-  const Mp = norm(134.9633964 + 477198.8675055 * T + 0.0087414 * T * T + (T ** 3) / 69699 - (T ** 4) / 14712000);
-  const F = norm(93.272095 + 483202.0175233 * T - 0.0036539 * T * T - (T ** 3) / 3526000 + (T ** 4) / 863310000);
-  const E = 1 - 0.002516 * T - 0.0000074 * T * T;
-  const A1 = norm(119.75 + 131.849 * T);
-  const A2 = norm(53.09 + 479264.29 * T);
-
-  let sum = 0;
-  for (const [d, m, mp, f, c] of LONGITUDE_TERMS) {
-    const e = Math.abs(m) === 1 ? E : Math.abs(m) === 2 ? E * E : 1;
-    sum += c * e * sin(d * D + m * M + mp * Mp + f * F);
-  }
-  sum += 3958 * sin(A1) + 1962 * sin(Lp - F) + 318 * sin(A2);
-  return norm(Lp + sum / 1e6);
+  return norm(EclipticGeoMoon(MakeTime(jd)).lon);
 }
 
 /** Lahiri ayanamsa (degrees), linear approximation around J2000 — error < 0.01° for 1900–2100. */
@@ -143,10 +107,11 @@ function taraOk(from, to) {
   return ![3, 5, 7].includes(count % 9);
 }
 
+/** Yoni (4 points): the classical 14 × 14 table, 4 = same animal … 0 = sworn enemies. */
 function yoniPoints(a, b) {
-  if (a === b) return 4;
-  if (YONI_ENEMIES.some(([x, y]) => (x === a && y === b) || (x === b && y === a))) return 0;
-  return 2;
+  const i = YONI_ORDER.indexOf(a);
+  const j = YONI_ORDER.indexOf(b);
+  return i < 0 || j < 0 ? 2 : YONI_POINTS[i][j];
 }
 
 /**

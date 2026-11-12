@@ -47,6 +47,9 @@ function tropicalAscendant(time, lat, lon) {
   return norm(deg(Math.atan2(Math.cos(ramc), -(Math.sin(ramc) * Math.cos(eps) + Math.tan(rad(lat)) * Math.sin(eps)))));
 }
 
+/** Test hook: tropical ascendant for a moment and place. */
+export const __ascForTest = (time, lat, lon) => tropicalAscendant(time, lat, lon);
+
 const signOf = (lon) => Math.floor(lon / 30); // 0 = Mesha
 function describe(lon) {
   const span = 360 / 27;
