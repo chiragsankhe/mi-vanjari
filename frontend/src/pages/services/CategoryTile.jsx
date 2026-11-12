@@ -6,20 +6,20 @@ import { cn } from '../../lib/utils';
 
 const u = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=640&q=70`;
 
-/** A photo that shows at a glance what the category is (food, hall, music…). `pos` = where the picture is anchored when cropped. */
+/** An Indian-wedding photo that shows at a glance what the category is (food, hall, music…). `pos` = where the picture is anchored when cropped. */
 const IMAGES = {
-  'wedding-halls': [u('1464366400600-7168b8af9bc3'), 'center'],
-  'dj-music': [u('1470229722913-7c0e2dbbafd3'), 'center 40%'],
-  'pandit-rituals': [u('1630764883473-e8c2056f0589'), 'center 45%'],
-  catering: [u('1555244162-803834f70033'), 'center'],
-  photography: [u('1452587925148-ce544e77e70d'), 'center 30%'],
-  decoration: [u('1587271636175-90d58cdad458'), 'center 35%'],
-  makeup: [u('1487412947147-5cebf100ffc2'), 'center 35%'],
-  'clothes-jewellery': [u('1679937698873-6065742c8d32'), 'center 55%'],
-  transportation: [u('1485291571150-772bcfc10da5'), 'center'],
-  'invitations-printing': [u('1607344645866-009c320b63e0'), 'center'],
-  'planning-management': [u('1583939003579-730e3918a45a'), 'center 30%'],
-  'other-services': [u('1530103862676-de8c9debad1d'), 'center'],
+  'wedding-halls': [u('1587271407850-8d438ca9fdf2'), 'center 60%'], // grand Indian wedding hall with mandap
+  'dj-music': [u('1781077128735-ee92e7377d78'), 'center 30%'], // baraat — groom on a lit-up carriage
+  'pandit-rituals': [u('1630764883473-e8c2056f0589'), 'center 45%'], // havan fire with flower garland
+  catering: [u('1742281258189-3b933879867a'), 'center'], // Indian thali
+  photography: [u('1630526720753-aa4e71acf67d'), 'center 30%'], // couple in traditional attire by a river
+  decoration: [u('1587271636175-90d58cdad458'), 'center 35%'], // flower mandap
+  makeup: [u('1610173827043-9db50e0d8ef9'), 'center 35%'], // Indian bridal makeup
+  'clothes-jewellery': [u('1733937108021-d5db469f2216'), 'center 40%'], // bride in kundan jewellery
+  transportation: [u('1665398417651-a7d10040b26c'), 'center'], // decorated wedding buggy with white horses
+  'invitations-printing': [u('1740511349064-bc118321de0c'), 'center'], // traditional wedding card with bangles
+  'planning-management': [u('1754782921180-674165dec130'), 'center 40%'], // couple under a flower chandelier
+  'other-services': [u('1771992226177-759e116e72f4'), 'center'], // henna hands with marigold
 };
 
 /**
