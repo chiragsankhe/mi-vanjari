@@ -11,11 +11,12 @@ export default function CategoryList() {
   const [q, setQ] = useState('');
   const [location, setLocation] = useState('');
   const [sort, setSort] = useState('');
+  const [sub, setSub] = useState('');
   const dq = useDebounce(q);
   const dl = useDebounce(location);
   const query = useInfiniteQuery({
-    queryKey: ['providers', slug, dq, dl, sort],
-    queryFn: ({ pageParam }) => get(`/services/${slug}`, { page: pageParam, q: dq || undefined, location: dl || undefined, sort: sort || undefined }),
+    queryKey: ['providers', slug, dq, dl, sort, sub],
+    queryFn: ({ pageParam }) => get(`/services/${slug}`, { page: pageParam, q: dq || undefined, location: dl || undefined, sort: sort || undefined, sub: sub || undefined }),
     initialPageParam: 1,
     getNextPageParam: (l) => (l.hasMore ? l.page + 1 : undefined),
   });
@@ -40,6 +41,15 @@ export default function CategoryList() {
             <option value="price">Lowest price</option>
           </select>
         </div>
+        {first?.category.subcategories?.length > 0 && (
+          <div className="no-scrollbar -mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Filter by type">
+            {[{ id: '', name: 'All' }, ...first.category.subcategories].map((s) => (
+              <button key={s.id || 'all'} type="button" onClick={() => setSub(s.id)} aria-pressed={sub === s.id} className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] transition ${sub === s.id ? 'border-primary bg-primary text-white' : 'border-line bg-white text-[#4b4641] hover:border-primary'}`}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        )}
         {query.isError ? (
           <ErrorState error={query.error} onRetry={query.refetch} />
         ) : query.isLoading ? (
@@ -53,7 +63,7 @@ export default function CategoryList() {
             Know someone great? Invite them to list their service on Mi Vanjari.
           </EmptyState>
         ) : (
-          <Stagger key={`${dq}${dl}${sort}`} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger key={`${dq}${dl}${sort}${sub}`} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((p) => (
               <StaggerItem key={p.id}>
                 <ProviderCard p={p} />

@@ -51,7 +51,7 @@ export async function hasMatrimonyAccess(user) {
 export async function listedOwnerFilter() {
   const settings = await getSettings();
   if (Date.now() < paidFromDate(settings).getTime()) return {};
-  return { OR: [{ role: { in: ['ADMIN', 'MODERATOR'] } }, { memberships: { some: activeMembershipWhere() } }] };
+  return { OR: [{ role: { in: ['ADMIN', 'MODERATOR'] } }, { memberships: { some: activeMembershipWhere() } }, { profile: { isDemo: true } }] };
 }
 
 /**

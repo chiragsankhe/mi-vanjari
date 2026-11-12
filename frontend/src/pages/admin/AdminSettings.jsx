@@ -24,12 +24,12 @@ function SampleContentCard() {
         {data && <Badge tone={data.present ? 'green' : 'gray'}>{data.present ? 'SHOWING' : 'OFF'}</Badge>}
       </h3>
       <p className="text-xs leading-relaxed text-muted">
-        Adds example community members, posts, businesses, wedding services and achievers so new visitors see how the site looks when it is busy. Every entry carries a <b>Sample</b> tag, uses illustrated avatars, has no phone number and cannot be messaged or followed.
-        There are no matrimony profiles and sample entries are never counted in the public member numbers. Remove it all with one click when real members have filled the site.
+        Adds demo accounts with info in every section — community members and posts, businesses, wedding services (with packages), achievers and a few matrimony profiles — so you can test the site and new visitors see how it looks when busy. Every entry carries a <b>Sample</b> tag, uses illustrated avatars, has no phone number and cannot be messaged or followed.
+        Sample entries are never counted in the public member numbers. <b>Remove it all with one click</b> whenever you like — real accounts are never touched.
       </p>
       {data?.present && (
         <p className="text-xs text-muted">
-          Now showing: {data.members} members · {data.posts} posts · {data.businesses} businesses · {data.services} wedding services · {data.achievements} achievers
+          Now showing: {data.members} members · {data.posts} posts · {data.businesses} businesses · {data.services} wedding services · {data.packages} packages · {data.achievements} achievers · {data.matrimony} matrimony profiles
         </p>
       )}
       <div className="flex flex-wrap gap-2">

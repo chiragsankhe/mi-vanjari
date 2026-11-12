@@ -241,8 +241,9 @@ export async function familyContactRequested(viewerId, targetUserId) {
 /** Ask a member to add family contact numbers (one request per viewer per week). */
 export async function requestFamilyContact(viewerId, targetUserId) {
   if (viewerId === targetUserId) throw ApiError.badRequest('This is your own profile');
-  const target = await prisma.profile.findUnique({ where: { userId: targetUserId }, select: { isActive: true, _count: { select: { familyContacts: true } } } });
+  const target = await prisma.profile.findUnique({ where: { userId: targetUserId }, select: { isActive: true, isDemo: true, _count: { select: { familyContacts: true } } } });
   if (!target?.isActive) throw ApiError.notFound('Profile not available');
+  if (target.isDemo) throw ApiError.forbidden('This is a sample profile, shown to illustrate the site. It is not a real member.', 'SAMPLE_PROFILE');
   if (target._count.familyContacts) throw ApiError.badRequest('This member has already added family contacts');
   if (await familyContactRequested(viewerId, targetUserId)) return { requested: true, already: true };
   const me = await prisma.profile.findUnique({ where: { userId: viewerId }, select: { fullName: true } });

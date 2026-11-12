@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import PackagesSection from './Packages';
 import { toast } from 'sonner';
 import { ContactButtons, Stars } from '../../components/common/Listing';
 import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, SampleTag, Spinner } from '../../components/ui';
@@ -78,6 +79,7 @@ export default function ProviderDetail() {
             <h2 className="font-serif text-lg font-semibold">About</h2>
             <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.description || 'No description yet.'}</p>
           </Reveal>
+          <PackagesSection provider={p} authed={authed} onLogin={() => openAuth()} />
           <Reveal className="space-y-4">
             <h2 className="flex items-center gap-3 font-serif text-xl font-semibold">
               Reviews <span className="text-sm font-normal text-muted">({p.ratingCount})</span>
@@ -112,6 +114,11 @@ export default function ProviderDetail() {
           <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-6 shadow-[var(--shadow-card)]">
             <div className="flex flex-wrap gap-2">
               <Badge tone="red">{p.category.name}</Badge>
+              {p.subcategories?.map((s) => (
+                <Badge key={s.id} tone="gray">
+                  {s.name}
+                </Badge>
+              ))}
               {p.isFeatured && <Badge>Featured</Badge>}
               {p.status !== 'APPROVED' && <Badge tone="gray">{p.status === 'PENDING' ? 'Awaiting approval' : 'Needs changes'}</Badge>}
             </div>

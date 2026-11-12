@@ -29,15 +29,15 @@ export default function Services() {
           <p className="mt-1 text-sm text-muted">Browse services by category</p>
         </Reveal>
         <Stagger className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3">
-          {(cats.data ?? Array.from({ length: 6 })).map((c, i) => (
+          {(cats.data ?? Array.from({ length: 12 })).map((c, i) => (
             <StaggerItem key={c?.id || i}>
               {c ? (
-                <Link to={`/services/category/${c.slug}`} className="group card card-hover relative block h-[160px] p-4 text-primary md:h-[175px] md:p-5">
-                  <span className="absolute top-4 right-4 font-serif text-[13px] text-[#cfc1b4] italic">0{i + 1}</span>
+                <Link to={`/services/category/${c.slug}`} className="group card card-hover relative block min-h-[160px] p-4 pb-11 text-primary md:min-h-[175px] md:p-5 md:pb-12">
+                  <span className="absolute top-4 right-4 font-serif text-[13px] text-[#cfc1b4] italic">{String(i + 1).padStart(2, '0')}</span>
                   <motion.span whileHover={{ scale: 1.15, rotate: -6 }} className="inline-block">
                     <Icon name={c.icon} size={30} />
                   </motion.span>
-                  <b className="mt-4 block font-serif text-[16px] font-semibold text-ink md:text-[17px]">{c.name}</b>
+                  <b className="mt-3 block font-serif text-[15px] leading-snug font-semibold text-ink md:mt-4 md:text-[17px]">{c.name}</b>
                   <small className="heading-deva block text-xs text-muted">{c.nameMr}</small>
                   <small className="mt-1 hidden text-[11px] text-muted sm:block">
                     {c.description} · {c.providerCount} listed

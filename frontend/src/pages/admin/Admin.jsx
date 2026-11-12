@@ -85,7 +85,9 @@ function ServicesQueue() {
                 {s.businessName}
               </Link>
               <p className="text-xs text-muted">
-                {s.category.name} · {s.location} · {s.priceFrom ? `from ${formatINR(s.priceFrom)}` : 'no price'} · by {s.user.profile?.fullName || formatPhone(s.user.phone)} · {timeAgo(s.createdAt)}
+                {s.category.name}
+                {!s.category.isApproved && <b className="text-primary"> (new category)</b>}
+                {s.subcategories?.length > 0 && ` › ${s.subcategories.map((x) => x.name + (x.isApproved ? '' : ' (new)')).join(', ')}`} · {s._count?.servicePackages || 0} packages · {s.location} · {s.priceFrom ? `from ${formatINR(s.priceFrom)}` : 'no price'} · by {s.user.profile?.fullName || formatPhone(s.user.phone)} · {timeAgo(s.createdAt)}
               </p>
               {s.description && <p className="mt-1 line-clamp-2 text-xs text-[#5b534d]">{s.description}</p>}
             </div>

@@ -394,8 +394,30 @@ model ServiceCategory {
   icon        String // icon key used by the frontend icon set
   slug        String  @unique
   sortOrder   Int     @default(0)
+  /// lower-case letters+digits of the name — stops two categories with the same name
+  key         String  @unique
+  /// false = suggested by a provider, waiting for admin approval (shown only to its creator until then)
+  isApproved  Boolean @default(true)
+  createdById String?
+
+  providers     ServiceProvider[]
+  subcategories ServiceSubcategory[]
+}
+
+model ServiceSubcategory {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  key         String
+  sortOrder   Int             @default(0)
+  isApproved  Boolean         @default(true)
+  createdById String?
+  createdAt   DateTime        @default(now())
 
   providers ServiceProvider[]
+
+  @@unique([categoryId, key])
 }
 
 model ServiceProvider {
@@ -424,8 +446,10 @@ model ServiceProvider {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  packages Package[]
-  reviews  ServiceReview[]
+  packages        Package[]
+  reviews         ServiceReview[]
+  subcategories   ServiceSubcategory[]
+  servicePackages ServicePackage[]
 
   @@index([categoryId, status, isActive])
 }
@@ -442,6 +466,25 @@ model ServiceReview {
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, userId])
+}
+
+/// A package a provider offers (e.g. "Bridal Makeup Package") — managed by the provider
+model ServicePackage {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  name        String
+  price       Int // in INR
+  description String?
+  photos      String[]
+  includes    String[] // services included
+  duration    String? // e.g. "3 hours"
+  details     String? // additional details / terms
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([providerId, sortOrder])
 }
 
 model Package {

@@ -11,7 +11,7 @@
  */
 import '../src/config/load-env.js';
 import { HISTORY } from './history-data.js';
-import { CATEGORIES, MUHURAT, MUHURAT_TITLES } from './reference-data.js';
+import { MUHURAT, MUHURAT_TITLES, syncServiceCategories } from './reference-data.js';
 import { PrismaClient } from '@prisma/client';
 import { computeBirthChart } from '../src/services/astrology/engine.js';
 
@@ -102,7 +102,8 @@ async function main() {
 
   // Categories
   const cats = {};
-  for (const c of CATEGORIES) cats[c.slug] = await prisma.serviceCategory.create({ data: c });
+  await syncServiceCategories(prisma);
+  for (const c of await prisma.serviceCategory.findMany()) cats[c.slug] = c;
 
   // History
   await prisma.historyEntry.createMany({ data: HISTORY });

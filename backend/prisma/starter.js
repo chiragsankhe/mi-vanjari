@@ -1,7 +1,7 @@
 /**
  * Starter content for a NEW live database — safe to run any number of times, never deletes anything
  * and creates no demo accounts:
- *   - wedding-service categories (Music & DJ, Halls, Makeup, Catering, Photography, Decoration)
+ *   - wedding-service categories with their subcategories (venues, DJ & music, pandit, catering, photography, decoration, makeup, clothes, transport, invitations, planning, other)
  *   - the researched Palghar Vanjari history entries
  *   - indicative muhurat dates
  *
@@ -13,11 +13,11 @@
 import '../src/config/load-env.js';
 import { PrismaClient } from '@prisma/client';
 import { HISTORY } from './history-data.js';
-import { CATEGORIES, MUHURAT, MUHURAT_TITLES } from './reference-data.js';
+import { CATEGORIES, MUHURAT, MUHURAT_TITLES, syncServiceCategories } from './reference-data.js';
 
 const prisma = new PrismaClient();
 try {
-  for (const c of CATEGORIES) await prisma.serviceCategory.upsert({ where: { slug: c.slug }, update: {}, create: c });
+  const cats = await syncServiceCategories(prisma);
 
   const haveTitles = new Set((await prisma.historyEntry.findMany({ select: { title: true } })).map((h) => h.title));
   const history = HISTORY.filter((h) => !haveTitles.has(h.title));
@@ -33,7 +33,7 @@ try {
     skipDuplicates: true,
   });
 
-  console.log(`✔ Starter content ready: ${CATEGORIES.length} service categories, ${history.length} history entries added, ${muhurat.count} muhurat dates added`);
+  console.log(`✔ Starter content ready: ${CATEGORIES.length} service categories (${cats.categories} new, ${cats.subcategories} new subcategories), ${history.length} history entries added, ${muhurat.count} muhurat dates added`);
 } catch (err) {
   console.error('✖ Could not add starter content:', err.message);
   process.exitCode = 1;

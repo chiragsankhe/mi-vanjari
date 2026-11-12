@@ -55,7 +55,7 @@ router.get(
         orderBy: { createdAt: 'desc' },
         skip,
         take,
-        include: { category: true, user: { select: { phone: true, profile: { select: { fullName: true } } } } },
+        include: { category: true, subcategories: { select: { id: true, name: true, isApproved: true } }, _count: { select: { servicePackages: true } }, user: { select: { phone: true, profile: { select: { fullName: true } } } } },
       }),
       prisma.serviceProvider.count({ where }),
     ]);
@@ -69,6 +69,11 @@ router.put(
   validate({ body: z.object({ status: z.enum(['APPROVED', 'REJECTED', 'PENDING']).optional(), isFeatured: z.boolean().optional() }) }),
   h(async (req, res) => {
     const updated = await prisma.serviceProvider.update({ where: { id: req.params.id }, data: req.body });
+    if (req.body.status === 'APPROVED') {
+      // approving a listing also approves the category / subcategories the provider suggested for it
+      await prisma.serviceCategory.updateMany({ where: { id: updated.categoryId, isApproved: false }, data: { isApproved: true } });
+      await prisma.serviceSubcategory.updateMany({ where: { providers: { some: { id: updated.id } }, isApproved: false }, data: { isApproved: true } });
+    }
     if (req.body.status === 'APPROVED' || req.body.status === 'REJECTED') {
       await notify({
         userId: updated.userId,
