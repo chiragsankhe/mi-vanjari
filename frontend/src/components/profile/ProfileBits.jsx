@@ -119,8 +119,41 @@ function CardFact({ icon, label, value, muted }) {
   );
 }
 
-export function ProfileCard({ p, showShortlist = true }) {
+export function ProfileCard({ p, showShortlist = true, compact = false }) {
   const t = useT();
+  if (compact) {
+    const sub = p.age ? `${p.age} ${t('years')}` : p.ageRange ? `${p.ageRange} ${t('years')}` : '';
+    return (
+      <Link to={`/profile/${p.userId}`} className="group card card-hover flex items-center gap-3 p-2">
+        <div className="relative size-[68px] shrink-0 overflow-hidden rounded-lg bg-sand">
+          <Img src={p.photoUrl} alt={p.fullName} fallbackIcon="user" className="size-full object-cover object-top" />
+          {p.locked && (
+            <span className="absolute right-1 bottom-1 grid size-4 place-items-center rounded-full bg-black/60 text-white">
+              <Icon name="lock" size={9} />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-center gap-1 font-serif text-[14px] leading-tight font-semibold">
+            <span className="truncate">{p.fullName}</span> {p.isVerified && <VerifiedDot size={13} />} {p.isSample && <SampleTag className="!px-1.5 !py-0 !text-[9px]" />}
+          </h3>
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted">
+            <Icon name="map" size={11} className="shrink-0 text-[#b0876a]" />
+            <span className="truncate">{[sub, p.currentCity].filter(Boolean).join(' · ')}</span>
+          </p>
+          {(p.locked || p.occupation || p.education) && (
+            <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-[#5f5750]">
+              <Icon name="briefcase" size={11} className="shrink-0 text-[#b0876a]" />
+              <span className="truncate">{p.locked ? t('private_profile') : p.occupation || p.education}</span>
+            </p>
+          )}
+        </div>
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary-soft text-primary transition group-hover:bg-primary group-hover:text-white">
+          <Icon name="arrow" size={14} />
+        </span>
+      </Link>
+    );
+  }
   return (
     <Link to={`/profile/${p.userId}`} className="group card card-hover block overflow-hidden">
       <div className="relative h-[210px] overflow-hidden sm:h-[275px]">
@@ -159,7 +192,18 @@ export function ProfileCard({ p, showShortlist = true }) {
   );
 }
 
-export function ProfileCardSkeleton() {
+export function ProfileCardSkeleton({ compact = false }) {
+  if (compact)
+    return (
+      <div className="card flex items-center gap-3 p-2">
+        <div className="skeleton size-[68px] shrink-0 rounded-lg" />
+        <div className="flex-1 space-y-2">
+          <div className="skeleton h-3.5 w-1/2" />
+          <div className="skeleton h-3 w-2/3" />
+          <div className="skeleton h-3 w-1/3" />
+        </div>
+      </div>
+    );
   return (
     <div className="card overflow-hidden">
       <div className="skeleton h-[210px] rounded-none sm:h-[275px]" />

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CountUp, ease, Icon, Img, Reveal, Stagger, StaggerItem, VerifiedDot, WarliBand } from '../components/ui';
 import { useT } from '../i18n/useT';
@@ -162,6 +162,87 @@ function Modules() {
   );
 }
 
+/** All wedding-service categories in a swipeable carousel (auto-advances, pauses while touched / hovered). */
+function ServicesCarousel() {
+  const { data: cats = [] } = useQuery({ queryKey: ['service-categories'], queryFn: () => get('/services/categories'), staleTime: 300_000 });
+  const ref = useRef(null);
+  const paused = useRef(false);
+  const resume = useRef(0);
+
+  const go = (dir) => {
+    const el = ref.current;
+    if (!el) return;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+    if (dir > 0 && atEnd) el.scrollTo({ left: 0, behavior: 'smooth' });
+    else if (dir < 0 && el.scrollLeft <= 8) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+    else el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.75), behavior: 'smooth' });
+  };
+  useEffect(() => {
+    if (cats.length < 2 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => !paused.current && go(1), 3500);
+    return () => clearInterval(id);
+  }, [cats.length]);
+  const hold = () => {
+    paused.current = true;
+    clearTimeout(resume.current);
+  };
+  const release = (delay = 2500) => {
+    clearTimeout(resume.current);
+    resume.current = setTimeout(() => (paused.current = false), delay);
+  };
+
+  if (!cats.length) return null;
+  return (
+    <section className="bg-[#fbf7f1] py-10 md:py-14" aria-label="Wedding services">
+      <div className="container-page">
+        <Reveal className="mb-5 flex items-end justify-between gap-3">
+          <div>
+            <p className="eyebrow mb-2">लग्न सेवा · Wedding services</p>
+            <h2 className="heading-deva text-[24px] font-semibold md:text-[clamp(26px,3vw,36px)]">लग्नाची प्रत्येक सेवा, एकाच ठिकाणी</h2>
+          </div>
+          <div className="hidden shrink-0 gap-2 sm:flex">
+            <button type="button" onClick={() => go(-1)} className="grid size-10 place-items-center rounded-full border border-line bg-white text-ink transition hover:border-primary hover:text-primary" aria-label="Previous services">
+              <Icon name="chevron-left" size={18} />
+            </button>
+            <button type="button" onClick={() => go(1)} className="grid size-10 place-items-center rounded-full border border-line bg-white text-ink transition hover:border-primary hover:text-primary" aria-label="Next services">
+              <Icon name="chevron-right" size={18} />
+            </button>
+          </div>
+        </Reveal>
+        <div
+          ref={ref}
+          onMouseEnter={hold}
+          onMouseLeave={() => release(800)}
+          onTouchStart={hold}
+          onTouchEnd={() => release()}
+          onFocus={hold}
+          onBlur={() => release(800)}
+          className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0"
+        >
+          {cats.map((c) => (
+            <Link key={c.id} to={`/services/category/${c.slug}`} className="group card card-hover relative flex min-h-[132px] w-[42vw] max-w-[230px] min-w-[150px] shrink-0 snap-start flex-col p-3.5 sm:w-[200px] sm:p-4">
+              <motion.span whileHover={{ rotate: -8, scale: 1.1 }} className="mb-2.5 grid size-10 place-items-center rounded-full bg-primary-soft text-primary sm:size-11">
+                <Icon name={c.icon} size={21} />
+              </motion.span>
+              <b className="font-serif text-[13.5px] leading-snug font-semibold text-ink sm:text-[14.5px]">{c.name}</b>
+              <small className="heading-deva mt-0.5 line-clamp-1 text-[11px] text-muted">{c.nameMr}</small>
+              <span className="mt-auto flex items-center justify-between pt-2 text-[10.5px] text-muted">
+                {c.providerCount ? `${c.providerCount} listed` : 'View'}
+                <span className="text-primary transition group-hover:translate-x-1">
+                  <Icon name="arrow" size={14} />
+                </span>
+              </span>
+            </Link>
+          ))}
+          <Link to="/services" className="flex min-h-[132px] w-[42vw] max-w-[230px] min-w-[150px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-xl bg-primary p-4 text-center text-[13px] font-bold text-white shadow-[var(--shadow-cta)] sm:w-[200px]">
+            All services <Icon name="arrow" size={18} />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function MatchSection() {
   const t = useT();
   const authed = useAuth((s) => s.status === 'authed');
@@ -291,6 +372,7 @@ export default function Home() {
       <Hero />
       <WarliBand />
       <Modules />
+      <ServicesCarousel />
       <MatchSection />
       <HowItWorks />
       <ComboBanner />

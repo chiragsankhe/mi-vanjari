@@ -188,37 +188,59 @@ function Members() {
   const [q, setQ] = useState('');
   const dq = useDebounce(q);
   const { items, total, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = usePaged(['members'], '/community/members', { q: dq || undefined }, { enabled: authed });
-  if (!authed)
-    return (
-      <EmptyState icon="users" title="Members only" action={<button className="btn btn-primary" onClick={() => openAuth('/community?tab=members')}>Log in to search members</button>}>
-        Search community members by name, city, village or profession.
-      </EmptyState>
-    );
+  const login = () => openAuth('/community?tab=members');
   return (
-    <div className="py-8">
-      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <p className="font-serif text-lg">{isLoading ? 'Searching…' : `${total} members`}</p>
-        <label className="flex h-11 items-center gap-2 rounded-lg border border-line bg-white px-3 text-muted sm:w-80">
-          <Icon name="search" size={17} />
-          <input className="w-full bg-transparent text-sm text-ink outline-none" placeholder="Name, city, village, profession…" value={q} onChange={(e) => setQ(e.target.value)} />
+    <div className="py-4 md:py-8">
+      {/* search is always on top (members must log in to see results) */}
+      <div className="sticky top-[66px] z-20 -mx-4 mb-3 bg-[#fbf7f1]/95 px-4 py-2 backdrop-blur md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <label className="flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-3.5 text-muted shadow-sm focus-within:border-primary">
+          <Icon name="search" size={18} />
+          <input
+            type="search"
+            enterKeyHint="search"
+            className="w-full bg-transparent text-sm text-ink outline-none"
+            placeholder="Search members by name, city, village, profession…"
+            aria-label="Search members"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onFocus={() => !authed && login()}
+          />
+          {q && (
+            <button type="button" onClick={() => setQ('')} className="grid size-6 shrink-0 place-items-center rounded-full bg-sand text-muted" aria-label="Clear search">
+              <Icon name="close" size={12} />
+            </button>
+          )}
         </label>
       </div>
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <ProfileCardSkeleton key={i} />
-          ))}
-        </div>
+      {!authed ? (
+        <EmptyState icon="users" title="Members only" action={<button className="btn btn-primary" onClick={login}>Log in to see members</button>}>
+          Search community members by name, city, village or profession.
+        </EmptyState>
       ) : (
-        <Stagger key={dq} className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" gap={0.04}>
-          {items.map((p) => (
-            <StaggerItem key={p.userId}>
-              <ProfileCard p={{ ...p, matchScore: null }} showShortlist={false} />
-            </StaggerItem>
-          ))}
-        </Stagger>
+        <>
+          <p className="mb-2.5 px-0.5 text-[13px] text-muted">{isLoading ? 'Searching…' : `${total} ${total === 1 ? 'member' : 'members'}${dq ? ` for “${dq}”` : ''}`}</p>
+          {isLoading ? (
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <ProfileCardSkeleton key={i} compact />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
+            <EmptyState icon="search" title="No members found">
+              Try a different name, city or profession.
+            </EmptyState>
+          ) : (
+            <Stagger key={dq} className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3" gap={0.03}>
+              {items.map((p) => (
+                <StaggerItem key={p.userId}>
+                  <ProfileCard compact p={{ ...p, matchScore: null }} showShortlist={false} />
+                </StaggerItem>
+              ))}
+            </Stagger>
+          )}
+          <LoadMoreSentinel onVisible={fetchNextPage} hasMore={hasNextPage} loading={isFetchingNextPage} />
+        </>
       )}
-      <LoadMoreSentinel onVisible={fetchNextPage} hasMore={hasNextPage} loading={isFetchingNextPage} />
     </div>
   );
 }
