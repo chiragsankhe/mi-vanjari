@@ -9,7 +9,6 @@
  */
 import * as A from 'astronomy-engine';
 import { julianDay, lahiriAyanamsa } from './engine.js';
-import { findPlace } from './places.js';
 import { NAKSHATRAS, RASHIS } from './tables.js';
 
 const norm = (x) => ((x % 360) + 360) % 360;
@@ -65,10 +64,10 @@ function describe(lon) {
 }
 
 /**
- * @param {{ dob: string, tob?: string, place?: string, utcOffsetHours?: number }} input
- *   dob YYYY-MM-DD, tob HH:mm local time (IST by default), place free text
+ * @param {{ dob: string, tob?: string, where: { name: string, lat: number, lon: number }, utcOffsetHours?: number }} input
+ *   dob YYYY-MM-DD, tob HH:mm local time at the birthplace, where = resolved birthplace (see lookup.js)
  */
-export function computeKundali({ dob, tob, place, utcOffsetHours = 5.5 }) {
+export function computeKundali({ dob, tob, where, utcOffsetHours = 5.5 }) {
   const [y, mo, d] = dob.split('-').map(Number);
   const hasTime = Boolean(tob);
   const [hh, mm] = (tob || '12:00').split(':').map(Number);
@@ -78,7 +77,6 @@ export function computeKundali({ dob, tob, place, utcOffsetHours = 5.5 }) {
   const jd = julianDay(date);
   const ayanamsa = lahiriAyanamsa(jd);
   const sidereal = (tropical) => norm(tropical - ayanamsa);
-  const where = findPlace(place);
 
   const planets = PLANETS.map((p) => {
     let lon;
@@ -124,6 +122,6 @@ export function computeKundali({ dob, tob, place, utcOffsetHours = 5.5 }) {
     pada: moon.pada,
     ayanamsa: Number(ayanamsa.toFixed(4)),
     place: where,
-    input: { dob, tob: tob || null, place: place || null },
+    input: { dob, tob: tob || null, place: where.name },
   };
 }

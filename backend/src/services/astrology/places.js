@@ -4,7 +4,7 @@
  * (within the region the difference is tiny; far away it shifts the Lagna by a few degrees).
  * [name, latitude, longitude, ...aliases]
  */
-const PLACES = [
+export const PLACES_TABLE = [
   // Palghar district
   ['Palghar', 19.697, 72.765],
   ['Boisar', 19.803, 72.755],
@@ -28,6 +28,7 @@ const PLACES = [
   ['Chinchani', 19.900, 72.697],
   ['Vangaon', 19.884, 72.762],
   ['Kasa', 19.950, 72.890],
+  ['Dahisar', 19.250, 72.865],
   // Mumbai region
   ['Mumbai', 19.076, 72.878, 'bombay'],
   ['Thane', 19.218, 72.978],
@@ -88,7 +89,7 @@ const PLACES = [
 ];
 
 const clean = (s) => String(s || '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
-const INDEX = PLACES.flatMap(([name, lat, lon, ...aliases]) => [name, ...aliases].map((k) => ({ key: clean(k), name, lat, lon })));
+const INDEX = PLACES_TABLE.flatMap(([name, lat, lon, ...aliases]) => [name, ...aliases].map((k) => ({ key: clean(k), name, lat, lon })));
 export const DEFAULT_PLACE = { name: 'Palghar', lat: 19.697, lon: 72.765 };
 
 /** Best match for free text like "Boisar, Palghar" → { name, lat, lon, matched } (falls back to Palghar). */
@@ -108,4 +109,4 @@ export function findPlace(text) {
 }
 
 /** Names for the place suggestions list in the form. */
-export const PLACE_NAMES = PLACES.map(([name]) => name);
+export const PLACE_NAMES = PLACES_TABLE.map(([name]) => name);

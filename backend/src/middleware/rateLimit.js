@@ -13,6 +13,15 @@ export const apiLimiter = rateLimit({
   handler,
 });
 
+/** Place search while typing: generous, but one visitor can't hammer the free geocoder. */
+export const placesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler,
+});
+
 /** 5 login-code requests per email address / phone number per hour. */
 export const otpPhoneLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,

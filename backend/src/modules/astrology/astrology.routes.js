@@ -5,7 +5,8 @@ import { optionalAuth } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { computeBirthChart, gunaMilan } from '../../services/astrology/engine.js';
 import { computeKundali } from '../../services/astrology/chart.js';
-import { PLACE_NAMES } from '../../services/astrology/places.js';
+import { resolveBirthPlace, searchPlaces, utcOffsetHours } from '../../services/astrology/lookup.js';
+import { placesLimiter } from '../../middleware/rateLimit.js';
 import { monthPanchang } from '../../services/astrology/panchang.js';
 import { NAKSHATRAS, RASHIS } from '../../services/astrology/tables.js';
 import { h } from '../../utils/http.js';
@@ -20,8 +21,18 @@ const birth = z.object({
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Time must be HH:mm')
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  place: z.string().trim().max(80).optional(),
+  place: z.string().trim().max(120).optional(),
+  // chosen from the place suggestions (exact coordinates + time zone)
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lon: z.coerce.number().min(-180).max(180).optional(),
+  tz: z.string().trim().max(60).optional(),
 });
+
+/** Birthplace + the UTC offset valid at that place on that date (India is always +5:30). */
+async function birthContext(b) {
+  const where = await resolveBirthPlace({ place: b.place, lat: b.lat, lon: b.lon, tz: b.tz });
+  return { where, offset: utcOffsetHours(where.tz, b.dob, b.tob) };
+}
 
 /** GET /astrology/rashis — reference table */
 router.get('/rashis', (_req, res) => res.json({ rashis: RASHIS, nakshatras: NAKSHATRAS }));
@@ -33,21 +44,22 @@ router.post(
   validate({ body: birth }),
   h(async (req, res) => {
     const { dob, tob, place } = req.body;
-    const chart = computeBirthChart(dob, tob);
+    const { where, offset } = await birthContext(req.body);
+    const chart = computeBirthChart(dob, tob, offset);
     prisma.rashiRecord
       .create({
         data: {
           userId: req.user?.id ?? null,
           dateOfBirth: new Date(`${dob}T00:00:00Z`),
           timeOfBirth: tob ?? null,
-          placeOfBirth: place || 'Unknown',
+          placeOfBirth: (where.matched ? where.name : place) || 'Unknown',
           rashi: chart.rashi.name,
           nakshatra: chart.nakshatra.name,
           rulingPlanet: chart.rashi.lord,
         },
       })
       .catch(() => {});
-    res.json({ ...chart, input: { dob, tob: tob ?? null, place: place ?? null } });
+    res.json({ ...chart, place: where, input: { dob, tob: tob ?? null, place: place ?? null } });
   }),
 );
 
@@ -58,20 +70,29 @@ router.post(
   h(async (req, res) => {
     const year = Number(req.body.dob.slice(0, 4));
     if (year < 1900 || year > 2100) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Date of birth must be between 1900 and 2100' } });
-    res.json(computeKundali(req.body));
+    const { where, offset } = await birthContext(req.body);
+    res.json(computeKundali({ dob: req.body.dob, tob: req.body.tob, where, utcOffsetHours: offset }));
   }),
 );
 
-/** GET /astrology/places → birthplace suggestions for the form */
-router.get('/places', (_req, res) => res.json(PLACE_NAMES));
+/** GET /astrology/places?q=varan → birthplace suggestions for the whole of India (village / taluka level) */
+router.get(
+  '/places',
+  placesLimiter,
+  h(async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json(await searchPlaces(String(req.query.q || '').slice(0, 60)));
+  }),
+);
 
 /** POST /astrology/match { boy: {dob,tob}, girl: {dob,tob} } → Ashtakoota score */
 router.post(
   '/match',
   validate({ body: z.object({ boy: birth, girl: birth }) }),
   h(async (req, res) => {
-    const boy = computeBirthChart(req.body.boy.dob, req.body.boy.tob);
-    const girl = computeBirthChart(req.body.girl.dob, req.body.girl.tob);
+    const [bc, gc] = await Promise.all([birthContext(req.body.boy), birthContext(req.body.girl)]);
+    const boy = computeBirthChart(req.body.boy.dob, req.body.boy.tob, bc.offset);
+    const girl = computeBirthChart(req.body.girl.dob, req.body.girl.tob, gc.offset);
     res.json({ ...gunaMilan(boy, girl), boy, girl });
   }),
 );

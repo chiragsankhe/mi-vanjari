@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BirthChartShareCard, KundaliChart, PlanetTable } from '../../components/astrology/KundaliChart';
 import { DownloadCardButton } from '../../components/common/DownloadCard';
+import { PlaceInput } from '../../components/common/PlaceInput';
 import { KundaliResult } from '../../components/common/KundaliResult';
 import { RashiDetails, RashiDownloadButton } from '../../components/common/RashiReport';
 import { Badge, Field, Icon, PageHeader, Reveal, Spinner, Tabs } from '../../components/ui';
@@ -23,21 +24,8 @@ function BirthFields({ value, onChange, title }) {
         <Field label="Date of birth *" type="date" required value={value.dob} onChange={set('dob')} />
         <Field label="Time of birth" type="time" value={value.tob} onChange={set('tob')} />
       </div>
-      <Field label="Place of birth" placeholder="e.g. Boisar, Palghar" list="mv-birth-places" autoComplete="off" value={value.place} onChange={set('place')} />
-      <PlaceList />
+      <PlaceInput value={value.place} onChange={(text, pl) => onChange({ ...value, place: text, geo: pl ? { lat: pl.lat, lon: pl.lon, tz: pl.tz } : undefined })} hint="Search any village, taluka or city in India" />
     </fieldset>
-  );
-}
-
-/** Birthplace suggestions (Palghar district first). */
-function PlaceList() {
-  const { data = [] } = useQuery({ queryKey: ['birth-places'], queryFn: () => get('/astrology/places'), staleTime: Infinity });
-  return (
-    <datalist id="mv-birth-places">
-      {data.map((n) => (
-        <option key={n} value={n} />
-      ))}
-    </datalist>
   );
 }
 
@@ -48,7 +36,7 @@ function BirthChart() {
   const me = useAuth((s) => s.user?.profile);
   const lang = useUI((s) => s.lang);
   const [v, setV] = useState({ name: me?.fullName || '', dob: me?.dateOfBirth || '', tob: me?.timeOfBirth || '', place: me?.placeOfBirth || '' });
-  const m = useMutation({ mutationFn: () => post('/astrology/kundali', { dob: v.dob, tob: v.tob || undefined, place: v.place || undefined }), onError: (e) => toast.error(errorMessage(e)) });
+  const m = useMutation({ mutationFn: () => post('/astrology/kundali', { dob: v.dob, tob: v.tob || undefined, place: v.place || undefined, ...v.geo }), onError: (e) => toast.error(errorMessage(e)) });
   const r = m.data;
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[380px_1fr]">
@@ -131,7 +119,7 @@ function BirthChart() {
 function RashiCalculator() {
   const me = useAuth((s) => s.user?.profile);
   const [v, setV] = useState({ name: me?.fullName || '', dob: me?.dateOfBirth || '', tob: me?.timeOfBirth || '', place: me?.placeOfBirth || '' });
-  const m = useMutation({ mutationFn: () => post('/astrology/rashi', { dob: v.dob, tob: v.tob || undefined, place: v.place || undefined }), onError: (e) => toast.error(errorMessage(e)) });
+  const m = useMutation({ mutationFn: () => post('/astrology/rashi', { dob: v.dob, tob: v.tob || undefined, place: v.place || undefined, ...v.geo }), onError: (e) => toast.error(errorMessage(e)) });
   const r = m.data;
   return (
     <div className="grid gap-6 py-8 lg:grid-cols-[380px_1fr]">
@@ -192,7 +180,7 @@ function RashiCalculator() {
               ))}
             </div>
             <p className="relative mt-6 text-[11px] text-[#e1c7bd]">
-              Moon at {r.degreeInSign}° in {r.rashi.name} (sidereal, Lahiri). Nadi: {r.nakshatra.nadiName} · Yoni: {r.nakshatra.yoni}
+              Moon at {r.degreeInSign}° in {r.rashi.name} (sidereal, Lahiri). Nadi: {r.nakshatra.nadiName} · Yoni: {r.nakshatra.yoni}{r.place?.matched ? ` · Born at ${r.place.name}` : ''}
             </p>
           </div>
           <RashiDetails rashi={r.rashi.name} nakshatra={r.nakshatra.name} pada={r.nakshatra.pada} />
@@ -213,12 +201,15 @@ function RashiCalculator() {
   );
 }
 
+/** Birth details for the API: time left out when empty, chosen place coordinates flattened in. */
+const withGeo = ({ geo, ...v }) => ({ ...v, tob: v.tob || undefined, place: v.place || undefined, ...geo });
+
 function KundaliMatch() {
   const empty = { name: '', dob: '', tob: '', place: '' };
   const [boy, setBoy] = useState(empty);
   const [girl, setGirl] = useState(empty);
   const m = useMutation({
-    mutationFn: () => post('/astrology/match', { boy: { ...boy, tob: boy.tob || undefined }, girl: { ...girl, tob: girl.tob || undefined } }),
+    mutationFn: () => post('/astrology/match', { boy: withGeo(boy), girl: withGeo(girl) }),
     onError: (e) => toast.error(errorMessage(e)),
   });
   return (
