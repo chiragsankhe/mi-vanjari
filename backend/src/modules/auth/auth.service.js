@@ -29,7 +29,11 @@ export async function requestEmailOtp(rawEmail) {
 export async function verifyEmailAndLogin(rawEmail, otp, meta) {
   const email = normalizeEmail(rawEmail);
   await verifyOtp(loginKey(email), otp);
+  return finishEmailLogin(email, meta);
+}
 
+/** Sign in the account that owns this (verified) email, linking an older phone account or creating a new one. */
+async function finishEmailLogin(email, meta) {
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     const linked = await prisma.profile.findFirst({ where: { email, user: { email: null } }, select: { userId: true } });
@@ -42,6 +46,31 @@ export async function verifyEmailAndLogin(rawEmail, otp, meta) {
   const tokens = await issueTokens(user, meta);
   const session = await sessionUser(user.id);
   return { ...tokens, user: session, isNewUser: !session.profile };
+}
+
+/**
+ * Google sign-in. The browser gets a signed ID token from Google; we ask Google to validate it, check it was
+ * issued for OUR client id and that the email is verified, then sign in (or create) the account with that email.
+ */
+export async function googleLogin(credential, meta) {
+  if (!env.GOOGLE_CLIENT_ID) throw new ApiError(503, 'GOOGLE_NOT_CONFIGURED', 'Google sign-in is not available right now.');
+  let info;
+  try {
+    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+    info = await res.json();
+    if (!res.ok) info = null;
+  } catch {
+    throw new ApiError(502, 'GOOGLE_UNREACHABLE', 'Could not reach Google. Please try again.');
+  }
+  const issuerOk = info && ['accounts.google.com', 'https://accounts.google.com'].includes(info.iss);
+  if (!info || !issuerOk || info.aud !== env.GOOGLE_CLIENT_ID || String(info.email_verified) !== 'true' || !info.email) {
+    throw ApiError.unauthorized('Google sign-in failed. Please try again.');
+  }
+  const email = normalizeEmail(info.email);
+  const existing = await prisma.user.findUnique({ where: { email }, select: { isBanned: true } });
+  if (existing?.isBanned) throw ApiError.forbidden('This account has been suspended.');
+  const result = await finishEmailLogin(email, meta);
+  return { ...result, googleName: info.name || null };
 }
 
 async function issueTokens(user, meta, family = crypto.randomUUID(), adminSession = false) {

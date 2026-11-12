@@ -79,7 +79,7 @@ function RequireAuth({ allowNoProfile = false, roles }) {
   if (status === 'guest')
     return (
       <div className="container-page py-10">
-        <EmptyState icon="lock" title="Please log in to continue" action={<button className="btn btn-primary" onClick={() => openAuth(location.pathname)}>Log in with mobile number</button>}>
+        <EmptyState icon="lock" title="Please log in to continue" action={<button className="btn btn-primary" onClick={() => openAuth(location.pathname)}>Log in</button>}>
           This part of Mi Vanjari is only available to verified community members — it keeps everyone’s information safe.
         </EmptyState>
       </div>

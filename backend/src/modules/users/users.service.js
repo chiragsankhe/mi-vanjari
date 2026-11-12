@@ -108,7 +108,7 @@ export async function createProfile(userId, input) {
   if (exists) throw ApiError.conflict('Profile already exists — use update instead');
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { intents: true, email: true } });
   const { familyContacts, phone, ...rest } = input;
-  await savePhone(userId, phone, { required: true });
+  await savePhone(userId, phone);
   if (!rest.email && user.email) rest.email = user.email; // the login email is the contact email by default
   const data = toDbData(withAstrology(rest));
   if (data.isMatrimonial === undefined) data.isMatrimonial = user.intents.includes('MATRIMONY') && !matrimonyMissing(data).length;

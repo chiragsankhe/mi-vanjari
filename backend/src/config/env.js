@@ -29,6 +29,8 @@ const schema = z.object({
   MSG91_AUTH_KEY: z.string().optional().default(''),
   MSG91_TEMPLATE_ID: z.string().optional().default(''),
   OTP_TTL_MINUTES: z.coerce.number().default(5),
+  // Google sign-in: the OAuth "Web client ID" from Google Cloud Console (not a secret). Empty = Google button hidden.
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
 
   CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
   CLOUDINARY_API_KEY: z.string().optional().default(''),

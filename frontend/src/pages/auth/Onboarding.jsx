@@ -60,7 +60,7 @@ export default function Onboarding() {
   useScrollTop(idx);
 
   const form = useForm({
-    resolver: zodResolver(makeProfileSchema({ requireEmail: true, requirePhone: !user?.phoneVerified })),
+    resolver: zodResolver(makeProfileSchema()),
     defaultValues: { ...profileDefaults(), email: user?.email || '', phone: user?.phone?.slice(-10) || '', isMatrimonial: goals.includes('MATRIMONY') },
     mode: 'onTouched',
   });
@@ -229,9 +229,9 @@ export default function Onboarding() {
             <motion.div key={current} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.3 }}>
               {current === 'contact' && (
                 <>
-                  <h2 className="mb-1 font-serif text-2xl font-semibold">Basic details</h2>
-                  <p className="mb-5 text-sm text-muted">So the community knows who you are and how to reach you.</p>
-                  <ContactSection form={form} phone={user?.phone} phoneVerified={user?.phoneVerified} />
+                  <h2 className="mb-1 font-serif text-2xl font-semibold">Almost done</h2>
+                  <p className="mb-5 text-sm text-muted">Just your name and where you live — that's all we need to begin.</p>
+                  <ContactSection form={form} phone={user?.phone} phoneVerified={user?.phoneVerified} email={user?.email} />
                 </>
               )}
               {current === 'personal' && <BasicSection form={form} withName={false} />}

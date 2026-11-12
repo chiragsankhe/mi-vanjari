@@ -179,7 +179,7 @@ export function Header() {
               <button className="btn btn-outline btn-sm hidden sm:inline-flex" onClick={() => openAuth()}>
                 {t('login')}
               </button>
-              <button className="btn btn-primary btn-sm !min-h-8 !gap-1 !px-3 !text-xs sm:!min-h-9 sm:!px-4 sm:!text-[13px]" onClick={() => openAuth()}>
+              <button className="btn btn-primary btn-sm !min-h-8 !gap-1 !px-3 !text-xs sm:!min-h-9 sm:!px-4 sm:!text-[13px]" onClick={() => openAuth(null, 'signup')}>
                 <span className="sm:hidden">{t('join_short')}</span>
                 <span className="hidden sm:inline">{t('join')}</span>
               </button>
@@ -228,7 +228,7 @@ export function Header() {
                     className="btn btn-primary w-full"
                     onClick={() => {
                       setDrawer(false);
-                      openAuth();
+                      openAuth(null, 'signup');
                     }}
                   >
                     {t('join')}

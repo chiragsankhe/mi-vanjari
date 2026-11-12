@@ -96,6 +96,19 @@ Razorpay → KYC (1–3 days) → **API keys** → Key ID + Secret. **Webhooks �
 
 ---
 
+## 10. "Continue with Google" and mobile-number login (optional)
+
+The login window always offers **email code**. Two more options switch on by themselves once their keys exist in Render (Environment tab) — until then they are simply hidden.
+
+**Google** (free)
+1. console.cloud.google.com → create a project → *APIs & Services → OAuth consent screen* (External, app name "Mi Vanjari", your support email, publish).
+2. *Credentials → Create credentials → OAuth client ID → Web application*. Under **Authorised JavaScript origins** add `https://mivanjari.com` (and `https://www.mivanjari.com`). No redirect URI is needed.
+3. Copy the **Client ID** (ends in `.apps.googleusercontent.com`; it is not a secret) into Render as `GOOGLE_CLIENT_ID`.
+
+**Mobile number (SMS OTP)** — MSG91, paid per SMS (about ₹0.2–0.25)
+1. msg91.com → sign up → complete DLT registration for your business (required by Indian law for any SMS).
+2. Create an **OTP template** and get it approved. Put the *Auth key* in Render as `MSG91_AUTH_KEY` and the template id as `MSG91_TEMPLATE_ID`.
+
 ## Later
 
 - **Update the site:** `git add . && git commit -m "…" && git push` → Render rebuilds and redeploys (~5 min).

@@ -66,6 +66,24 @@ router.post(
   }),
 );
 
+/** GET /auth/config — which sign-in methods are switched on (the login window only shows these). */
+router.get('/config', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({ google: env.GOOGLE_CLIENT_ID || null, sms: env.otpProvider === 'msg91' || !env.isProd, email: env.mailConfigured || !env.isProd });
+});
+
+/** POST /auth/google { credential } → same response as verify-otp */
+router.post(
+  '/google',
+  verifyLimiter,
+  validate({ body: z.object({ credential: z.string().min(20).max(4000) }) }),
+  h(async (req, res) => {
+    const { user, isNewUser, accessToken, refreshToken } = await auth.googleLogin(req.body.credential, { userAgent: req.get('user-agent'), ip: req.ip });
+    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions());
+    res.json({ accessToken, user, isNewUser });
+  }),
+);
+
 /** POST /auth/refresh — rotates the refresh cookie (body.refreshToken accepted for native clients). */
 router.post(
   '/refresh',

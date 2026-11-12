@@ -236,12 +236,12 @@ export function BasicSection({ form, withName = true }) {
  * Community-only members fill just this.
  */
 /** Email + mobile number. A number verified by SMS login is shown read-only. */
-export function ContactFields({ form, phone, phoneVerified, requireEmail = true }) {
+export function ContactFields({ form, phone, phoneVerified, requireEmail = false, requirePhone = false, hideEmail = false }) {
   const { register, formState } = form;
   const e = formState.errors;
   return (
     <>
-      <Field label={`Email ID${requireEmail ? ' *' : ''}`} type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" error={e.email?.message} {...register('email')} />
+      {!hideEmail && <Field label={`Email ID${requireEmail ? ' *' : ' (optional)'}`} type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" error={e.email?.message} {...register('email')} />}
       {phoneVerified && phone ? (
         <label className="block">
           <span className="field-label">Mobile number</span>
@@ -250,19 +250,19 @@ export function ContactFields({ form, phone, phoneVerified, requireEmail = true 
           </span>
         </label>
       ) : (
-        <Field label="Mobile number *" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="10-digit mobile number" hint="Shown only to people you approve" error={e.phone?.message} {...register('phone')} />
+        <Field label={`Mobile number${requirePhone ? ' *' : ' (optional)'}`} type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="10-digit mobile number" hint="Shown only to people you approve" error={e.phone?.message} {...register('phone')} />
       )}
     </>
   );
 }
 
-export function ContactSection({ form, phone, phoneVerified }) {
+export function ContactSection({ form, phone, phoneVerified, email }) {
   const { register, formState } = form;
   const e = formState.errors;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Full name *" placeholder="e.g. Aditya Chavan" autoComplete="name" error={e.fullName?.message} {...register('fullName')} className="sm:col-span-2" />
-      <ContactFields form={form} phone={phone} phoneVerified={phoneVerified} />
+      <ContactFields form={form} phone={phone} phoneVerified={phoneVerified} hideEmail={Boolean(email)} />
       <Field label="City / village *" placeholder="e.g. Boisar" error={e.currentCity?.message} {...register('currentCity')} />
       <Field as="select" label="State *" error={e.currentState?.message} {...register('currentState')}>
         {STATES.map((s) => (

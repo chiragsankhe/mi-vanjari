@@ -47,6 +47,14 @@ services:
         sync: false
       - key: MAIL_FROM
         value: Mi Vanjari <mivanjari1111@gmail.com>
+      # Google sign-in — Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web). Optional.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      # login by mobile number (SMS OTP) — MSG91 auth key + DLT-approved OTP template id. Optional.
+      - key: MSG91_AUTH_KEY
+        sync: false
+      - key: MSG91_TEMPLATE_ID
+        sync: false
       # photos — Cloudinary → Settings → API Keys
       - key: CLOUDINARY_CLOUD_NAME
         value: dcmyvkpl5

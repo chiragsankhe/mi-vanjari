@@ -35,6 +35,7 @@ export const useUI = create((set) => ({
 
   authOpen: false,
   authRedirect: null,
-  openAuth: (redirect = null) => set({ authOpen: true, authRedirect: redirect }),
+  authMode: 'login',
+  openAuth: (redirect = null, mode = 'login') => set({ authOpen: true, authRedirect: redirect, authMode: mode }),
   closeAuth: () => set({ authOpen: false, authRedirect: null }),
 }));
