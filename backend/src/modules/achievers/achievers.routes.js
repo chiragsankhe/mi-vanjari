@@ -44,8 +44,11 @@ router.get(
       ...(q && { OR: [{ name: { contains: String(q), mode: 'insensitive' } }, { company: { contains: String(q), mode: 'insensitive' } }, { schoolName: { contains: String(q), mode: 'insensitive' } }] }),
     };
     const orderBy = type === 'ACADEMIC' ? [{ year: 'desc' }, { percentage: 'desc' }] : [{ createdAt: 'desc' }];
-    const [items, total] = await Promise.all([prisma.achievement.findMany({ where, orderBy, skip, take }), prisma.achievement.count({ where })]);
-    res.json(pageResult(items, total, { page, limit }));
+    const [items, total] = await Promise.all([
+      prisma.achievement.findMany({ where, orderBy, skip, take, include: { user: { select: { profile: { select: { isDemo: true } } } } } }),
+      prisma.achievement.count({ where }),
+    ]);
+    res.json(pageResult(items.map(({ user, ...a }) => ({ ...a, isSample: Boolean(user?.profile?.isDemo) })), total, { page, limit }));
   }),
 );
 

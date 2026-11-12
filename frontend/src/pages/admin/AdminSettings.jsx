@@ -1,9 +1,53 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge, Field, Icon, Skeleton, Spinner } from '../../components/ui';
-import { errorMessage, get, put } from '../../lib/api';
+import { Badge, ConfirmDialog, Field, Icon, Skeleton, Spinner } from '../../components/ui';
+import { api, errorMessage, get, put } from '../../lib/api';
 import { cn, timeAgo } from '../../lib/utils';
+
+/** Sample content: fake community members, posts, listings and achievers (tagged "Sample") so a new visitor sees a busy site. */
+function SampleContentCard() {
+  const qc = useQueryClient();
+  const [confirm, setConfirm] = useState(false);
+  const { data } = useQuery({ queryKey: ['admin', 'sample'], queryFn: () => get('/admin/sample-content') });
+  const done = (msg) => () => {
+    qc.invalidateQueries({ queryKey: ['admin', 'sample'] });
+    toast.success(msg);
+    setConfirm(false);
+  };
+  const add = useMutation({ mutationFn: () => api.post('/admin/sample-content'), onSuccess: done('Sample content added'), onError: (e) => toast.error(errorMessage(e)) });
+  const remove = useMutation({ mutationFn: () => api.delete('/admin/sample-content'), onSuccess: done('Sample content removed'), onError: (e) => toast.error(errorMessage(e)) });
+  return (
+    <div className="card h-max space-y-3 p-5 lg:col-span-2">
+      <h3 className="flex items-center gap-2 font-semibold">
+        <Icon name="users" size={17} className="text-primary" /> Sample content
+        {data && <Badge tone={data.present ? 'green' : 'gray'}>{data.present ? 'SHOWING' : 'OFF'}</Badge>}
+      </h3>
+      <p className="text-xs leading-relaxed text-muted">
+        Adds example community members, posts, businesses, wedding services and achievers so new visitors see how the site looks when it is busy. Every entry carries a <b>Sample</b> tag, uses illustrated avatars, has no phone number and cannot be messaged or followed.
+        There are no matrimony profiles and sample entries are never counted in the public member numbers. Remove it all with one click when real members have filled the site.
+      </p>
+      {data?.present && (
+        <p className="text-xs text-muted">
+          Now showing: {data.members} members · {data.posts} posts · {data.businesses} businesses · {data.services} wedding services · {data.achievements} achievers
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button className="btn btn-primary btn-sm" onClick={() => add.mutate()} disabled={add.isPending}>
+          {add.isPending ? <Spinner size={15} /> : <><Icon name="plus" size={15} /> {data?.present ? 'Top up sample content' : 'Add sample content'}</>}
+        </button>
+        {data?.present && (
+          <button className="btn btn-outline btn-sm" onClick={() => setConfirm(true)}>
+            <Icon name="trash" size={15} /> Remove all sample content
+          </button>
+        )}
+      </div>
+      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} onConfirm={() => remove.mutate()} loading={remove.isPending} danger confirmLabel="Remove" title="Remove all sample content?">
+        This deletes only the sample members, posts, listings and achievers. Real members and their content are not touched.
+      </ConfirmDialog>
+    </div>
+  );
+}
 
 export function AdminSettings() {
   const qc = useQueryClient();
@@ -65,6 +109,7 @@ export function AdminSettings() {
         <p className="text-[11px] text-muted">Card / UPI details never touch our server — Razorpay collects them. We only store the order, the result and the receipt.</p>
         {data?.updatedAt && <p className="text-[11px] text-muted">Last changed {timeAgo(data.updatedAt)}</p>}
       </div>
+      <SampleContentCard />
     </div>
   );
 }

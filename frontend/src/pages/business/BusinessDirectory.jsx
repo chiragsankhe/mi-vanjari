@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, PageHeader, Skeleton, Stagger, StaggerItem, VerifiedDot } from '../../components/ui';
+import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, PageHeader, SampleTag, Skeleton, Stagger, StaggerItem, VerifiedDot } from '../../components/ui';
 import { useDebounce, usePaged } from '../../hooks';
 import { ChatWithOwner } from '../../components/chat/ChatWithOwner';
 import { get } from '../../lib/api';
@@ -13,6 +13,7 @@ export function BusinessCard({ b }) {
     <Link to={`/business/${b.id}`} className="group card card-hover flex h-full flex-col overflow-hidden p-2.5">
       <div className="relative h-48 overflow-hidden rounded-lg">
         <Img src={b.photos?.[0]} alt={b.name} fallbackIcon="briefcase" className="size-full object-cover transition duration-700 group-hover:scale-105" />
+        {b.isSample && <SampleTag className="absolute top-2.5 right-2.5 bg-white" />}
       </div>
       <div className="flex flex-1 flex-col p-2.5 pt-3.5">
         <span className="w-fit bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{b.category}</span>

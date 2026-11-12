@@ -9,7 +9,7 @@ import { FamilyContactsCard } from '../../components/profile/FamilyContactsCard'
 import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import { KundaliResult } from '../../components/common/KundaliResult';
 import { FollowButton, ReportDialogBody, ShortlistButton } from '../../components/profile/ProfileBits';
-import { Badge, ConfirmDialog, EmptyState, ErrorState, Icon, Img, Modal, PageLoader, Reveal, Spinner, VerifiedDot } from '../../components/ui';
+import { Badge, ConfirmDialog, EmptyState, ErrorState, Icon, Img, Modal, PageLoader, Reveal, SampleNotice, SampleTag, Spinner, VerifiedDot } from '../../components/ui';
 import { useScreenshotGuard } from '../../hooks';
 import { errorCode, errorMessage, get, post, put } from '../../lib/api';
 import { heightLabel, LABELS, lastActive, telLink, whatsappLink } from '../../lib/utils';
@@ -179,7 +179,8 @@ export default function ProfileDetail() {
             </motion.div>
           )}
 
-          <div className="flex gap-2">
+          {p.isSample && <SampleNotice>This profile shows how the community looks. It is not a real member, so following and messaging are switched off.</SampleNotice>}
+          <div className={p.isSample ? 'hidden' : 'flex gap-2'}>
             <FollowButton userId={p.userId} status={p.followStatus} accountType={p.accountType} className="flex-1" onChange={() => refetch()} />
             {p.canMessage && (
               <button className="btn btn-outline flex-1" onClick={() => openChat.mutate()} disabled={openChat.isPending}>
@@ -197,6 +198,7 @@ export default function ProfileDetail() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-serif text-3xl font-semibold md:text-4xl">{p.fullName}</h1>
               {p.isVerified && <VerifiedDot size={22} />}
+              {p.isSample && <SampleTag />}
               {p.accountType === 'PRIVATE' && (
                 <Badge tone="gray">
                   <Icon name="lock" size={11} /> Private

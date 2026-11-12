@@ -187,6 +187,23 @@ export function Badge({ children, tone = 'gold', className }) {
   return <span className={cn('inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold', tones[tone], className)}>{children}</span>;
 }
 
+/** Marks sample content (added by the admin to show how the site looks). Never shown for real members. */
+export function SampleTag({ className }) {
+  return (
+    <span title="A sample entry that shows how the site looks. Not a real member." className={cn('inline-flex shrink-0 items-center rounded-full border border-[#c9b8f0] bg-[#f1ebff] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#5b3fa0] uppercase', className)}>
+      Sample
+    </span>
+  );
+}
+
+export function SampleNotice({ children, className }) {
+  return (
+    <p className={cn('rounded-lg border border-[#c9b8f0] bg-[#f1ebff] px-4 py-3 text-center text-xs leading-relaxed text-[#5b3fa0]', className)}>
+      <b>Sample entry.</b> {children || 'It shows how this section looks and is not a real member, so contact is switched off.'}
+    </p>
+  );
+}
+
 export function EmptyState({ icon = 'star', title, children, action }) {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center px-6 py-14 text-center">

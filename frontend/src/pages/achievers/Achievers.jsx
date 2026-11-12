@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { EmptyState, Icon, Img, LoadMoreSentinel, PageHeader, Segment, Skeleton, Stagger, StaggerItem } from '../../components/ui';
+import { EmptyState, Icon, Img, LoadMoreSentinel, PageHeader, SampleTag, Segment, Skeleton, Stagger, StaggerItem } from '../../components/ui';
 import { usePaged } from '../../hooks';
 import { get } from '../../lib/api';
 import { cn } from '../../lib/utils';
@@ -12,7 +12,7 @@ function AchieverCard({ a, rank }) {
   return (
     <motion.article whileHover={{ y: -6 }} className="card relative h-full overflow-hidden p-2.5">
       <div className="relative h-56 overflow-hidden rounded-lg">
-        <Img src={a.photoUrl} alt={a.name} fallbackIcon={academic ? 'graduation' : 'award'} className="size-full object-cover object-top" />
+        <Img src={a.photoUrl} alt={a.name} fallbackIcon={academic ? 'graduation' : 'award'} className={cn('size-full object-cover', a.isSample ? 'object-[center_35%]' : 'object-top')} />
         {academic && a.percentage != null && (
           <span className="absolute right-2.5 bottom-2.5 rounded-lg bg-white/95 px-3 py-1.5 text-center shadow">
             <b className="block font-serif text-xl leading-none text-primary">{a.percentage}%</b>
@@ -25,7 +25,9 @@ function AchieverCard({ a, rank }) {
       </div>
       <div className="p-2.5 pt-3.5">
         <span className="inline-block bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{academic ? `Academic excellence · ${a.year ?? ''}` : 'Professional excellence'}</span>
-        <h2 className="mt-2 font-serif text-[19px] font-semibold">{a.name}</h2>
+        <h2 className="mt-2 flex flex-wrap items-center gap-2 font-serif text-[19px] font-semibold">
+          {a.name} {a.isSample && <SampleTag />}
+        </h2>
         <p className="mt-1 text-xs text-muted">{academic ? [a.stream, a.schoolName].filter(Boolean).join(' · ') : [a.role, a.company, a.city].filter(Boolean).join(' · ')}</p>
         {a.description && <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[#5b534d]">{a.description}</p>}
         {a.linkedinUrl && (

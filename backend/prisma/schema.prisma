@@ -234,6 +234,8 @@ model Profile {
   showPhone   Boolean     @default(false) // reveal phone to accepted followers
   isActive    Boolean     @default(true)
   isVerified  Boolean     @default(false)
+  /// sample content added from Admin → Settings (shown with a "Sample" tag; cannot be messaged or followed)
+  isDemo      Boolean     @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

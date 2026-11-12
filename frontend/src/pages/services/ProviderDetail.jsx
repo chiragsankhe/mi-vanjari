@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ContactButtons, Stars } from '../../components/common/Listing';
-import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, Spinner } from '../../components/ui';
+import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, SampleTag, Spinner } from '../../components/ui';
 import { errorMessage, get, post } from '../../lib/api';
 import { cn, formatINR, timeAgo } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
@@ -115,7 +115,9 @@ export default function ProviderDetail() {
               {p.isFeatured && <Badge>Featured</Badge>}
               {p.status !== 'APPROVED' && <Badge tone="gray">{p.status === 'PENDING' ? 'Awaiting approval' : 'Needs changes'}</Badge>}
             </div>
-            <h1 className="mt-3 font-serif text-3xl font-semibold">{p.businessName}</h1>
+            <h1 className="mt-3 font-serif text-3xl font-semibold">
+              {p.businessName} {p.isSample && <SampleTag className="align-middle" />}
+            </h1>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
               <Icon name="map" size={15} /> {p.location}
             </p>
@@ -129,8 +131,8 @@ export default function ProviderDetail() {
                 Starting at <b className="font-serif text-xl">{formatINR(p.priceFrom)}</b>
               </p>
             )}
-            {authed ? (
-              <ContactButtons phone={p.phone} whatsapp={p.whatsapp} name={p.businessName} className="mt-5" chat={{ type: 'SERVICE', id: p.id, ownerId: p.userId }} />
+            {authed || p.isSample ? (
+              <ContactButtons sample={p.isSample} phone={p.phone} whatsapp={p.whatsapp} name={p.businessName} className="mt-5" chat={{ type: 'SERVICE', id: p.id, ownerId: p.userId }} />
             ) : (
               <button className="btn btn-primary mt-5 w-full" onClick={() => openAuth()}>
                 <Icon name="lock" size={16} /> Log in to see contact

@@ -48,6 +48,12 @@ const providerSelect = {
   phone: true,
   whatsapp: true,
   category: { select: { id: true, name: true, nameMr: true, slug: true, icon: true } },
+  user: { select: { profile: { select: { isDemo: true } } } },
+};
+/** Marks sample listings (added by the admin) and removes the owner record + any phone number from the response. */
+const asSample = ({ user, ...p }) => {
+  const isSample = Boolean(user?.profile?.isDemo);
+  return { ...p, isSample, ...(isSample && 'phone' in p && { phone: null, whatsapp: null }) };
 };
 /** Listing cards never carry contact numbers (they are shown on the detail page to logged-in members). */
 const { phone: _p, whatsapp: _w, ...listSelect } = providerSelect;
@@ -87,7 +93,7 @@ router.get(
       orderBy: { ratingAvg: 'desc' },
       take: 4,
     });
-    res.json(rows);
+    res.json(rows.map(asSample));
   }),
 );
 
@@ -120,9 +126,9 @@ router.get(
     const isOwner = p && req.user?.id === p.userId;
     if (!p || (p.status !== 'APPROVED' && !isOwner && !isAdminSession(req.user))) throw ApiError.notFound('Service not found');
     res.json({
-      ...p,
-      phone: req.user ? p.phone : null,
-      whatsapp: req.user ? p.whatsapp : null,
+      ...asSample(p),
+      phone: req.user && !p.user?.profile?.isDemo ? p.phone : null,
+      whatsapp: req.user && !p.user?.profile?.isDemo ? p.whatsapp : null,
       isOwner,
       reviews: p.reviews.map((r) => ({ ...r, user: { fullName: r.user.profile?.fullName || 'Member', photoUrl: r.user.profile?.profilePhotoUrl } })),
       myReview: req.user ? p.reviews.find((r) => r.userId === req.user.id) || null : null,
@@ -156,7 +162,7 @@ router.get(
       prisma.serviceProvider.findMany({ where, select: listSelect, orderBy, skip, take }),
       prisma.serviceProvider.count({ where }),
     ]);
-    res.json({ category, ...pageResult(items, total, { page, limit }) });
+    res.json({ category, ...pageResult(items.map(asSample), total, { page, limit }) });
   }),
 );
 

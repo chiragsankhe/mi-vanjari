@@ -26,11 +26,12 @@ router.get(
     if (Date.now() - statsCache.at < 5 * 60_000 && statsCache.data) return res.json(statsCache.data);
     const monthAgo = new Date(Date.now() - 30 * 86400_000);
     const [members, connections, businesses, services, joinedThisMonth] = await Promise.all([
-      prisma.profile.count({ where: { isActive: true } }),
+      // real members only — sample content is never counted
+      prisma.profile.count({ where: { isActive: true, isDemo: false } }),
       prisma.follow.count({ where: { status: 'ACCEPTED' } }),
-      prisma.business.count({ where: { isActive: true, status: 'APPROVED' } }),
-      prisma.serviceProvider.count({ where: { isActive: true, status: 'APPROVED' } }),
-      prisma.profile.count({ where: { createdAt: { gte: monthAgo } } }),
+      prisma.business.count({ where: { isActive: true, status: 'APPROVED', user: { profile: { isDemo: false } } } }),
+      prisma.serviceProvider.count({ where: { isActive: true, status: 'APPROVED', user: { profile: { isDemo: false } } } }),
+      prisma.profile.count({ where: { createdAt: { gte: monthAgo }, isDemo: false } }),
     ]);
     statsCache = { at: Date.now(), data: { members, connections, businesses, services, joinedThisMonth } };
     res.json(statsCache.data);
@@ -66,7 +67,7 @@ router.get(
 
 // ── Posts / community updates ──────────────────────────────────────────────
 
-const authorSelect = { profile: { select: { userId: true, fullName: true, profilePhotoUrl: true, isVerified: true, currentCity: true } } };
+const authorSelect = { profile: { select: { userId: true, fullName: true, profilePhotoUrl: true, isVerified: true, currentCity: true, isDemo: true } } };
 
 async function shapePosts(rows, viewerId) {
   const liked = viewerId

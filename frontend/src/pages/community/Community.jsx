@@ -5,7 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { VanjariFilm } from '../../components/history/VanjariFilm';
 import { ProfileCard, ProfileCardSkeleton, ReportDialogBody } from '../../components/profile/ProfileBits';
-import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
+import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, SampleTag, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
 import { useDebounce, usePaged } from '../../hooks';
 import { del, errorMessage, get, post, upload } from '../../lib/api';
 import { cn, timeAgo } from '../../lib/utils';
@@ -127,7 +127,7 @@ export function PostCard({ post: p }) {
         </Link>
         <div className="min-w-0 flex-1">
           <Link to={`/profile/${p.author.userId}`} className="flex items-center gap-1.5 text-sm font-semibold hover:text-primary">
-            {p.author.fullName} {p.author.isVerified && <VerifiedDot size={14} />}
+            {p.author.fullName} {p.author.isVerified && <VerifiedDot size={14} />} {p.author.isDemo && <SampleTag />}
           </Link>
           <small className="text-xs text-muted">
             {p.author.currentCity} · {timeAgo(p.createdAt)}

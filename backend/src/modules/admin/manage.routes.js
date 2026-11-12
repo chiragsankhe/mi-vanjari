@@ -8,6 +8,7 @@ import { validate } from '../../middleware/validate.js';
 import { audit } from '../../services/audit.service.js';
 import { activeMembershipWhere, grantMembership } from '../../services/membership.service.js';
 import { notify } from '../../services/notification.service.js';
+import { addSampleContent, removeSampleContent, sampleStatus } from '../../services/sample-content.js';
 import { getSettings, updateSettings } from '../../services/settings.service.js';
 import { maskPhone } from '../../utils/format.js';
 import { ApiError, h, pageResult, paginate } from '../../utils/http.js';
@@ -330,6 +331,29 @@ router.put(
     await audit(req, 'SETTINGS_UPDATED', { details: { before, after } });
     done(res);
     res.json(after);
+  }),
+);
+
+// ── Sample content (so a new visitor sees how the site looks when it is busy) ──
+router.get('/sample-content', admin, h(async (_req, res) => res.json(await sampleStatus())));
+router.post(
+  '/sample-content',
+  admin,
+  h(async (req, res) => {
+    const result = await addSampleContent();
+    await audit(req, 'SAMPLE_CONTENT_ADDED', { details: result.added });
+    done(res);
+    res.json(result);
+  }),
+);
+router.delete(
+  '/sample-content',
+  admin,
+  h(async (req, res) => {
+    const result = await removeSampleContent();
+    await audit(req, 'SAMPLE_CONTENT_REMOVED', { details: { removed: result.removed } });
+    done(res);
+    res.json(result);
   }),
 );
 

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { errorMessage, inBatches, upload } from '../../lib/api';
 import { cn, formatINR, telLink, whatsappLink } from '../../lib/utils';
 import { ChatWithOwner } from '../chat/ChatWithOwner';
-import { Badge, Icon, Img, Spinner } from '../ui';
+import { Badge, Icon, Img, SampleNotice, SampleTag, Spinner } from '../ui';
 
 export function Stars({ value = 0, size = 14, className }) {
   return (
@@ -28,6 +28,7 @@ export function ProviderCard({ p }) {
             <Icon name="star" size={11} filled /> Featured
           </Badge>
         )}
+        {p.isSample && <SampleTag className="absolute top-2.5 right-2.5 bg-white" />}
       </div>
       <div className="p-2.5 pt-3.5">
         <span className="text-[10px] font-bold tracking-[0.1em] text-primary uppercase">{p.category?.name}</span>
@@ -39,7 +40,7 @@ export function ProviderCard({ p }) {
           <Stars value={p.ratingAvg} size={13} />
           <b>{p.ratingAvg ? p.ratingAvg.toFixed(1) : 'New'}</b>
           {p.ratingCount > 0 && <span className="text-muted">({p.ratingCount})</span>}
-          <ChatWithOwner type="SERVICE" id={p.id} ownerId={p.userId} variant="icon" className="ml-auto" />
+          {!p.isSample && <ChatWithOwner type="SERVICE" id={p.id} ownerId={p.userId} variant="icon" className="ml-auto" />}
         </div>
       </div>
     </Link>
@@ -47,7 +48,8 @@ export function ProviderCard({ p }) {
 }
 
 /** Chat · Call · WhatsApp for a listing. `chat` = { type: 'BUSINESS'|'SERVICE', id, ownerId } */
-export function ContactButtons({ phone, whatsapp, name, className, chat }) {
+export function ContactButtons({ phone, whatsapp, name, className, chat, sample = false }) {
+  if (sample) return <SampleNotice className={className} />;
   return (
     <div className={cn('space-y-2', className)}>
       {chat && <ChatWithOwner {...chat} label="Chat with owner" className="w-full" />}

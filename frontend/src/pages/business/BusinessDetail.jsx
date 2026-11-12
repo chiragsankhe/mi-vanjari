@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ContactButtons } from '../../components/common/Listing';
 import { ReportDialogBody } from '../../components/profile/ProfileBits';
-import { Avatar, ConfirmDialog, EmptyState, Icon, Img, Modal, PageLoader, VerifiedDot } from '../../components/ui';
+import { Avatar, ConfirmDialog, EmptyState, Icon, Img, Modal, PageLoader, SampleTag, VerifiedDot } from '../../components/ui';
 import { del, errorMessage, get } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
@@ -63,7 +63,9 @@ export default function BusinessDetail() {
         <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 lg:sticky lg:top-24 lg:h-max">
           <div className="card p-6 shadow-[var(--shadow-card)]">
             <span className="bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{b.category}</span>
-            <h1 className="mt-3 font-serif text-3xl font-semibold">{b.name}</h1>
+            <h1 className="mt-3 font-serif text-3xl font-semibold">
+              {b.name} {b.isSample && <SampleTag className="align-middle" />}
+            </h1>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
               <Icon name="map" size={15} /> {b.location}
             </p>
@@ -83,8 +85,8 @@ export default function BusinessDetail() {
                 </span>
               </Link>
             )}
-            {authed ? (
-              <ContactButtons phone={b.phone} whatsapp={b.whatsapp} name={b.name} className="mt-5" chat={{ type: 'BUSINESS', id: b.id, ownerId: b.owner?.userId || b.userId }} />
+            {authed || b.isSample ? (
+              <ContactButtons sample={b.isSample} phone={b.phone} whatsapp={b.whatsapp} name={b.name} className="mt-5" chat={{ type: 'BUSINESS', id: b.id, ownerId: b.owner?.userId || b.userId }} />
             ) : (
               <button className="btn btn-primary mt-5 w-full" onClick={() => openAuth()}>
                 <Icon name="lock" size={16} /> Log in to see contact

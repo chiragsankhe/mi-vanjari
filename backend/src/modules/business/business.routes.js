@@ -55,10 +55,14 @@ const select = {
   status: true,
   createdAt: true,
   userId: true,
-  user: { select: { profile: { select: { fullName: true, profilePhotoUrl: true, isVerified: true } } } },
+  user: { select: { profile: { select: { fullName: true, profilePhotoUrl: true, isVerified: true, isDemo: true } } } },
 };
 
-const shape = (b) => ({ ...b, owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null, user: undefined });
+// Sample listings (added by the admin) never carry a phone number
+const shape = (b) => {
+  const isSample = Boolean(b.user?.profile?.isDemo);
+  return { ...b, ...(isSample && { phone: null, whatsapp: null }), isSample, owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null, user: undefined };
+};
 
 /** GET /business/categories */
 router.get('/categories', (_req, res) => res.json(BUSINESS_CATEGORIES));

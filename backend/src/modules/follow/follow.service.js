@@ -24,6 +24,7 @@ export async function follow(senderId, receiverId) {
   if (senderId === receiverId) throw ApiError.badRequest('You cannot follow yourself');
   const target = await prisma.profile.findUnique({ where: { userId: receiverId } });
   if (!target) throw ApiError.notFound('Member not found');
+  if (target.isDemo) throw ApiError.forbidden('This is a sample profile, shown to illustrate the site. It is not a real member.', 'SAMPLE_PROFILE');
 
   const rel = await getRelationship(senderId, receiverId);
   if (rel.blocked) throw ApiError.forbidden('You cannot follow this member');

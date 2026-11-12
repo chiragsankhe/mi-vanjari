@@ -77,6 +77,7 @@ export function toProfileCard(profile, { full, followStatus = 'NONE', matchScore
     matchScore,
     shortlisted,
     locked: !full,
+    isSample: Boolean(profile.isDemo),
   };
   if (!full) {
     // Private profile, not connected yet: the main photo and the basics are visible so families can decide

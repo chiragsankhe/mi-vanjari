@@ -8,7 +8,7 @@ import { del, errorCode, errorMessage, post } from '../../lib/api';
 import { cmToFeet, cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 import { useUI } from '../../store/ui';
-import { Icon, Img, Spinner, VerifiedDot } from '../ui';
+import { Icon, Img, SampleTag, Spinner, VerifiedDot } from '../ui';
 
 /** Follow button with optimistic state. */
 export function FollowButton({ userId, status: initial, accountType, className, size = 'md', onChange }) {
@@ -140,7 +140,7 @@ export function ProfileCard({ p, showShortlist = true }) {
       </div>
       <div className="p-3.5 sm:p-4">
         <h3 className="flex items-center gap-1.5 font-serif text-[15px] font-semibold sm:text-base">
-          <span className="truncate">{p.fullName}</span> {p.isVerified && <VerifiedDot />}
+          <span className="truncate">{p.fullName}</span> {p.isVerified && <VerifiedDot />} {p.isSample && <SampleTag />}
         </h3>
         <p className="mt-1 truncate text-xs text-muted">
           {p.age ? `${p.age} ${t('years')}` : p.ageRange ? `${p.ageRange} ${t('years')}` : p.currentCity}

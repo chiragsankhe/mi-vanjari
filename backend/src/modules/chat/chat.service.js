@@ -12,8 +12,15 @@ const pair = (a, b) => (a < b ? [a, b] : [b, a]);
  *  • an ACCEPTED follow in either direction (member-to-member, incl. matrimony), or
  *  • an enquiry conversation — started from the other person's business / wedding-service listing.
  */
+/** Sample profiles (added by the admin to show how the site looks) are not real people — nobody can message them. */
+export async function assertNotSample(userId) {
+  const p = await prisma.profile.findUnique({ where: { userId }, select: { isDemo: true } });
+  if (p?.isDemo) throw ApiError.forbidden('This is a sample profile, shown to illustrate the site. It is not a real member.', 'SAMPLE_PROFILE');
+}
+
 export async function assertCanChat(senderId, receiverId) {
   if (senderId === receiverId) throw ApiError.badRequest('Invalid recipient');
+  await assertNotSample(receiverId);
   const rel = await getRelationship(senderId, receiverId);
   if (rel.blocked) throw ApiError.forbidden('You cannot message this member', 'BLOCKED');
   if (rel.connected) return;
@@ -35,6 +42,7 @@ export async function openListingChat(userId, type, listingId) {
       : await prisma.serviceProvider.findFirst({ where: { id: listingId, isActive: true, status: 'APPROVED' }, select: { userId: true, businessName: true } });
   if (!listing) throw ApiError.notFound('Listing not available');
   if (listing.userId === userId) throw ApiError.badRequest('This is your own listing');
+  await assertNotSample(listing.userId);
   const rel = await getRelationship(userId, listing.userId);
   if (rel.blocked) throw ApiError.forbidden('You cannot message this member', 'BLOCKED');
   const [participant1Id, participant2Id] = pair(userId, listing.userId);
