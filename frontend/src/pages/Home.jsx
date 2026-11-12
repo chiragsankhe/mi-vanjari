@@ -8,6 +8,7 @@ import { get } from '../lib/api';
 import { cn, formatINR } from '../lib/utils';
 import { useAuth } from '../store/auth';
 import { useUI } from '../store/ui';
+import CategoryTile from './services/CategoryTile';
 
 const HERO = 'https://images.unsplash.com/photo-1774868701808-12c52546b346?auto=format&fit=crop&w=800&q=85';
 const STACK = [
@@ -219,22 +220,10 @@ function ServicesCarousel() {
           onBlur={() => release(800)}
           className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0"
         >
-          {cats.map((c) => (
-            <Link key={c.id} to={`/services/category/${c.slug}`} className="group card card-hover relative flex min-h-[132px] w-[42vw] max-w-[230px] min-w-[150px] shrink-0 snap-start flex-col p-3.5 sm:w-[200px] sm:p-4">
-              <motion.span whileHover={{ rotate: -8, scale: 1.1 }} className="mb-2.5 grid size-10 place-items-center rounded-full bg-primary-soft text-primary sm:size-11">
-                <Icon name={c.icon} size={21} />
-              </motion.span>
-              <b className="font-serif text-[13.5px] leading-snug font-semibold text-ink sm:text-[14.5px]">{c.name}</b>
-              <small className="heading-deva mt-0.5 line-clamp-1 text-[11px] text-muted">{c.nameMr}</small>
-              <span className="mt-auto flex items-center justify-between pt-2 text-[10.5px] text-muted">
-                {c.providerCount ? `${c.providerCount} listed` : 'View'}
-                <span className="text-primary transition group-hover:translate-x-1">
-                  <Icon name="arrow" size={14} />
-                </span>
-              </span>
-            </Link>
+          {cats.map((c, i) => (
+            <CategoryTile key={c.id} c={c} index={i} className="h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 snap-start sm:h-[190px] sm:w-[230px]" />
           ))}
-          <Link to="/services" className="flex min-h-[132px] w-[42vw] max-w-[230px] min-w-[150px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-xl bg-primary p-4 text-center text-[13px] font-bold text-white shadow-[var(--shadow-cta)] sm:w-[200px]">
+          <Link to="/services" className="flex h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-xl bg-primary p-4 text-center text-[13px] font-bold text-white shadow-[var(--shadow-cta)] sm:h-[190px] sm:w-[230px]">
             All services <Icon name="arrow" size={18} />
           </Link>
         </div>

@@ -5,6 +5,7 @@ import { ProviderCard, Stars } from '../../components/common/Listing';
 import { Icon, Img, PageHeader, Reveal, Skeleton, Stagger, StaggerItem } from '../../components/ui';
 import { get } from '../../lib/api';
 import { formatINR } from '../../lib/utils';
+import CategoryTile from './CategoryTile';
 
 export default function Services() {
   const cats = useQuery({ queryKey: ['service-categories'], queryFn: () => get('/services/categories') });
@@ -32,22 +33,9 @@ export default function Services() {
           {(cats.data ?? Array.from({ length: 12 })).map((c, i) => (
             <StaggerItem key={c?.id || i}>
               {c ? (
-                <Link to={`/services/category/${c.slug}`} className="group card card-hover relative block min-h-[160px] p-4 pb-11 text-primary md:min-h-[175px] md:p-5 md:pb-12">
-                  <span className="absolute top-4 right-4 font-serif text-[13px] text-[#cfc1b4] italic">{String(i + 1).padStart(2, '0')}</span>
-                  <motion.span whileHover={{ scale: 1.15, rotate: -6 }} className="inline-block">
-                    <Icon name={c.icon} size={30} />
-                  </motion.span>
-                  <b className="mt-3 block font-serif text-[15px] leading-snug font-semibold text-ink md:mt-4 md:text-[17px]">{c.name}</b>
-                  <small className="heading-deva block text-xs text-muted">{c.nameMr}</small>
-                  <small className="mt-1 hidden text-[11px] text-muted sm:block">
-                    {c.description} · {c.providerCount} listed
-                  </small>
-                  <span className="absolute right-4 bottom-4 transition group-hover:translate-x-1">
-                    <Icon name="arrow" size={16} />
-                  </span>
-                </Link>
+                <CategoryTile c={c} index={i} className="h-[170px] md:h-[210px]" />
               ) : (
-                <Skeleton className="h-[170px]" />
+                <Skeleton className="h-[170px] md:h-[210px]" />
               )}
             </StaggerItem>
           ))}
