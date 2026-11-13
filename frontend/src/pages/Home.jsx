@@ -26,6 +26,17 @@ const MODULES = [
   { icon: 'zodiac', title: 'राशी आणि कुंडली', en: 'Rashi & Kundali', desc: 'Traditional astrological guidance', tone: 'bg-[#f2e5e2] text-[#7b3025]', to: '/astrology' },
 ];
 
+const modulePhoto = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=720&q=70`;
+/** Photo behind each module card (and where the picture is anchored when cropped). */
+const MODULE_IMAGES = {
+  '/matrimonial': [modulePhoto('1754782921180-674165dec130'), 'center 40%'], // couple under a flower chandelier
+  '/community': [modulePhoto('1712186870325-00427d06341a'), 'center 40%'], // Maharashtra hill fort
+  '/services': [modulePhoto('1587271636175-90d58cdad458'), 'center 35%'], // flower mandap
+  '/business': [modulePhoto('1763291966927-740c48e6afe5'), 'center'], // textile market stall
+  '/achievers': [modulePhoto('1773212902287-94f6df597e6d'), 'center 30%'], // graduates with certificates and garlands
+  '/astrology': [modulePhoto('1771775606126-1bdf21d19205'), 'center'], // zodiac clock
+};
+
 function Hero() {
   const t = useT();
   const openAuth = useUI((s) => s.openAuth);
@@ -143,18 +154,25 @@ function Modules() {
       <Stagger className="no-scrollbar -mr-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pr-4 pb-2 sm:mr-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pr-0 lg:grid-cols-3">
         {MODULES.map((m, i) => (
           <StaggerItem key={m.en} className="min-w-[250px] snap-start sm:min-w-0">
-            <Link to={m.to} className="group card card-hover relative block h-full min-h-[220px] overflow-hidden p-6">
-              <motion.span whileHover={{ rotate: -8, scale: 1.08 }} className={cn('mb-5 grid size-[52px] place-items-center rounded-full', m.tone)}>
-                <Icon name={m.icon} size={26} />
-              </motion.span>
-              <span className="absolute top-5 right-5 font-serif text-[15px] text-[#c7bcb0] italic">0{i + 1}</span>
-              <b className="heading-deva block text-[19px] font-semibold">{m.title}</b>
-              <strong className="mt-1 mb-3 block text-[11px] tracking-[0.07em] text-primary uppercase">{m.en}</strong>
-              <small className="block max-w-[220px] text-xs leading-relaxed text-muted">{m.desc}</small>
-              <span className="absolute right-5 bottom-5 grid size-8 place-items-center rounded-full text-primary transition group-hover:bg-primary group-hover:text-white">
-                <Icon name="arrow" size={16} />
-              </span>
-              <span className="pointer-events-none absolute -right-10 -bottom-10 size-32 rounded-full bg-primary/[0.03] transition-transform duration-500 group-hover:scale-150" />
+            <Link to={m.to} className="group relative isolate block h-full min-h-[230px] overflow-hidden rounded-xl bg-gradient-to-br from-primary-dark to-primary text-white shadow-[var(--shadow-card)] md:min-h-[250px]">
+              {MODULE_IMAGES[m.to] && <img src={MODULE_IMAGES[m.to][0]} alt="" loading="lazy" style={{ objectPosition: MODULE_IMAGES[m.to][1] }} className="absolute inset-0 -z-10 size-full object-cover transition duration-700 group-hover:scale-110" />}
+              <span className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/15" />
+              <div className="flex h-full min-h-[230px] flex-col justify-between p-5 md:min-h-[250px]">
+                <div className="flex items-start justify-between">
+                  <motion.span whileHover={{ rotate: -8, scale: 1.08 }} className="grid size-[46px] place-items-center rounded-full bg-white/90 text-primary shadow-sm">
+                    <Icon name={m.icon} size={23} />
+                  </motion.span>
+                  <span className="font-serif text-[14px] text-white/70 italic">0{i + 1}</span>
+                </div>
+                <div>
+                  <b className="heading-deva block text-[20px] font-semibold [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">{m.title}</b>
+                  <strong className="mt-0.5 mb-2 block text-[11px] tracking-[0.07em] text-[#ffd98a] uppercase">{m.en}</strong>
+                  <small className="block max-w-[230px] text-xs leading-relaxed text-white/90">{m.desc}</small>
+                </div>
+                <span className="absolute right-4 bottom-4 grid size-8 place-items-center rounded-full bg-white/20 text-white transition group-hover:bg-white group-hover:text-primary">
+                  <Icon name="arrow" size={16} />
+                </span>
+              </div>
             </Link>
           </StaggerItem>
         ))}
