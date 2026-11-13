@@ -181,36 +181,73 @@ function Modules() {
   );
 }
 
-/** All wedding-service categories in a swipeable carousel (auto-advances, pauses while touched / hovered). */
+/** All wedding-service categories in a carousel that glides continuously and loops (pauses while touched / hovered). */
 function ServicesCarousel() {
   const { data: cats = [] } = useQuery({ queryKey: ['service-categories'], queryFn: () => get('/services/categories'), staleTime: 300_000 });
   const ref = useRef(null);
   const paused = useRef(false);
   const resume = useRef(0);
+  const SPEED = 42; // pixels per second
 
-  const go = (dir) => {
-    const el = ref.current;
-    if (!el) return;
-    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
-    if (dir > 0 && atEnd) el.scrollTo({ left: 0, behavior: 'smooth' });
-    else if (dir < 0 && el.scrollLeft <= 8) el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
-    else el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.75), behavior: 'smooth' });
-  };
   useEffect(() => {
-    if (cats.length < 2 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const id = setInterval(() => !paused.current && go(1), 3500);
-    return () => clearInterval(id);
+    const el = ref.current;
+    if (!el || cats.length < 2) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    let last = 0;
+    let pos = el.scrollLeft;
+    let visible = true;
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(([e]) => (visible = e.isIntersecting)) : null;
+    io?.observe(el);
+    const tick = (t) => {
+      // the list is rendered twice; one loop = the distance from the first tile to the start of the copy
+      const copy = el.lastElementChild;
+      const half = copy && el.firstElementChild ? copy.offsetLeft - el.firstElementChild.offsetLeft : 0;
+      const dt = last ? Math.min(t - last, 64) : 16;
+      last = t;
+      if (paused.current || !visible) {
+        pos = el.scrollLeft; // follow manual scrolling, then continue from there
+      } else {
+        pos += (SPEED * dt) / 1000;
+      }
+      if (half > 0) {
+        if (pos >= half) pos -= half;
+        if (pos < 0) pos += half;
+        if (!paused.current && visible) el.scrollLeft = pos;
+        else if (el.scrollLeft >= half) el.scrollLeft -= half;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      io?.disconnect();
+    };
   }, [cats.length]);
+
   const hold = () => {
     paused.current = true;
     clearTimeout(resume.current);
   };
-  const release = (delay = 2500) => {
+  const release = (delay = 1200) => {
     clearTimeout(resume.current);
     resume.current = setTimeout(() => (paused.current = false), delay);
   };
+  const go = (dir) => {
+    const el = ref.current;
+    if (!el) return;
+    hold();
+    el.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.7), behavior: 'smooth' });
+    release(1600);
+  };
 
   if (!cats.length) return null;
+  const tile = (c, i, copy) => <CategoryTile key={`${copy}-${c.id}`} c={c} index={i} className="h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 sm:h-[190px] sm:w-[230px]" />;
+  const allTile = (copy) => (
+    <Link key={`${copy}-all`} to="/services" className="flex h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl bg-primary p-4 text-center text-[13px] font-bold text-white shadow-[var(--shadow-cta)] sm:h-[190px] sm:w-[230px]">
+      All services <Icon name="arrow" size={18} />
+    </Link>
+  );
   return (
     <section className="bg-[#fbf7f1] py-10 md:py-14" aria-label="Wedding services">
       <div className="container-page">
@@ -231,19 +268,20 @@ function ServicesCarousel() {
         <div
           ref={ref}
           onMouseEnter={hold}
-          onMouseLeave={() => release(800)}
+          onMouseLeave={() => release(400)}
           onTouchStart={hold}
-          onTouchEnd={() => release()}
+          onTouchEnd={() => release(1500)}
           onFocus={hold}
-          onBlur={() => release(800)}
-          className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0"
+          onBlur={() => release(400)}
+          className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
         >
-          {cats.map((c, i) => (
-            <CategoryTile key={c.id} c={c} index={i} className="h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 snap-start sm:h-[190px] sm:w-[230px]" />
-          ))}
-          <Link to="/services" className="flex h-[170px] w-[44vw] max-w-[250px] min-w-[160px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-xl bg-primary p-4 text-center text-[13px] font-bold text-white shadow-[var(--shadow-cta)] sm:h-[190px] sm:w-[230px]">
-            All services <Icon name="arrow" size={18} />
-          </Link>
+          {cats.map((c, i) => tile(c, i, 'a'))}
+          {allTile('a')}
+          {/* second copy makes the loop seamless; hidden from screen readers and the tab order */}
+          <div className="flex shrink-0 gap-3" aria-hidden="true" inert="">
+            {cats.map((c, i) => tile(c, i, 'b'))}
+            {allTile('b')}
+          </div>
         </div>
       </div>
     </section>
