@@ -9,13 +9,13 @@ const u = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&
 /** An Indian-wedding photo that shows at a glance what the category is (food, hall, music…). `pos` = where the picture is anchored when cropped. */
 const IMAGES = {
   'wedding-halls': [u('1587271407850-8d438ca9fdf2'), 'center 60%'], // grand Indian wedding hall with mandap
-  'dj-music': [u('1781077128735-ee92e7377d78'), 'center 30%'], // baraat — groom on a lit-up carriage
-  'pandit-rituals': [u('1577083753695-e010191bacb5'), 'center 45%'], // pooja diyas with marigold and rose petals
+  'dj-music': [u('1774438357438-d3f5e0ef9c46'), 'center 60%'], // dhol-tasha team in orange kurtas
+  'pandit-rituals': ['/img/services/pandit-rituals.webp', 'center 50%'], // pandit performing a havan with the couple
   catering: [u('1742281258189-3b933879867a'), 'center'], // Indian thali
   photography: [u('1630526720753-aa4e71acf67d'), 'center 30%'], // couple in traditional attire by a river
   decoration: [u('1587271636175-90d58cdad458'), 'center 35%'], // flower mandap
   makeup: [u('1610173827043-9db50e0d8ef9'), 'center 35%'], // Indian bridal makeup
-  'clothes-jewellery': [u('1610047614301-13c63f00c032'), 'center 35%'], // red embroidered lehenga with gold jewellery
+  'clothes-jewellery': ['/img/services/clothes-jewellery.webp', 'center 28%'], // bride in kundan jewellery and red lehenga
   transportation: [u('1665398417651-a7d10040b26c'), 'center'], // decorated wedding buggy with white horses
   'invitations-printing': [u('1740511349064-bc118321de0c'), 'center'], // traditional wedding card with bangles
   'planning-management': [u('1772127822525-7eda37383b9f'), 'center 55%'], // draped outdoor wedding reception set-up
