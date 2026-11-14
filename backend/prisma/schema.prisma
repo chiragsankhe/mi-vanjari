@@ -258,10 +258,10 @@ model Profile {
   jobDesignation   String?
   companyName      String?
   workingCity      String?
-  experienceYears  Int?
+  experienceYears  Float? // years, decimals allowed (2.5)
   businessName     String?
   businessType     String?
-  businessYears    Int?
+  businessYears    Float? // years, decimals allowed (2.5)
   motherOccupation String?
   brothers         Int?
   marriedBrothers  Int?

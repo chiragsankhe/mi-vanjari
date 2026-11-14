@@ -17,6 +17,10 @@ const tagList = z
   .optional()
   .transform((v) => (v ? [...new Set(v)] : v));
 
+/** a number that may have decimals, e.g. 2.5 years */
+const optDecimal = (min, max) =>
+  z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().min(min).max(max).nullable().optional().transform((n) => (n == null ? n : Math.round(n * 10) / 10)));
+
 const optInt = (min, max) =>
   z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(min).max(max).nullable().optional());
 
@@ -118,10 +122,10 @@ export const profileSchema = z
     jobDesignation: optStr(80),
     companyName: optStr(100),
     workingCity: optStr(80),
-    experienceYears: optInt(0, 60),
+    experienceYears: optDecimal(0, 60),
     businessName: optStr(100),
     businessType: optStr(80),
-    businessYears: optInt(0, 60),
+    businessYears: optDecimal(0, 60),
 
     isMatrimonial: z.boolean().optional(),
     gotra: optStr(60),

@@ -463,7 +463,7 @@ export function WorkSection({ form }) {
           <Field label="Job designation" placeholder="e.g. Senior Accountant" {...register('jobDesignation')} />
           <Field label="Company / organization" placeholder="e.g. Tata Motors" {...register('companyName')} />
           <Field label="Working city" placeholder="e.g. Pune" {...register('workingCity')} />
-          <Field label="Years of experience" type="number" inputMode="numeric" min={0} max={60} placeholder="e.g. 5" {...register('experienceYears')} />
+          <Field label="Years of experience" type="number" inputMode="decimal" step="0.5" min={0} max={60} placeholder="e.g. 2.5" {...register('experienceYears')} />
         </>
       )}
       {business && (
@@ -471,7 +471,7 @@ export function WorkSection({ form }) {
           {job && <GroupTitle hint="Your own business, full-time or alongside your job.">Your business</GroupTitle>}
           <Field label={/farm/i.test(type || '') ? 'Farm / work name (optional)' : 'Business name'} placeholder="e.g. Jadhav Dairy" {...register('businessName')} />
           <SelectOther form={form} name="businessType" label="Type of business" options={BUSINESS_TYPES} />
-          <Field label="Years in this business" type="number" inputMode="numeric" min={0} max={60} placeholder="e.g. 3" {...register('businessYears')} />
+          <Field label="Years in this business" type="number" inputMode="decimal" step="0.5" min={0} max={60} placeholder="e.g. 2.5" {...register('businessYears')} />
           {!job && <Field label="Working city" placeholder="e.g. Palghar" {...register('workingCity')} />}
         </>
       )}
