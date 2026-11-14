@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { cleanExtraPhones, ExtraPhonesField, validateExtraPhones } from '../common/ExtraPhones';
+import { cleanExtraContacts, ExtraPhonesField, validateExtraPhones } from '../common/ExtraPhones';
 import { PhotoUploader } from '../common/Listing';
 import { get } from '../../lib/api';
 import { Field } from '../ui';
@@ -12,7 +12,7 @@ import { Field } from '../ui';
 const tenDigits = (v) => String(v || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
 const isMobile = (v) => /^[6-9]\d{9}$/.test(tenDigits(v));
 
-export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), extraPhones: [], location: base.city || '', website: '', photos: [] });
+export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), contactName: '', extraPhones: [], location: base.city || '', website: '', photos: [] });
 export const emptyService = (base = {}) => ({ businessName: '', categoryId: '', priceFrom: '', experienceYears: '', location: base.city || '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), description: '', photos: [] });
 
 export function validateBusiness(b) {
@@ -46,7 +46,8 @@ export const toBusinessPayload = (b) => ({
   category: b.category,
   description: b.description.trim(),
   phone: tenDigits(b.phone),
-  extraPhones: cleanExtraPhones(b.extraPhones || [], b.phone),
+  contactName: (b.contactName || '').trim() || null,
+  extraContacts: cleanExtraContacts(b.extraPhones || [], b.phone),
   whatsapp: b.whatsapp ? tenDigits(b.whatsapp) : null,
   location: b.location.trim(),
   website: b.website.trim() || null,
@@ -95,6 +96,7 @@ export function BusinessStep({ value: b, onChange, errors = {} }) {
         </Field>
         <Field as="textarea" label="What do you do? *" placeholder="Products or services, since when, what makes you special…" maxLength={1500} value={b.description} onChange={set('description')} error={errors.description} className="sm:col-span-2" />
         <PhoneField label="Business phone *" value={b.phone} onChange={set('phone')} error={errors.phone} />
+        <Field label="Person name for this number" placeholder="e.g. Ramesh Sankhe (owner)" maxLength={60} value={b.contactName || ''} onChange={set('contactName')} />
         <PhoneField label="WhatsApp" value={b.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
         <ExtraPhonesField value={b.extraPhones || []} onChange={set('extraPhones')} errors={errors.extraPhones || {}} />
         <Field label="Address / area *" placeholder="e.g. Tarapur MIDC, Boisar" value={b.location} onChange={set('location')} error={errors.location} />

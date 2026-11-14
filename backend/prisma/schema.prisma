@@ -560,6 +560,9 @@ model Business {
   phone       String
   /// more contact numbers (a business often has several) — shown after the main number
   extraPhones String[] @default([])
+  /// who answers the main number, and who answers each extra number (same order as extraPhones)
+  contactName String?
+  extraNames  String[] @default([])
   whatsapp    String?
   website     String?
   location    String

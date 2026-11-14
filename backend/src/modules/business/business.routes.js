@@ -36,11 +36,14 @@ const schema = z.object({
   category: z.enum(BUSINESS_CATEGORIES),
   description: z.string().trim().max(1500).optional().nullable(),
   phone,
-  extraPhones: z
-    .array(phone)
+  contactName: z.string().trim().max(60, 'Name is too long').optional().nullable().or(z.literal('').transform(() => null)),
+  // older form: just numbers
+  extraPhones: z.array(phone).max(4, 'You can add up to 4 more numbers').optional(),
+  // current form: a person name with each number
+  extraContacts: z
+    .array(z.object({ name: z.string().trim().max(60, 'Name is too long').optional().nullable(), phone }))
     .max(4, 'You can add up to 4 more numbers')
-    .optional()
-    .transform((v) => (v ? [...new Set(v)] : v)),
+    .optional(),
   whatsapp: phone.optional().nullable().or(z.literal('').transform(() => null)),
   website: z.string().trim().url('Enter a valid URL (https://...)').optional().nullable().or(z.literal('').transform(() => null)),
   location: z.string().trim().min(2).max(120),
@@ -54,6 +57,8 @@ const select = {
   description: true,
   phone: true,
   extraPhones: true,
+  contactName: true,
+  extraNames: true,
   whatsapp: true,
   website: true,
   location: true,
@@ -67,8 +72,28 @@ const select = {
 // Sample listings (added by the admin) never carry a phone number
 const shape = (b) => {
   const isSample = Boolean(b.user?.profile?.isDemo);
-  return { ...b, ...(isSample && { phone: null, extraPhones: [], whatsapp: null }), isSample, owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null, user: undefined };
+  const { extraNames = [], ...rest } = b;
+  // every extra number comes with the name of the person who answers it
+  const extraContacts = (b.extraPhones || []).map((p, i) => ({ phone: p, name: extraNames[i] || '' }));
+  return {
+    ...rest,
+    extraContacts,
+    ...(isSample && { phone: null, extraPhones: [], extraContacts: [], contactName: null, whatsapp: null }),
+    isSample,
+    owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null,
+    user: undefined,
+  };
 };
+
+/** Turns the form's numbers + names into the stored columns (no repeated numbers; names stay lined up with their numbers). */
+function contactColumns(body) {
+  const { extraContacts, extraPhones, ...rest } = body;
+  const list = extraContacts ?? (extraPhones ? extraPhones.map((p) => ({ phone: p, name: '' })) : null);
+  if (!list) return rest;
+  const seen = new Set([rest.phone].filter(Boolean));
+  const kept = list.filter((c) => !seen.has(c.phone) && seen.add(c.phone));
+  return { ...rest, extraPhones: kept.map((c) => c.phone), extraNames: kept.map((c) => (c.name || '').trim()) };
+}
 
 /** GET /business/categories */
 router.get('/categories', (_req, res) => res.json(BUSINESS_CATEGORIES));
@@ -96,7 +121,7 @@ router.get(
       prisma.business.findMany({ where, select, orderBy: { createdAt: 'desc' }, skip, take }),
       prisma.business.count({ where }),
     ]);
-    res.json(pageResult(rows.map((b) => ({ ...shape(b), phone: undefined, extraPhones: undefined, whatsapp: undefined })), total, { page, limit }));
+    res.json(pageResult(rows.map((b) => ({ ...shape(b), phone: undefined, extraPhones: undefined, extraContacts: undefined, contactName: undefined, whatsapp: undefined })), total, { page, limit }));
   }),
 );
 
@@ -117,7 +142,7 @@ router.get(
   h(async (req, res) => {
     const b = await prisma.business.findUnique({ where: { id: req.params.id }, select });
     if (!b || (b.status !== 'APPROVED' && b.userId !== req.user?.id && !isAdminSession(req.user))) throw ApiError.notFound('Business not found');
-    res.json({ ...shape(b), ...(!req.user && { phone: null, extraPhones: [], whatsapp: null }), isOwner: b.userId === req.user?.id });
+    res.json({ ...shape(b), ...(!req.user && { phone: null, extraPhones: [], extraContacts: [], contactName: null, whatsapp: null }), isOwner: b.userId === req.user?.id });
   }),
 );
 
@@ -139,7 +164,7 @@ router.post(
   requireAuth,
   validate({ body: schema }),
   h(async (req, res) => {
-    const created = await prisma.business.create({ data: { ...req.body, photos: req.body.photos || [], userId: req.user.id }, select });
+    const created = await prisma.business.create({ data: { ...contactColumns(req.body), photos: req.body.photos || [], userId: req.user.id }, select });
     res.status(201).json(shape(created));
   }),
 );
@@ -152,7 +177,7 @@ router.put(
   h(async (req, res) => {
     const b = await prisma.business.findUnique({ where: { id: req.params.id } });
     if (!b || (b.userId !== req.user.id && !isAdminSession(req.user))) throw ApiError.notFound('Business not found');
-    res.json(shape(await prisma.business.update({ where: { id: b.id }, data: req.body, select })));
+    res.json(shape(await prisma.business.update({ where: { id: b.id }, data: contactColumns({ phone: b.phone, ...req.body }), select })));
   }),
 );
 

@@ -49,9 +49,10 @@ export function ProviderCard({ p }) {
 }
 
 /** Chat · Call · WhatsApp for a listing. `chat` = { type: 'BUSINESS'|'SERVICE', id, ownerId } */
-export function ContactButtons({ phone, extraPhones = [], whatsapp, name, className, chat, sample = false }) {
+export function ContactButtons({ phone, contactName, extraContacts = [], whatsapp, name, className, chat, sample = false }) {
   if (sample) return <SampleNotice className={className} />;
-  const numbers = [phone, ...extraPhones].filter(Boolean);
+  // every number with the name of the person who answers it (the name may be empty)
+  const numbers = [{ phone, name: contactName }, ...extraContacts].filter((c) => c.phone);
   return (
     <div className={cn('space-y-2', className)}>
       {chat && <ChatWithOwner {...chat} label="Chat with owner" className="w-full" />}
@@ -60,8 +61,8 @@ export function ContactButtons({ phone, extraPhones = [], whatsapp, name, classN
         <div className="rounded-lg border border-line bg-white p-2.5">
           <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">{numbers.length > 1 ? 'Phone numbers' : 'Phone number'}</span>
           <ul className="divide-y divide-line">
-            {numbers.map((n) => (
-              <PhoneRow key={n} number={n} />
+            {numbers.map((c) => (
+              <PhoneRow key={c.phone} number={c.phone} person={c.name} />
             ))}
           </ul>
         </div>
@@ -74,7 +75,7 @@ export function ContactButtons({ phone, extraPhones = [], whatsapp, name, classN
 }
 
 /** One phone number: shown in full, with Call (opens the dialler on a phone) and Copy (for computers). */
-export function PhoneRow({ number }) {
+export function PhoneRow({ number, person }) {
   const [copied, setCopied] = useState(false);
   const shown = formatPhone(number);
   const copy = async () => {
@@ -102,9 +103,12 @@ export function PhoneRow({ number }) {
   };
   return (
     <li className="flex items-center justify-between gap-2 py-1.5">
-      <a href={telLink(number)} className="min-w-0 truncate text-[15px] font-semibold tabular-nums hover:text-primary">
-        {shown}
-      </a>
+      <span className="min-w-0">
+        {person && <small className="block truncate text-[12px] font-medium text-muted">{person}</small>}
+        <a href={telLink(number)} className="block truncate text-[15px] font-semibold tabular-nums hover:text-primary">
+          {shown}
+        </a>
+      </span>
       <span className="flex shrink-0 gap-1.5">
         <button type="button" onClick={copy} className="btn btn-ghost btn-sm h-8 !px-2.5" aria-label={`Copy ${shown}`}>
           <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy'}

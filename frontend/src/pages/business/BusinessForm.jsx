@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { cleanExtraPhones, ExtraPhonesField, validateExtraPhones } from '../../components/common/ExtraPhones';
+import { cleanExtraContacts, ExtraPhonesField, validateExtraPhones } from '../../components/common/ExtraPhones';
 import { PhotoUploader } from '../../components/common/Listing';
 import { Field, Icon, PageHeader, Spinner } from '../../components/ui';
 import { errorMessage, get, post, put } from '../../lib/api';
@@ -17,6 +17,7 @@ const schema = z.object({
   category: z.string().min(1, 'Choose a category'),
   description: z.string().max(1500).optional(),
   phone,
+  contactName: z.string().trim().max(60, 'Name is too long').optional(),
   whatsapp: phone.optional().or(z.literal('')),
   website: z.string().url('Enter a full URL starting with https://').optional().or(z.literal('')),
   location: z.string().trim().min(2, 'Location is required'),
@@ -39,9 +40,9 @@ export default function BusinessForm() {
   useEffect(() => {
     const b = existing.data;
     if (!b) return;
-    form.reset({ name: b.name, category: b.category, description: b.description || '', phone: b.phone.slice(-10), whatsapp: b.whatsapp?.slice(-10) || '', website: b.website || '', location: b.location });
+    form.reset({ name: b.name, category: b.category, description: b.description || '', phone: b.phone.slice(-10), contactName: b.contactName || '', whatsapp: b.whatsapp?.slice(-10) || '', website: b.website || '', location: b.location });
     setPhotos(b.photos || []);
-    setExtra((b.extraPhones || []).map((p) => p.slice(-10)));
+    setExtra((b.extraContacts || (b.extraPhones || []).map((p) => ({ name: '', phone: p }))).map((c) => ({ name: c.name || '', phone: String(c.phone).slice(-10) })));
   }, [existing.data, form]);
 
   const submit = form.handleSubmit(async (v) => {
@@ -50,7 +51,7 @@ export default function BusinessForm() {
     if (Object.keys(errs).length) return toast.error('Please check the extra contact numbers');
     setSaving(true);
     try {
-      const body = { ...v, whatsapp: v.whatsapp || null, website: v.website || null, photos, extraPhones: cleanExtraPhones(extra, v.phone) };
+      const body = { ...v, contactName: v.contactName?.trim() || null, whatsapp: v.whatsapp || null, website: v.website || null, photos, extraContacts: cleanExtraContacts(extra, v.phone) };
       const saved = id ? await put(`/business/${id}`, body) : await post('/business', body);
       qc.invalidateQueries({ queryKey: ['business'] });
       toast.success(id ? 'Business updated' : 'Your business is now listed 🎉');
@@ -76,6 +77,7 @@ export default function BusinessForm() {
           </Field>
           <Field label="Location *" placeholder="e.g. Dahanu, Palghar" error={e.location?.message} {...form.register('location')} />
           <Field label="Phone *" inputMode="numeric" error={e.phone?.message} {...form.register('phone')} />
+          <Field label="Person name for this number" placeholder="e.g. Ramesh Sankhe (owner)" maxLength={60} error={e.contactName?.message} {...form.register('contactName')} />
           <Field label="WhatsApp" inputMode="numeric" error={e.whatsapp?.message} {...form.register('whatsapp')} />
           <ExtraPhonesField value={extra} onChange={(v) => { setExtra(v); setExtraErrors({}); }} errors={extraErrors} />
           <Field label="Website" placeholder="https://" error={e.website?.message} {...form.register('website')} className="sm:col-span-2" />
