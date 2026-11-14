@@ -93,3 +93,24 @@ export const LABELS = {
   FEMALE: 'Female',
   OTHER: 'Other',
 };
+
+/**
+ * Card-sized copy of a photo (list cards don't need the full-size picture): Unsplash and Cloudinary can resize on the fly.
+ * Other addresses are returned unchanged.
+ */
+export function thumb(url, width = 900) {
+  if (!url || typeof url !== 'string') return url;
+  try {
+    if (url.includes('images.unsplash.com')) {
+      const u = new URL(url);
+      u.searchParams.set('w', String(width));
+      u.searchParams.set('q', '80');
+      u.searchParams.set('auto', 'format');
+      return u.toString();
+    }
+    if (url.includes('res.cloudinary.com') && url.includes('/upload/') && !/\/upload\/[^/]*(w_|c_|f_)/.test(url)) return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
+  } catch {
+    /* keep original */
+  }
+  return url;
+}

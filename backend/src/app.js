@@ -92,7 +92,7 @@ export function createApp() {
         index: false,
         setHeaders: (res, file) =>
           // hashed build files never change → cache for a year; everything else revalidates
-          res.setHeader('Cache-Control', file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache'),
+          res.setHeader('Cache-Control', file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : file.includes(`${path.sep}img${path.sep}`) ? 'public, max-age=2592000' : 'no-cache'),
       }),
     );
     // every other page address (/matrimonial, /profile/123 …) is handled by the React app

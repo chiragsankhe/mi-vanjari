@@ -26,15 +26,15 @@ const MODULES = [
   { icon: 'zodiac', title: 'राशी आणि कुंडली', en: 'Rashi & Kundali', desc: 'Traditional astrological guidance', tone: 'bg-[#f2e5e2] text-[#7b3025]', to: '/astrology' },
 ];
 
-const modulePhoto = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=720&q=70`;
+const modulePhoto = (name) => `/img/services/${name}.webp`;
 /** Photo behind each module card (and where the picture is anchored when cropped). */
 const MODULE_IMAGES = {
-  '/matrimonial': [modulePhoto('1754782921180-674165dec130'), 'center 40%'], // couple under a flower chandelier
-  '/community': [modulePhoto('1712186870325-00427d06341a'), 'center 40%'], // Maharashtra hill fort
-  '/services': [modulePhoto('1587271636175-90d58cdad458'), 'center 35%'], // flower mandap
-  '/business': [modulePhoto('1763291966927-740c48e6afe5'), 'center'], // textile market stall
-  '/achievers': [modulePhoto('1773212902287-94f6df597e6d'), 'center 30%'], // graduates with certificates and garlands
-  '/astrology': [modulePhoto('1771775606126-1bdf21d19205'), 'center'], // zodiac clock
+  '/matrimonial': [modulePhoto('home-matrimonial'), 'center 40%'], // couple under a flower chandelier
+  '/community': [modulePhoto('home-community'), 'center 40%'], // Maharashtra hill fort
+  '/services': [modulePhoto('decoration'), 'center 35%'], // flower mandap
+  '/business': [modulePhoto('home-business'), 'center'], // textile market stall
+  '/achievers': [modulePhoto('home-achievers'), 'center 30%'], // graduates with certificates and garlands
+  '/astrology': [modulePhoto('home-astrology'), 'center'], // zodiac clock
 };
 
 function Hero() {
