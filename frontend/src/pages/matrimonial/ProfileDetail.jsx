@@ -93,7 +93,7 @@ function KundaliPanel({ userId }) {
         <div className="p-6 sm:p-8">
           <h2 className="heading-deva mb-5 pr-8 text-2xl font-semibold">कुंडली जुळणी · Guna Milan</h2>
           {q.isError ? (
-            <EmptyState icon="zodiac" title="Can’t match yet" action={errorCode(q.error) === 'BIRTH_DETAILS_REQUIRED' && <Link to="/me/edit?section=family" className="btn btn-primary">Add my birth details</Link>}>
+            <EmptyState icon="zodiac" title="Can’t match yet" action={errorCode(q.error) === 'BIRTH_DETAILS_REQUIRED' && <Link to="/me/edit?section=kundli" className="btn btn-primary">Add my birth details</Link>}>
               {errorMessage(q.error)}
             </EmptyState>
           ) : !q.data ? (
@@ -267,10 +267,22 @@ export default function ProfileDetail() {
             </Reveal>
           ) : (
             <>
-              {p.bio && (
+              {(p.bio || p.careerGoals || p.marriageExpectations) && (
                 <Reveal className="card p-5 sm:p-6">
                   <h2 className="mb-2 font-serif text-lg font-semibold">In {p.fullName?.split(' ')[0] || 'their'}’s words</h2>
                   <p className="text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.bio}</p>
+                  {p.careerGoals && (
+                    <>
+                      <h3 className="mt-4 mb-1 text-sm font-semibold">Career goals</h3>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.careerGoals}</p>
+                    </>
+                  )}
+                  {p.marriageExpectations && (
+                    <>
+                      <h3 className="mt-4 mb-1 text-sm font-semibold">Expectations from marriage</h3>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.marriageExpectations}</p>
+                    </>
+                  )}
                 </Reveal>
               )}
               <div className="grid gap-5 xl:grid-cols-2">
@@ -278,8 +290,14 @@ export default function ProfileDetail() {
                   <Row label="Age" value={p.age && `${p.age} years`} />
                   <Row label="Height" value={heightLabel(p.heightCm)} />
                   <Row label="Marital status" value={LABELS[p.maritalStatus]} />
-                  <Row label="Lives in" value={`${p.currentCity}, ${p.currentState}`} />
-                  <Row label="Native village" value={p.nativeVillage} />
+                  <Row label="Lives in" value={[p.currentCity, p.currentDistrict, p.currentState].filter(Boolean).join(', ')} />
+                  <Row label="Native place" value={[p.nativeVillage, p.nativeDistrict, p.nativeState].filter(Boolean).join(', ')} />
+                  <Row label="Mother tongue" value={p.motherTongue} />
+                  <Row label="Languages" value={p.languages?.length ? p.languages.join(', ') : null} />
+                  <Row label="Religion" value={[p.religion, p.community].filter(Boolean).join(' · ')} />
+                  <Row label="Weight" value={p.weightKg && `${p.weightKg} kg`} />
+                  <Row label="Blood group" value={p.bloodGroup} />
+                  <Row label="Profile by" value={p.createdBy} />
                   <Row label="Mobile" value={p.phone} />
                   {p.phoneVisible ? (
                     <div className="flex gap-2 pt-3">
@@ -313,7 +331,14 @@ export default function ProfileDetail() {
                   ) : (
                     <Row label="Education" value={p.education} />
                   )}
+                  <Row label="Working as" value={p.employmentType} />
                   <Row label="Occupation" value={p.occupation} />
+                  <Row label="Designation" value={p.jobDesignation} />
+                  <Row label="Company" value={p.companyName} />
+                  <Row label="Working city" value={p.workingCity} />
+                  <Row label="Experience" value={p.experienceYears != null && `${p.experienceYears} ${p.experienceYears === 1 ? 'year' : 'years'}`} />
+                  <Row label="Business" value={[p.businessName, p.businessType].filter(Boolean).join(' · ')} />
+                  <Row label="In business for" value={p.businessYears != null && `${p.businessYears} ${p.businessYears === 1 ? 'year' : 'years'}`} />
                   <Row label="Annual income" value={p.annualIncome} />
                   {p.workDetails && (
                     <div className="pt-2.5">
@@ -325,11 +350,33 @@ export default function ProfileDetail() {
                 <Section title="Family" icon="users">
                   <Row label="Gotra" value={p.gotra} />
                   <Row label="Sub-caste" value={p.subCaste} />
+                  <Row label="Devak" value={p.devak} />
+                  <Row label="Kuldaivat" value={p.kuldaivat} />
                   <Row label="Father" value={[p.fatherName, p.fatherOccupation].filter(Boolean).join(' · ')} />
-                  <Row label="Mother" value={p.motherName} />
-                  <Row label="Siblings" value={p.siblingsCount} />
+                  <Row label="Mother" value={[p.motherName, p.motherOccupation].filter(Boolean).join(' · ')} />
+                  <Row label="Brothers" value={p.brothers != null && `${p.brothers}${p.marriedBrothers ? ` (${p.marriedBrothers} married)` : ''}`} />
+                  <Row label="Sisters" value={p.sisters != null && `${p.sisters}${p.marriedSisters ? ` (${p.marriedSisters} married)` : ''}`} />
+                  {p.brothers == null && p.sisters == null && <Row label="Siblings" value={p.siblingsCount} />}
                   <Row label="Family type" value={LABELS[p.familyType]} />
+                  <Row label="Family values" value={p.familyValues} />
+                  {p.aboutFamily && <p className="pt-2.5 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.aboutFamily}</p>}
                 </Section>
+                {(p.bodyType || p.physicalStatus || p.physicalDetails) && (
+                  <Section title="Physical" icon="user">
+                    <Row label="Body type" value={p.bodyType} />
+                    <Row label="Physical status" value={p.physicalStatus} />
+                    {p.physicalDetails && <p className="pt-2.5 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.physicalDetails}</p>}
+                  </Section>
+                )}
+                {(p.diet || p.drinking || p.smoking || p.hobbies?.length > 0 || p.interests?.length > 0) && (
+                  <Section title="Lifestyle" icon="sparkle">
+                    <Row label="Diet" value={p.diet} />
+                    <Row label="Drinking" value={p.drinking} />
+                    <Row label="Smoking" value={p.smoking} />
+                    <Row label="Hobbies" value={p.hobbies?.length ? p.hobbies.join(', ') : null} />
+                    <Row label="Interests" value={p.interests?.length ? p.interests.join(', ') : null} />
+                  </Section>
+                )}
                 <Section title="Astrology" icon="zodiac">
                   <Row label="Rashi" value={p.rashi && <RashiLink rashi={p.rashi} nakshatra={p.nakshatra} name={p.fullName?.split(" ")[0]} />} />
                   <Row label="Nakshatra" value={p.nakshatra} />
@@ -338,6 +385,8 @@ export default function ProfileDetail() {
                 {p.isMatrimonial && (
                   <Section title="Partner preferences" icon="heart">
                     <Row label="Age" value={p.prefAgeMin && p.prefAgeMax && `${p.prefAgeMin} – ${p.prefAgeMax} years`} />
+                    <Row label="Occupation" value={p.prefOccupation} />
+                    <Row label="Name" value={p.prefName} />
                     <Row label="Education" value={p.prefEducation} />
                     <Row label="Location" value={p.prefLocation} />
                   </Section>

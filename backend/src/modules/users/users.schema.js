@@ -10,6 +10,13 @@ const optStr = (max = 120) =>
     .nullable()
     .transform((v) => (v === '' ? null : v));
 
+/** a list of short typed / picked answers (languages, hobbies, interests) */
+const tagList = z
+  .array(z.string().trim().min(1).max(40))
+  .max(25)
+  .optional()
+  .transform((v) => (v ? [...new Set(v)] : v));
+
 const optInt = (min, max) =>
   z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(min).max(max).nullable().optional());
 
@@ -25,6 +32,11 @@ export const familyContactSchema = z
       .string()
       .transform((v) => normalizePhone(v))
       .refine(Boolean, 'Enter a valid 10-digit mobile number'),
+    whatsapp: z
+      .string()
+      .transform((v) => (v ? normalizePhone(v) : null))
+      .optional()
+      .nullable(),
     bestTime: optStr(60),
     languages: optStr(60),
     isPrimary: z.boolean().optional(),
@@ -59,6 +71,26 @@ export const profileSchema = z
     heightCm: optInt(120, 230),
     bio: optStr(600),
 
+    // personal
+    createdBy: optStr(40),
+    weightKg: optInt(30, 250),
+    bloodGroup: optStr(20),
+    motherTongue: optStr(40),
+    languages: tagList,
+    // religion & community
+    religion: optStr(40),
+    community: optStr(60),
+    devak: optStr(60),
+    kuldaivat: optStr(60),
+    // location
+    currentDistrict: optStr(60),
+    nativeDistrict: optStr(60),
+    nativeState: optStr(60),
+    // physical
+    bodyType: optStr(40),
+    physicalStatus: optStr(60),
+    physicalDetails: optStr(500),
+
     currentCity: z.string().trim().min(2, 'City is required').max(80),
     currentState: z.string().trim().min(2, 'State is required').max(80),
     currentCountry: z.string().trim().max(80).optional(),
@@ -70,15 +102,26 @@ export const profileSchema = z
       .array(
         z.object({
           degree: z.string().trim().min(1, 'Enter the degree').max(80),
+          specialization: optStr(80),
           institute: optStr(120),
           year: z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(1950).max(2100).nullable().optional()),
         }),
       )
       .max(10, 'You can add up to 10 degrees')
       .optional(),
+    highestQualification: optStr(80),
     workDetails: optStr(1000),
     occupation: optStr(120),
     annualIncome: optStr(40),
+    // professional
+    employmentType: optStr(60),
+    jobDesignation: optStr(80),
+    companyName: optStr(100),
+    workingCity: optStr(80),
+    experienceYears: optInt(0, 60),
+    businessName: optStr(100),
+    businessType: optStr(80),
+    businessYears: optInt(0, 60),
 
     isMatrimonial: z.boolean().optional(),
     gotra: optStr(60),
@@ -86,8 +129,26 @@ export const profileSchema = z
     fatherName: optStr(80),
     fatherOccupation: optStr(80),
     motherName: optStr(80),
+    motherOccupation: optStr(80),
     siblingsCount: optInt(0, 20),
+    brothers: optInt(0, 15),
+    marriedBrothers: optInt(0, 15),
+    sisters: optInt(0, 15),
+    marriedSisters: optInt(0, 15),
     familyType: z.enum(['NUCLEAR', 'JOINT']).optional().nullable(),
+    familyValues: optStr(60),
+    aboutFamily: optStr(600),
+
+    // lifestyle
+    diet: optStr(40),
+    drinking: optStr(40),
+    smoking: optStr(40),
+    hobbies: tagList,
+    interests: tagList,
+
+    // about me
+    careerGoals: optStr(600),
+    marriageExpectations: optStr(600),
 
     timeOfBirth: z
       .string()
@@ -101,6 +162,8 @@ export const profileSchema = z
     prefAgeMax: optInt(18, 80),
     prefEducation: optStr(80),
     prefLocation: optStr(80),
+    prefOccupation: optStr(120),
+    prefName: optStr(80),
 
     accountType: z.enum(['PUBLIC', 'PRIVATE']).optional(),
     showPhone: z.boolean().optional(),
@@ -131,3 +194,5 @@ export const MATRIMONY_REQUIRED = [
   ['education', 'education'],
   ['occupation', 'occupation'],
 ];
+// Everything else on the matrimony form (mother tongue, district, employment type, contact person ...) is checked in the form,
+// not here, so profiles created before these questions existed can still be edited.

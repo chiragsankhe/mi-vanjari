@@ -3,7 +3,7 @@ import { useFieldArray } from 'react-hook-form';
 import { Field, Icon } from '../ui';
 
 export const MAX_DEGREES = 10;
-export const emptyDegree = () => ({ degree: '', institute: '', year: '' });
+export const emptyDegree = () => ({ degree: '', specialization: '', institute: '', year: '' });
 
 /**
  * Education as a list: every degree the member has (degree, college / university, year),
@@ -43,8 +43,9 @@ export function DegreesField({ form, required = false }) {
                   </button>
                 )}
               </div>
-              <div className="grid gap-3 sm:grid-cols-[1.3fr_1.5fr_0.7fr]">
-                <Field label="Degree / course" placeholder="e.g. B.Com, B.E. Computer, MBA, ITI" error={errors?.[i]?.degree?.message} {...register(`degrees.${i}.degree`)} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Degree / course" placeholder="e.g. B.Com, B.E., MBA, ITI" error={errors?.[i]?.degree?.message} {...register(`degrees.${i}.degree`)} />
+                <Field label="Specialization (optional)" placeholder="e.g. Computer, Finance" {...register(`degrees.${i}.specialization`)} />
                 <Field label="College / university (optional)" placeholder="e.g. Mumbai University" {...register(`degrees.${i}.institute`)} />
                 <Field label="Year (optional)" type="number" inputMode="numeric" min={1950} max={thisYear + 6} placeholder={String(thisYear - 2)} error={errors?.[i]?.year?.message} {...register(`degrees.${i}.year`)} />
               </div>

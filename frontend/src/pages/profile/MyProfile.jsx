@@ -19,9 +19,9 @@ function Completion({ p }) {
     [p.bio, 'Write a short bio', '/me/edit'],
     // family & Kundali details matter only for matrimony profiles
     [p.gotra || !p.isMatrimonial, 'Add family details', '/me/edit?section=family'],
-    [p.rashi || !p.isMatrimonial, 'Add birth time for Kundali', '/me/edit?section=family'],
-    [p.prefAgeMin || !p.isMatrimonial, 'Set partner preferences', '/me/edit?section=family'],
-    [p.familyContacts?.length || !p.isMatrimonial, 'Add family contacts', '/me/edit?section=family'],
+    [p.rashi || !p.isMatrimonial, 'Add birth time for Kundali', '/me/edit?section=kundli'],
+    [p.prefAgeMin || !p.isMatrimonial, 'Set partner preferences', '/me/edit?section=kundli'],
+    [p.familyContacts?.length || !p.isMatrimonial, 'Add a contact person', '/me/edit?section=reach'],
   ];
   const done = checks.filter(([ok]) => ok).length;
   const pct = Math.round((done / checks.length) * 100);

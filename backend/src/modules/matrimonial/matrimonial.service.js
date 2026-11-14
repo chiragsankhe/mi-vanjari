@@ -167,7 +167,7 @@ export async function detail(viewer, targetUserId, rel) {
   // but matrimony details (family contacts, preferences, match & Kundali) are withheld.
   if (user.profile.isMatrimonial && !rel.isSelf && !(await hasMatrimonyAccess(viewer))) {
     const { fee } = await membershipStatus(viewer.id, viewer.role);
-    Object.assign(doc, { matrimonyLocked: true, membershipFee: fee, familyContacts: [], familyContactCount: doc.familyContacts?.length || doc.familyContactCount || 0, matchScore: null, gunaScore: null, prefAgeMin: null, prefAgeMax: null, prefEducation: null, prefLocation: null });
+    Object.assign(doc, { matrimonyLocked: true, membershipFee: fee, familyContacts: [], familyContactCount: doc.familyContacts?.length || doc.familyContactCount || 0, matchScore: null, gunaScore: null, prefAgeMin: null, prefAgeMax: null, prefEducation: null, prefLocation: null, prefOccupation: null, prefName: null });
   }
   return doc;
 }

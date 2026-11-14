@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Paywall } from '../../components/membership/Paywall';
 import { BusinessStep, emptyBusiness, emptyService, ServiceStep, toBusinessPayload, toServicePayload, validateBusiness, validateService } from '../../components/onboarding/ListingSteps';
 import { PhotoManager } from '../../components/profile/PhotoManager';
-import { BasicSection, cleanProfile, ContactSection, FamilySection, makeProfileSchema, profileDefaults, WorkSection } from '../../components/profile/ProfileForm';
+import { BasicSection, cleanProfile, ContactSection, FamilySection, KundliSection, LifestyleSection, makeProfileSchema, profileDefaults, ReachSection, STEP_FIELDS, WorkSection } from '../../components/profile/ProfileForm';
 import { BrandMark, Icon, Spinner } from '../../components/ui';
 import { useScrollTop } from '../../hooks';
 import { errorMessage, get, post, put } from '../../lib/api';
@@ -26,20 +26,17 @@ const STEP_INFO = {
   contact: ['user', 'Basic details', 'मूलभूत माहिती'],
   personal: ['heart', 'About you', 'तुमच्याबद्दल'],
   work: ['graduation', 'Education & work', 'शिक्षण आणि काम'],
-  family: ['users', 'Family & preferences', 'कुटुंब आणि अपेक्षा'],
+  family: ['users', 'Family', 'कुटुंब'],
+  more: ['sparkle', 'Lifestyle & about', 'आवडीनिवडी'],
+  kundli: ['zodiac', 'Kundli & partner', 'कुंडली आणि अपेक्षा'],
+  reach: ['phone', 'Contact', 'संपर्क'],
   business: ['briefcase', 'Your business', 'व्यवसाय'],
   service: ['tent', 'Wedding service', 'लग्न सेवा'],
   pay: ['rupee', 'Membership', 'सदस्यत्व'],
   photos: ['camera', 'Photos', 'फोटो'],
 };
 
-// Profile-form fields validated on each step
-const STEP_FIELDS = {
-  contact: ['fullName', 'email', 'phone', 'currentCity', 'currentState', 'nativeVillage'],
-  personal: ['dateOfBirth', 'gender', 'maritalStatus', 'heightCm', 'bio'],
-  work: ['degrees', 'occupation', 'annualIncome', 'workDetails'],
-  family: ['gotra', 'subCaste', 'fatherName', 'fatherOccupation', 'motherName', 'siblingsCount', 'familyType', 'timeOfBirth', 'placeOfBirth', 'prefAgeMin', 'prefAgeMax', 'prefEducation', 'prefLocation', 'accountType', 'familyContacts'],
-};
+// Profile-form fields validated on each step: see STEP_FIELDS in ProfileForm.jsx
 
 export default function Onboarding() {
   const user = useAuth((s) => s.user);
@@ -69,7 +66,7 @@ export default function Onboarding() {
   const B = goals.includes('BUSINESS');
   const S = goals.includes('SERVICES');
   const steps = useMemo(
-    () => ['contact', ...(M ? ['personal', 'work', 'family'] : []), ...(B ? ['business'] : []), ...(S ? ['service'] : []), ...(M ? [...(payNeeded ? ['pay'] : []), 'photos'] : [])],
+    () => ['contact', ...(M ? ['personal', 'work', 'family', 'more', 'kundli', 'reach'] : []), ...(B ? ['business'] : []), ...(S ? ['service'] : []), ...(M ? [...(payNeeded ? ['pay'] : []), 'photos'] : [])],
     [M, B, S, payNeeded],
   );
   const lastFormIdx = steps.findLastIndex((s) => !['pay', 'photos'].includes(s));
@@ -177,7 +174,7 @@ export default function Onboarding() {
           <BrandMark size={48} />
           <div>
             <h1 className="heading-deva text-2xl font-semibold md:text-3xl">आपली प्रोफाइल तयार करा</h1>
-            <p className="text-sm text-muted">{M ? 'Matrimony needs a fuller profile — about 3 minutes.' : 'Just the basics — takes about a minute.'}</p>
+            <p className="text-sm text-muted">{M ? 'A few short steps — only the starred (*) answers are needed. Everything else is optional.' : 'Just the basics — takes about a minute.'}</p>
           </div>
         </div>
 
@@ -236,7 +233,10 @@ export default function Onboarding() {
               )}
               {current === 'personal' && <BasicSection form={form} withName={false} />}
               {current === 'work' && <WorkSection form={form} withLocation={false} />}
-              {current === 'family' && <FamilySection form={form} showMatrimonial={false} />}
+              {current === 'family' && <FamilySection form={form} />}
+              {current === 'more' && <LifestyleSection form={form} />}
+              {current === 'kundli' && <KundliSection form={form} />}
+              {current === 'reach' && <ReachSection form={form} showMatrimonial={false} />}
               {current === 'business' && (
                 <BusinessStep
                   value={business}

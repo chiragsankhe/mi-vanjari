@@ -237,6 +237,48 @@ model Profile {
   /// sample content added from Admin → Settings (shown with a "Sample" tag; cannot be messaged or followed)
   isDemo      Boolean     @default(false)
 
+  // ── Matrimony details (all optional text unless noted; dropdown answers may be a typed "Other" value) ──
+  createdBy        String? // who filled the profile: Self / Parent / Brother …
+  weightKg         Int?
+  bloodGroup       String?
+  motherTongue     String?
+  languages        String[] @default([])
+  religion         String?
+  community        String?
+  devak            String?
+  kuldaivat        String?
+  currentDistrict  String?
+  nativeDistrict   String?
+  nativeState      String?
+  bodyType         String?
+  physicalStatus   String? // Fully fit / Differently abled / Past medical condition / Other
+  physicalDetails  String?
+  highestQualification String?
+  employmentType   String? // Job / Business / Job + business / Self-employed / Student / Not working / Other
+  jobDesignation   String?
+  companyName      String?
+  workingCity      String?
+  experienceYears  Int?
+  businessName     String?
+  businessType     String?
+  businessYears    Int?
+  motherOccupation String?
+  brothers         Int?
+  marriedBrothers  Int?
+  sisters          Int?
+  marriedSisters   Int?
+  familyValues     String?
+  aboutFamily      String?
+  diet             String?
+  drinking         String?
+  smoking          String?
+  hobbies          String[] @default([])
+  interests        String[] @default([])
+  careerGoals      String?
+  marriageExpectations String?
+  prefOccupation   String?
+  prefName         String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -260,6 +302,7 @@ model FamilyContact {
   phone         String // E.164, +91XXXXXXXXXX
   bestTime      String? // e.g. "Evenings after 7 PM"
   languages     String? // e.g. "Marathi, Hindi"
+  whatsapp      String? // E.164, optional
   isPrimary     Boolean @default(false)
   sortOrder     Int     @default(0)
   createdAt     DateTime @default(now())

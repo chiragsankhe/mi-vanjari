@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PhotoManager } from '../../components/profile/PhotoManager';
-import { BasicSection, cleanProfile, ContactFields, FamilySection, profileDefaults, profileFormSchema, WorkSection } from '../../components/profile/ProfileForm';
+import { BasicSection, cleanProfile, ContactFields, FamilySection, KundliSection, LifestyleSection, profileDefaults, profileFormSchema, ReachSection, WorkSection } from '../../components/profile/ProfileForm';
 import { Icon, PageHeader, Spinner, Tabs } from '../../components/ui';
 import { errorMessage, put } from '../../lib/api';
 import { useAuth } from '../../store/auth';
@@ -49,7 +49,10 @@ export default function EditProfile() {
           tabs={[
             { value: 'basic', label: 'About you' },
             { value: 'work', label: 'Location & work' },
-            { value: 'family', label: 'Family & preferences' },
+            { value: 'family', label: 'Family' },
+            { value: 'more', label: 'Lifestyle & about' },
+            { value: 'kundli', label: 'Kundli & partner' },
+            { value: 'reach', label: 'Contact & privacy' },
             { value: 'photos', label: 'Photos' },
           ]}
         />
@@ -66,6 +69,9 @@ export default function EditProfile() {
               )}
               {section === 'work' && <WorkSection form={form} />}
               {section === 'family' && <FamilySection form={form} />}
+              {section === 'more' && <LifestyleSection form={form} />}
+              {section === 'kundli' && <KundliSection form={form} />}
+              {section === 'reach' && <ReachSection form={form} />}
               {section === 'photos' && <PhotoManager />}
             </motion.div>
           </AnimatePresence>
