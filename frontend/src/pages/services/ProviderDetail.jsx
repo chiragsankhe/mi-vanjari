@@ -60,7 +60,8 @@ export default function ProviderDetail() {
         </Link>
       </div>
       <div className="container-page mt-4 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <div className="space-y-5">
+        {/* On phones the order is: photos → About → info card → packages → reviews. On desktop the info card is a sticky right column. */}
+        <div className="space-y-5 lg:col-start-1 lg:row-start-1">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden p-2.5">
             <div className="aspect-[16/10] overflow-hidden rounded-lg">
               <Img src={p.photos?.[img]} alt={p.businessName} fallbackIcon={p.category.icon} className="size-full object-cover" />
@@ -79,38 +80,9 @@ export default function ProviderDetail() {
             <h2 className="font-serif text-lg font-semibold">About</h2>
             <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.description || 'No description yet.'}</p>
           </Reveal>
-          <PackagesSection provider={p} authed={authed} onLogin={() => openAuth()} />
-          <Reveal className="space-y-4">
-            <h2 className="flex items-center gap-3 font-serif text-xl font-semibold">
-              Reviews <span className="text-sm font-normal text-muted">({p.ratingCount})</span>
-            </h2>
-            {authed && !p.isOwner && <ReviewForm providerId={p.id} mine={p.myReview} />}
-            {!authed && (
-              <button className="btn btn-outline btn-sm" onClick={() => openAuth()}>
-                Log in to write a review
-              </button>
-            )}
-            {p.reviews.length === 0 ? (
-              <p className="text-sm text-muted">No written reviews yet.</p>
-            ) : (
-              p.reviews.map((r) => (
-                <div key={r.id} className="card flex gap-3 p-4">
-                  <Avatar src={r.user.photoUrl} name={r.user.fullName} size={38} />
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <b className="text-sm">{r.user.fullName}</b>
-                      <Stars value={r.rating} size={12} />
-                      <small className="text-xs text-muted">{timeAgo(r.createdAt)}</small>
-                    </div>
-                    {r.comment && <p className="mt-1 text-sm text-[#4b4641]">{r.comment}</p>}
-                  </div>
-                </div>
-              ))
-            )}
-          </Reveal>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-24 lg:h-max">
+        <div className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-max">
           <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-6 shadow-[var(--shadow-card)]">
             <div className="flex flex-wrap gap-2">
               <Badge tone="red">{p.category.name}</Badge>
@@ -163,6 +135,39 @@ export default function ProviderDetail() {
             </div>
           )}
         </div>
+
+        <div className="space-y-5 lg:col-start-1 lg:row-start-2">
+          <PackagesSection provider={p} authed={authed} onLogin={() => openAuth()} />
+          <Reveal className="space-y-4">
+            <h2 className="flex items-center gap-3 font-serif text-xl font-semibold">
+              Reviews <span className="text-sm font-normal text-muted">({p.ratingCount})</span>
+            </h2>
+            {authed && !p.isOwner && <ReviewForm providerId={p.id} mine={p.myReview} />}
+            {!authed && (
+              <button className="btn btn-outline btn-sm" onClick={() => openAuth()}>
+                Log in to write a review
+              </button>
+            )}
+            {p.reviews.length === 0 ? (
+              <p className="text-sm text-muted">No written reviews yet.</p>
+            ) : (
+              p.reviews.map((r) => (
+                <div key={r.id} className="card flex gap-3 p-4">
+                  <Avatar src={r.user.photoUrl} name={r.user.fullName} size={38} />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <b className="text-sm">{r.user.fullName}</b>
+                      <Stars value={r.rating} size={12} />
+                      <small className="text-xs text-muted">{timeAgo(r.createdAt)}</small>
+                    </div>
+                    {r.comment && <p className="mt-1 text-sm text-[#4b4641]">{r.comment}</p>}
+                  </div>
+                </div>
+              ))
+            )}
+          </Reveal>
+        </div>
+
       </div>
     </div>
   );
