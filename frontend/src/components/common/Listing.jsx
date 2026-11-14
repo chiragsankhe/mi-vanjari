@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { errorMessage, inBatches, upload } from '../../lib/api';
 import { cn, formatINR, telLink, whatsappLink } from '../../lib/utils';
 import { ChatWithOwner } from '../chat/ChatWithOwner';
+import AutoImage from './AutoImage';
 import { Badge, Icon, Img, SampleNotice, SampleTag, Spinner } from '../ui';
 
 export function Stars({ value = 0, size = 14, className }) {
@@ -21,7 +22,7 @@ export function ProviderCard({ p }) {
   return (
     <Link to={`/services/provider/${p.id}`} className="group card card-hover block overflow-hidden p-2.5">
       <div className="relative h-44 overflow-hidden rounded-lg">
-        <Img src={p.photos?.[0]} alt={p.businessName} fallbackIcon={p.category?.icon || 'tent'} className="size-full object-cover transition duration-700 group-hover:scale-105" />
+        <AutoImage photos={p.photos} alt={p.businessName} fallbackIcon={p.category?.icon || 'tent'} className="transition duration-700 group-hover:scale-105" />
         {p.priceFrom != null && <span className="absolute bottom-2.5 left-2.5 rounded-md bg-white px-2.5 py-1.5 text-[11px] font-bold">From {formatINR(p.priceFrom)}</span>}
         {p.isFeatured && (
           <Badge className="absolute top-2.5 left-2.5">

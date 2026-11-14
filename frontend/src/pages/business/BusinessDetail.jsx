@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ContactButtons } from '../../components/common/Listing';
+import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import { ReportDialogBody } from '../../components/profile/ProfileBits';
-import { Avatar, ConfirmDialog, EmptyState, Icon, Img, Modal, PageLoader, SampleTag, VerifiedDot } from '../../components/ui';
+import { Avatar, ConfirmDialog, EmptyState, Icon, Modal, PageLoader, SampleTag, VerifiedDot } from '../../components/ui';
 import { del, errorMessage, get } from '../../lib/api';
-import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 import { useUI } from '../../store/ui';
 
@@ -16,7 +16,6 @@ export default function BusinessDetail() {
   const navigate = useNavigate();
   const authed = useAuth((s) => s.status === 'authed');
   const openAuth = useUI((s) => s.openAuth);
-  const [img, setImg] = useState(0);
   const [confirm, setConfirm] = useState(false);
   const [report, setReport] = useState(false);
   const { data: b, isLoading, isError } = useQuery({ queryKey: ['business', id], queryFn: () => get(`/business/${id}`) });
@@ -42,18 +41,7 @@ export default function BusinessDetail() {
       <div className="container-page mt-4 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
           <div className="card overflow-hidden p-2.5">
-            <div className="aspect-[16/10] overflow-hidden rounded-lg">
-              <Img src={b.photos?.[img]} alt={b.name} fallbackIcon="briefcase" className="size-full object-cover" />
-            </div>
-            {b.photos?.length > 1 && (
-              <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto">
-                {b.photos.map((u, i) => (
-                  <button key={u} onClick={() => setImg(i)} className={cn('size-16 shrink-0 overflow-hidden rounded-md border-2', i === img ? 'border-primary' : 'border-transparent opacity-70')}>
-                    <img src={u} alt="" className="size-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <PhotoGallery photos={b.photos || []} alt={b.name} aspect="aspect-[16/9] sm:aspect-[16/10]" fit="object-center" fallbackIcon="briefcase" />
           </div>
           <div className="card p-6">
             <h2 className="font-serif text-lg font-semibold">About the business</h2>

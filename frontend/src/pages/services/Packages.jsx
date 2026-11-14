@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PhotoUploader } from '../../components/common/Listing';
+import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import { Field, Icon, Img, Modal, Spinner } from '../../components/ui';
 import { del, errorMessage, post, put } from '../../lib/api';
 import { cn, formatINR, telLink, whatsappLink } from '../../lib/utils';
@@ -74,7 +75,6 @@ function PackageEditor({ providerId, pkg, onClose }) {
 }
 
 function PackageCard({ pkg, provider, authed, onLogin, onEdit, onDelete }) {
-  const [img, setImg] = useState(0);
   const [open, setOpen] = useState(false);
   const photos = pkg.photos || [];
   const includes = pkg.includes || [];
@@ -85,10 +85,9 @@ function PackageCard({ pkg, provider, authed, onLogin, onEdit, onDelete }) {
     <article className="card p-2.5">
       <div className="flex gap-3">
         {photos.length > 0 && (
-          <button type="button" onClick={() => setImg((i) => (i + 1) % photos.length)} className="relative size-[84px] shrink-0 overflow-hidden rounded-lg bg-sand sm:size-24" aria-label={photos.length > 1 ? 'Next photo' : pkg.name}>
-            <Img src={photos[img]} alt={pkg.name} fallbackIcon={provider.category.icon} className="size-full object-cover" />
-            {photos.length > 1 && <span className="absolute right-1 bottom-1 rounded-full bg-black/60 px-1.5 text-[9px] font-semibold text-white">{img + 1}/{photos.length}</span>}
-          </button>
+          <div className="size-[84px] shrink-0 sm:size-24">
+            <PhotoGallery photos={photos} alt={pkg.name} aspect="size-full" fit="object-center" fallbackIcon={provider.category.icon} mini />
+          </div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

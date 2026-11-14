@@ -2,12 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import PackagesSection from './Packages';
 import { toast } from 'sonner';
 import { ContactButtons, Stars } from '../../components/common/Listing';
 import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, SampleTag, Spinner } from '../../components/ui';
 import { errorMessage, get, post } from '../../lib/api';
-import { cn, formatINR, timeAgo } from '../../lib/utils';
+import { formatINR, timeAgo } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 import { useUI } from '../../store/ui';
 
@@ -46,7 +47,6 @@ export default function ProviderDetail() {
   const { id } = useParams();
   const authed = useAuth((s) => s.status === 'authed');
   const openAuth = useUI((s) => s.openAuth);
-  const [img, setImg] = useState(0);
   const { data: p, isLoading, isError } = useQuery({ queryKey: ['provider', id], queryFn: () => get(`/services/provider/${id}`) });
 
   if (isLoading) return <PageLoader />;
@@ -63,18 +63,7 @@ export default function ProviderDetail() {
         {/* On phones the order is: photos → About → info card → packages → reviews. On desktop the info card is a sticky right column. */}
         <div className="space-y-5 lg:col-start-1 lg:row-start-1">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden p-2.5">
-            <div className="aspect-[16/9] overflow-hidden rounded-lg sm:aspect-[16/10]">
-              <Img src={p.photos?.[img]} alt={p.businessName} fallbackIcon={p.category.icon} className="size-full object-cover" />
-            </div>
-            {p.photos?.length > 1 && (
-              <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto">
-                {p.photos.map((u, i) => (
-                  <button key={u} onClick={() => setImg(i)} className={cn('size-16 shrink-0 overflow-hidden rounded-md border-2', i === img ? 'border-primary' : 'border-transparent opacity-70')}>
-                    <img src={u} alt="" className="size-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <PhotoGallery photos={p.photos || []} alt={p.businessName} aspect="aspect-[16/9] sm:aspect-[16/10]" fit="object-center" fallbackIcon={p.category.icon} />
           </motion.div>
           <Reveal className="card p-4 sm:p-6">
             <h2 className="font-serif text-lg font-semibold">About</h2>

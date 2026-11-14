@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { EmptyState, Icon, Img, LoadMoreSentinel, PageHeader, SampleTag, Segment, Skeleton, Stagger, StaggerItem } from '../../components/ui';
+import { PhotoGallery } from '../../components/profile/PhotoGallery';
+import { EmptyState, Icon, LoadMoreSentinel, PageHeader, SampleTag, Segment, Skeleton, Stagger, StaggerItem } from '../../components/ui';
 import { usePaged } from '../../hooks';
 import { get } from '../../lib/api';
 import { cn } from '../../lib/utils';
@@ -11,8 +12,8 @@ function AchieverCard({ a, rank }) {
   const academic = a.type === 'ACADEMIC';
   return (
     <motion.article whileHover={{ y: -6 }} className="card relative h-full overflow-hidden p-2.5">
-      <div className="relative h-56 overflow-hidden rounded-lg">
-        <Img src={a.photoUrl} alt={a.name} fallbackIcon={academic ? 'graduation' : 'award'} className={cn('size-full object-cover', a.isSample ? 'object-[center_35%]' : 'object-top')} />
+      <div className="h-56">
+        <PhotoGallery photos={a.photoUrl ? [a.photoUrl] : []} alt={a.name} aspect="h-full" fit={a.isSample ? 'object-[center_35%]' : 'object-top'} fallbackIcon={academic ? 'graduation' : 'award'} thumbs={false} showCount={false}>
         {academic && a.percentage != null && (
           <span className="absolute right-2.5 bottom-2.5 rounded-lg bg-white/95 px-3 py-1.5 text-center shadow">
             <b className="block font-serif text-xl leading-none text-primary">{a.percentage}%</b>
@@ -22,6 +23,7 @@ function AchieverCard({ a, rank }) {
         {rank && rank <= 3 && (
           <span className={cn('absolute top-2.5 left-2.5 grid size-9 place-items-center rounded-full text-sm font-bold text-white shadow', rank === 1 ? 'bg-gold' : rank === 2 ? 'bg-[#9aa3ad]' : 'bg-[#b87333]')}>#{rank}</span>
         )}
+        </PhotoGallery>
       </div>
       <div className="p-2.5 pt-3.5">
         <span className="inline-block bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{academic ? `Academic excellence · ${a.year ?? ''}` : 'Professional excellence'}</span>

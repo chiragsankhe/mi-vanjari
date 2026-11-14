@@ -155,7 +155,8 @@ function Lightbox({ photos, index, setIndex, onClose, alt, watermark }) {
  *  • Auto-advances every 3 s; pauses on hover, keyboard focus, touch, and while the viewer is open
  *  • Swipe or arrows to change; click opens the full-screen viewer
  */
-export function PhotoGallery({ photos, locked, alt, watermark, children }) {
+export function PhotoGallery({ photos: raw, locked, alt, watermark, children, aspect = 'aspect-[4/5]', fit = 'object-top', fallbackIcon = 'user', thumbs = true, mini = false, showCount = true, className }) {
+  const photos = (raw || []).map((p) => (typeof p === 'string' ? { url: p } : p)); // accepts URLs or { url } objects
   const [index, setIndex] = useState(0);
   const [hover, setHover] = useState(false);
   const [open, setOpen] = useState(false);
@@ -190,7 +191,7 @@ export function PhotoGallery({ photos, locked, alt, watermark, children }) {
   return (
     <>
       <div
-        className={cn('group relative aspect-[4/5] touch-pan-y overflow-hidden rounded-lg bg-sand', !locked && 'cursor-zoom-in')}
+        className={cn('group relative touch-pan-y overflow-hidden rounded-lg bg-sand', aspect, !locked && 'cursor-zoom-in', className)}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onFocus={() => setHover(true)}
@@ -211,12 +212,12 @@ export function PhotoGallery({ photos, locked, alt, watermark, children }) {
       >
         <AnimatePresence initial={false}>
           <motion.div key={index} initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
-            <Img src={photos[index]?.url} alt={alt} fallbackIcon="user" className="size-full object-cover object-top" />
+            <Img src={photos[index]?.url} alt={alt} fallbackIcon={fallbackIcon} className={cn('size-full object-cover', fit)} />
           </motion.div>
         </AnimatePresence>
         {watermark && <Watermark text={watermark} />}
 
-        {multi && (
+        {multi && !mini && (
           <>
             {/* story-style progress bars */}
             <div className="absolute inset-x-3 top-2 z-10 flex gap-1">
@@ -254,7 +255,12 @@ export function PhotoGallery({ photos, locked, alt, watermark, children }) {
         )}
 
         {/* photo count */}
-        {!locked && n > 0 && photos[0]?.url && (
+        {mini && multi && (
+          <span className="absolute right-1 bottom-1 z-10 rounded-full bg-black/60 px-1.5 text-[9px] font-semibold text-white tabular-nums">
+            {index + 1}/{n}
+          </span>
+        )}
+        {!mini && showCount && !locked && n > 0 && photos[0]?.url && (
           <span className="absolute right-3 bottom-3 z-10 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
             <Icon name="camera" size={13} /> {multi ? `${index + 1} / ${n}` : '1 photo'}
             {hover && multi && <span className="ml-1 text-[10px] font-normal text-white/75">· paused</span>}
@@ -263,7 +269,7 @@ export function PhotoGallery({ photos, locked, alt, watermark, children }) {
         {children}
       </div>
 
-      {multi && (
+      {multi && thumbs && !mini && (
         <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto">
           {photos.map((ph, i) => (
             <button
