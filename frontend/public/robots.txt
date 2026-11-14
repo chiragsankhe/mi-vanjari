@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /me
+Disallow: /messages
+Disallow: /settings
+
+Sitemap: https://mivanjari.com/sitemap.xml

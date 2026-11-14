@@ -8,7 +8,7 @@ const PAGES = {
     icon: 'lock',
     intro: 'Your trust matters more than anything. Here is how Mi Vanjari protects your information.',
     sections: [
-      ['What we collect', 'Your verified mobile number, the profile details you choose to add, photos you upload, and messages you send. We never ask for passwords, bank details or government IDs.'],
+      ['What we collect', 'Your verified email address (and mobile number, if you add one), the profile details you choose to add, photos you upload, and messages you send. We never ask for passwords, bank details or government IDs.'],
       ['Who can see what', 'Public profiles show basic details to logged-in community members. Private profiles show only first name, age range, city and gotra with a blurred photo until you accept a follow request. Your phone number is never shown in search, and is revealed only to accepted followers if you switch on “Show my phone number”.'],
       ['Photos', 'Every photo is re-processed when uploaded: location data (EXIF/GPS) is removed and a separate blurred copy is created, so the real photo is never sent to members who aren’t allowed to see it.'],
       ['Messages', 'Chat is available only between connected members. Screenshot and copy deterrence is enabled on chats and profiles (note: no website can fully block screenshots — please share responsibly).'],
@@ -25,7 +25,7 @@ const PAGES = {
       ['Involve your family', 'Meet for the first time in a public place, with family informed. Verify details through relatives and community elders.'],
       ['Keep personal details private', 'Don’t share your address, workplace or financial information early in a conversation.'],
       ['Use report & block', 'Every profile, post and listing has a report option. Our moderators review every report. Blocking hides your profile from that member instantly.'],
-      ['Look for the green tick', 'The green tick means the member’s phone is verified. Admin-verified profiles carry extra trust.'],
+      ['Look for the green tick', 'The green tick means the member’s email or phone is verified. Admin-verified profiles carry extra trust.'],
     ],
   },
   contact: {
@@ -34,7 +34,7 @@ const PAGES = {
     icon: 'phone',
     intro: 'We’d love to hear from you — suggestions, partnerships, or help with your account.',
     sections: [
-      ['Community help desk', 'Email: help@example.com · WhatsApp: +91 00000 00000 (placeholder — update in src/pages/misc/Info.jsx)'],
+      ['Community help desk', 'Write to us at mivanjari1111@gmail.com — we reply as soon as we can.'],
       ['List a service or business', 'Use “List your service” or “List your business” — our team reviews listings within 48 hours.'],
       ['Report a concern', 'Use the report option on any profile or listing, or write to the help desk above.'],
       ['Volunteer with us', 'Help verify achievers, update our history pages or organise community events in your city.'],
