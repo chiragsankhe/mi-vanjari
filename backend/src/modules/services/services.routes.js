@@ -10,7 +10,7 @@ import { ApiError, h, pageResult, paginate } from '../../utils/http.js';
 
 /**
  * Wedding services marketplace.
- * New provider listings start as PENDING and become public after admin approval.
+ * New provider listings go live immediately; an admin can reject or hide them afterwards.
  */
 const router = Router();
 
@@ -284,11 +284,14 @@ router.post(
     const cat = await prisma.serviceCategory.findUnique({ where: { id: fields.categoryId } });
     if (!canUse(cat, req.user)) throw ApiError.badRequest('Invalid category');
     const subs = await checkSubcategories(subcategoryIds, cat.id, req.user);
-    const autoApprove = isAdminSession(req.user);
+    // Listings go live at once (the admin can still reject or hide any of them afterwards).
+    // The category / options the provider suggested become public with it, otherwise the listing would be hidden.
     const created = await prisma.serviceProvider.create({
-      data: { ...fields, photos: fields.photos || [], userId: req.user.id, status: autoApprove ? 'APPROVED' : 'PENDING', subcategories: { connect: subs } },
+      data: { ...fields, photos: fields.photos || [], userId: req.user.id, status: 'APPROVED', subcategories: { connect: subs } },
       select: providerSelect,
     });
+    if (!cat.isApproved) await prisma.serviceCategory.update({ where: { id: cat.id }, data: { isApproved: true } });
+    if (subs.length) await prisma.serviceSubcategory.updateMany({ where: { id: { in: subs.map((s) => s.id) }, isApproved: false }, data: { isApproved: true } });
     res.status(201).json(created);
   }),
 );

@@ -45,7 +45,7 @@ function CategoryPicker({ form, cats, subIds, setSubIds }) {
       form.setValue('categoryId', c.id, { shouldValidate: true });
       setSubIds([]);
       setNewCat('');
-      toast.success(c.existed ? `“${c.name}” already exists — selected it for you` : c.isApproved ? 'Category added' : 'New category added — it becomes visible to everyone after a quick review');
+      toast.success(c.existed ? `“${c.name}” already exists — selected it for you` : c.isApproved ? 'Category added' : 'New category added — it becomes visible to everyone when you publish your service');
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
@@ -61,7 +61,7 @@ function CategoryPicker({ form, cats, subIds, setSubIds }) {
       setSubIds((ids) => (ids.includes(s.id) ? ids : [...ids, s.id]));
       setNewSub('');
       setAddingSub(false);
-      toast.success(s.existed ? `“${s.name}” already exists — selected it for you` : s.isApproved ? 'Option added' : 'New option added — it becomes visible to everyone after a quick review');
+      toast.success(s.existed ? `“${s.name}” already exists — selected it for you` : s.isApproved ? 'Option added' : 'New option added — it becomes visible to everyone when you publish your service');
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
@@ -104,7 +104,7 @@ function CategoryPicker({ form, cats, subIds, setSubIds }) {
               {busy ? <Spinner size={15} /> : 'Add'}
             </button>
           </div>
-          <p className="mt-1.5 text-xs text-muted">If a category with this name already exists, we pick it for you. New categories appear for other providers once reviewed.</p>
+          <p className="mt-1.5 text-xs text-muted">If a category with this name already exists, we pick it for you. New categories appear for other providers once you publish your service.</p>
         </div>
       )}
 
@@ -181,7 +181,7 @@ export default function ServiceForm() {
       const body = { ...v, whatsapp: v.whatsapp || null, priceFrom: v.priceFrom === '' ? null : v.priceFrom, photos, subcategoryIds: subIds };
       const saved = id ? await put(`/services/${id}`, body) : await post('/services', body);
       qc.invalidateQueries({ queryKey: ['my-services'] });
-      toast.success(saved.status === 'APPROVED' ? 'Listing saved' : 'Submitted! Your listing goes live after a quick review.');
+      toast.success(saved.status === 'APPROVED' ? 'Listing saved' : 'Submitted! Your listing is awaiting approval.');
       navigate(`/services/provider/${saved.id}`, { state: { justSaved: !id } });
     } catch (err) {
       toast.error(err instanceof Error && !err.response ? err.message : errorMessage(err));
@@ -192,7 +192,7 @@ export default function ServiceForm() {
 
   return (
     <>
-      <PageHeader eyebrow="Wedding services" title={id ? 'सेवा संपादित करा' : 'आपली सेवा नोंदवा'} subtitle="Reach families planning weddings across the community. Listings are reviewed before going live." icon="tent" />
+      <PageHeader eyebrow="Wedding services" title={id ? 'सेवा संपादित करा' : 'आपली सेवा नोंदवा'} subtitle="Reach families planning weddings across the community. Your listing goes live as soon as you save it." icon="tent" />
       <form onSubmit={submit} className="container-page max-w-3xl py-8">
         <div className="card grid gap-4 p-5 sm:grid-cols-2 sm:p-8">
           <Field label="Business name *" error={e.businessName?.message} {...form.register('businessName')} className="sm:col-span-2" />
@@ -215,7 +215,7 @@ export default function ServiceForm() {
             Cancel
           </button>
           <button className="btn btn-primary" disabled={saving}>
-            {saving ? <Spinner size={16} /> : <><Icon name="check" size={17} /> {id ? 'Save changes' : 'Submit for review'}</>}
+            {saving ? <Spinner size={16} /> : <><Icon name="check" size={17} /> {id ? 'Save changes' : 'Publish my service'}</>}
           </button>
         </div>
       </form>
