@@ -5,7 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { VanjariFilm } from '../../components/history/VanjariFilm';
 import { ProfileCard, ProfileCardSkeleton, ReportDialogBody } from '../../components/profile/ProfileBits';
-import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, SampleTag, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
+import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, Reveal, SampleTag, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
 import { useDebounce, usePaged } from '../../hooks';
 import { del, errorMessage, get, post, upload } from '../../lib/api';
 import { cn, timeAgo } from '../../lib/utils';
@@ -26,8 +26,8 @@ function Timeline() {
       {isLoading
         ? [0, 1, 2].map((i) => <Skeleton key={i} className="mb-6 ml-14 h-40 md:ml-[100px]" />)
         : data.map((h, i) => (
-            <motion.article key={h.id} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.7 }} className="mb-6 grid grid-cols-[55px_1fr] md:grid-cols-[100px_1fr]">
-              <motion.span initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ type: 'spring', delay: 0.2 }} className="z-10 grid size-11 place-items-center rounded-full border border-primary bg-ivory font-serif text-[13px] text-primary italic md:ml-[27px]">
+            <Reveal as="article" key={h.id} y={40} className="mb-6 grid grid-cols-[55px_1fr] md:grid-cols-[100px_1fr]">
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }} className="z-10 grid size-11 place-items-center rounded-full border border-primary bg-ivory font-serif text-[13px] text-primary italic md:ml-[27px]">
                 0{i + 1}
               </motion.span>
               <div className="card overflow-hidden transition hover:shadow-[var(--shadow-card)]">
@@ -45,7 +45,7 @@ function Timeline() {
                   <p className="text-[13px] leading-[1.85] text-muted">{h.content}</p>
                 </div>
               </div>
-            </motion.article>
+            </Reveal>
           ))}
     </section>
   );

@@ -209,8 +209,7 @@ export function KundaliResult({ result, boyName = 'Groom', girlName = 'Bride' })
                     <motion.div
                       className={cn('h-full rounded-full', st.bar)}
                       initial={{ width: 0 }}
-                      whileInView={{ width: `${(k.score / k.max) * 100}%` }}
-                      viewport={{ once: true }}
+                      animate={{ width: `${(k.score / k.max) * 100}%` }}
                       transition={{ duration: 0.8, delay: i * 0.06 }}
                     />
                   </div>

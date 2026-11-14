@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useInView } from 'motion/react';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useInView as useIOInView } from 'react-intersection-observer';
 import { cn, initials } from '../../lib/utils';
@@ -11,46 +11,80 @@ export { Icon };
 
 export const ease = [0.22, 1, 0.36, 1];
 
+/**
+ * True once the element has been scrolled into view. Content that starts hidden (for an animation) must never stay hidden,
+ * so besides the browser's visibility observer there is a plain position check every 0.5 s — if the observer is slow,
+ * blocked or never fires, anything that is on screen still appears.
+ */
+function useSeen(ref, margin = 40) {
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    if (!('IntersectionObserver' in window)) {
+      setSeen(true);
+      return undefined;
+    }
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      setSeen(true);
+    };
+    const onScreen = () => {
+      const r = el.getBoundingClientRect();
+      return r.top < window.innerHeight - margin && r.bottom > 0;
+    };
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && show(), { rootMargin: `0px 0px -${margin}px 0px` });
+    io.observe(el);
+    if (onScreen()) show();
+    const timer = setInterval(() => onScreen() && show(), 500);
+    return () => {
+      io.disconnect();
+      clearInterval(timer);
+    };
+  }, [ref, margin]);
+  return seen;
+}
+
 /** Fade-and-rise when scrolled into view. */
 export function Reveal({ children, delay = 0, y = 24, className, as = 'div', once = true }) {
   const Comp = motion[as] ?? motion.div;
+  const ref = useRef(null);
+  const seen = useSeen(ref, 60);
   return (
-    <Comp
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: '-60px' }}
-      transition={{ duration: 0.7, delay, ease }}
-    >
+    <Comp ref={ref} className={className} initial={{ opacity: 0, y }} animate={seen || once === false ? { opacity: 1, y: 0 } : { opacity: 0, y }} transition={{ duration: 0.7, delay, ease }}>
       {children}
     </Comp>
   );
 }
 
 /** Staggered children (wrap items in <StaggerItem>). */
+const StaggerCtx = createContext(null);
+
+/**
+ * Staggered children (wrap items in <StaggerItem>).
+ * Each item animates itself when it appears — never wait for a parent signal, because items often arrive after the data
+ * loads (skeleton → real cards) and a parent-driven animation would leave them invisible.
+ */
 export function Stagger({ children, className, delay = 0, gap = 0.07 }) {
+  const ctx = useRef({ n: 0, delay, gap });
+  ctx.current.delay = delay;
+  ctx.current.gap = gap;
   return (
-    <motion.div
-      className={className}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: '-40px' }}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: gap, delayChildren: delay } } }}
-    >
-      {children}
-    </motion.div>
+    <StaggerCtx.Provider value={ctx.current}>
+      <div className={className}>{children}</div>
+    </StaggerCtx.Provider>
   );
 }
 
 export const StaggerItem = forwardRef(function StaggerItem({ children, className, as = 'div', ...rest }, ref) {
   const Comp = motion[as] ?? motion.div;
+  const ctx = useContext(StaggerCtx);
+  // order of arrival decides the little delay (wraps around so a long list never waits long)
+  const [wait] = useState(() => (ctx ? ctx.delay + (ctx.n++ % 12) * ctx.gap : 0));
   return (
-    <Comp
-      ref={ref}
-      className={className}
-      variants={{ hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease } } }}
-      {...rest}
-    >
+    <Comp ref={ref} className={className} initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease, delay: wait }} {...rest}>
       {children}
     </Comp>
   );
