@@ -51,33 +51,69 @@ export function ProviderCard({ p }) {
 /** Chat · Call · WhatsApp for a listing. `chat` = { type: 'BUSINESS'|'SERVICE', id, ownerId } */
 export function ContactButtons({ phone, extraPhones = [], whatsapp, name, className, chat, sample = false }) {
   if (sample) return <SampleNotice className={className} />;
+  const numbers = [phone, ...extraPhones].filter(Boolean);
   return (
     <div className={cn('space-y-2', className)}>
       {chat && <ChatWithOwner {...chat} label="Chat with owner" className="w-full" />}
-      <div className="flex gap-2">
-      <a href={telLink(phone)} className={cn('btn flex-1', chat ? 'btn-outline' : 'btn-primary')}>
-        <Icon name="phone" size={17} /> Call
-      </a>
-      <a href={whatsappLink(whatsapp || phone, `Namaskar! I found ${name} on Mi Vanjari.`)} target="_blank" rel="noreferrer" className="btn btn-outline flex-1">
-        <Icon name="whatsapp" size={17} /> WhatsApp
-      </a>
-      </div>
-      {extraPhones.length > 0 && (
+      {/* The number itself is always shown: "Call" only works on a phone, so on a computer people can read or copy it */}
+      {numbers.length > 0 && (
         <div className="rounded-lg border border-line bg-white p-2.5">
-          <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">Other numbers</span>
+          <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">{numbers.length > 1 ? 'Phone numbers' : 'Phone number'}</span>
           <ul className="divide-y divide-line">
-            {extraPhones.map((n) => (
-              <li key={n} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="text-sm font-medium tabular-nums">{formatPhone(n)}</span>
-                <a href={telLink(n)} className="btn btn-outline btn-sm h-8" aria-label={`Call ${formatPhone(n)}`}>
-                  <Icon name="phone" size={14} /> Call
-                </a>
-              </li>
+            {numbers.map((n) => (
+              <PhoneRow key={n} number={n} />
             ))}
           </ul>
         </div>
       )}
+      <a href={whatsappLink(whatsapp || phone, `Namaskar! I found ${name} on Mi Vanjari.`)} target="_blank" rel="noreferrer" className="btn btn-outline w-full">
+        <Icon name="whatsapp" size={17} /> WhatsApp
+      </a>
     </div>
+  );
+}
+
+/** One phone number: shown in full, with Call (opens the dialler on a phone) and Copy (for computers). */
+export function PhoneRow({ number }) {
+  const [copied, setCopied] = useState(false);
+  const shown = formatPhone(number);
+  const copy = async () => {
+    const digits = String(number).replace(/\D/g, '').slice(-10);
+    try {
+      await navigator.clipboard.writeText(digits);
+    } catch {
+      // older browsers / blocked clipboard: fall back to a hidden text box
+      const box = document.createElement('textarea');
+      box.value = digits;
+      box.style.position = 'fixed';
+      box.style.opacity = '0';
+      document.body.appendChild(box);
+      box.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        /* ignore */
+      }
+      box.remove();
+    }
+    setCopied(true);
+    toast.success('Number copied');
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <li className="flex items-center justify-between gap-2 py-1.5">
+      <a href={telLink(number)} className="min-w-0 truncate text-[15px] font-semibold tabular-nums hover:text-primary">
+        {shown}
+      </a>
+      <span className="flex shrink-0 gap-1.5">
+        <button type="button" onClick={copy} className="btn btn-ghost btn-sm h-8 !px-2.5" aria-label={`Copy ${shown}`}>
+          <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy'}
+        </button>
+        <a href={telLink(number)} className="btn btn-primary btn-sm h-8 !px-3" aria-label={`Call ${shown}`}>
+          <Icon name="phone" size={14} /> Call
+        </a>
+      </span>
+    </li>
   );
 }
 

@@ -13,6 +13,47 @@ import { RashiLink } from '../../components/common/RashiReport';
 import { FamilyContactsCard } from '../../components/profile/FamilyContactsCard';
 import { PostCard } from '../community/Community';
 
+const DASH_TABS = [
+  { value: 'posts', label: 'My posts', icon: 'chat' },
+  { value: 'saved', label: 'Saved profiles', icon: 'bookmark' },
+  { value: 'viewers', label: 'Who viewed me', icon: 'eye' },
+  { value: 'listings', label: 'My services & business', icon: 'briefcase' },
+];
+
+/**
+ * The four sections of the profile page. On a phone they are small cards in a 2 × 2 grid, so every section is visible at once
+ * (a row of text tabs ran off the screen); from tablet size up it is the usual underlined tab bar.
+ */
+function DashTabs({ value, onChange }) {
+  return (
+    <>
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:hidden" role="tablist" aria-label="Profile sections">
+        {DASH_TABS.map((t) => {
+          const on = value === t.value;
+          return (
+            <button
+              key={t.value}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => onChange(t.value)}
+              className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2.5 text-left transition ${on ? 'border-primary bg-primary-soft text-primary shadow-sm' : 'border-line bg-white text-ink hover:border-primary/40'}`}
+            >
+              <span className={`grid size-8 shrink-0 place-items-center rounded-full ${on ? 'bg-primary text-white' : 'bg-sand text-muted'}`}>
+                <Icon name={t.icon} size={16} />
+              </span>
+              <span className="min-w-0 text-[12px] leading-tight font-semibold">{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-5 hidden sm:block">
+        <Tabs id="dash" value={value} onChange={onChange} tabs={DASH_TABS} />
+      </div>
+    </>
+  );
+}
+
 function Completion({ p }) {
   const checks = [
     [p.photoUrl, 'Add a profile photo', '/me/edit?section=photos'],
@@ -226,18 +267,7 @@ export default function MyProfile() {
             <FamilyContactsCard contacts={p.familyContacts} visible isSelf />
           </div>
         )}
-        <Tabs
-          id="dash"
-          className="mt-5"
-          value={tab}
-          onChange={(v) => setParams({ tab: v }, { replace: true })}
-          tabs={[
-            { value: 'posts', label: 'My posts' },
-            { value: 'saved', label: 'Saved profiles' },
-            { value: 'viewers', label: 'Who viewed me' },
-            { value: 'listings', label: 'My services & business' },
-          ]}
-        />
+        <DashTabs value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })} />
         {tab === 'posts' && <Posts userId={user.id} />}
         {tab === 'saved' && <Saved />}
         {tab === 'viewers' && <Viewers />}

@@ -80,6 +80,12 @@ const paths = {
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,
+  copy: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+    </>
+  ),
   'check-double': <path d="m2 12 4 4 9-10M10 15l1 1 9-10" />,
   phone: <path d="M7.6 3H4.4C3.6 3 3 3.6 3 4.4A16.6 16.6 0 0 0 19.6 21c.8 0 1.4-.6 1.4-1.4v-3.2l-4.3-1-1.1 2a13.7 13.7 0 0 1-9-9l2-1.1Z" />,
   mail: (
