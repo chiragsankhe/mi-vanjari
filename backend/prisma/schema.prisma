@@ -558,6 +558,8 @@ model Business {
   category    String // Agriculture, Shop, Transport, Education ...
   description String?
   phone       String
+  /// more contact numbers (a business often has several) — shown after the main number
+  extraPhones String[] @default([])
   whatsapp    String?
   website     String?
   location    String

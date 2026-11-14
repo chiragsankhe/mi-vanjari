@@ -74,7 +74,7 @@ export default function BusinessDetail() {
               </Link>
             )}
             {authed || b.isSample ? (
-              <ContactButtons sample={b.isSample} phone={b.phone} whatsapp={b.whatsapp} name={b.name} className="mt-5" chat={{ type: 'BUSINESS', id: b.id, ownerId: b.owner?.userId || b.userId }} />
+              <ContactButtons sample={b.isSample} phone={b.phone} extraPhones={b.extraPhones || []} whatsapp={b.whatsapp} name={b.name} className="mt-5" chat={{ type: 'BUSINESS', id: b.id, ownerId: b.owner?.userId || b.userId }} />
             ) : (
               <button className="btn btn-primary mt-5 w-full" onClick={() => openAuth()}>
                 <Icon name="lock" size={16} /> Log in to see contact

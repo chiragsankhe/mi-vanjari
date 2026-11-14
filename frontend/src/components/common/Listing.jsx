@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { errorMessage, inBatches, upload } from '../../lib/api';
-import { cn, formatINR, telLink, whatsappLink } from '../../lib/utils';
+import { cn, formatINR, formatPhone, telLink, whatsappLink } from '../../lib/utils';
 import { ChatWithOwner } from '../chat/ChatWithOwner';
 import AutoImage from './AutoImage';
 import { Badge, Icon, Img, SampleNotice, SampleTag, Spinner } from '../ui';
@@ -49,7 +49,7 @@ export function ProviderCard({ p }) {
 }
 
 /** Chat · Call · WhatsApp for a listing. `chat` = { type: 'BUSINESS'|'SERVICE', id, ownerId } */
-export function ContactButtons({ phone, whatsapp, name, className, chat, sample = false }) {
+export function ContactButtons({ phone, extraPhones = [], whatsapp, name, className, chat, sample = false }) {
   if (sample) return <SampleNotice className={className} />;
   return (
     <div className={cn('space-y-2', className)}>
@@ -62,6 +62,21 @@ export function ContactButtons({ phone, whatsapp, name, className, chat, sample 
         <Icon name="whatsapp" size={17} /> WhatsApp
       </a>
       </div>
+      {extraPhones.length > 0 && (
+        <div className="rounded-lg border border-line bg-white p-2.5">
+          <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">Other numbers</span>
+          <ul className="divide-y divide-line">
+            {extraPhones.map((n) => (
+              <li key={n} className="flex items-center justify-between gap-3 py-1.5">
+                <span className="text-sm font-medium tabular-nums">{formatPhone(n)}</span>
+                <a href={telLink(n)} className="btn btn-outline btn-sm h-8" aria-label={`Call ${formatPhone(n)}`}>
+                  <Icon name="phone" size={14} /> Call
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

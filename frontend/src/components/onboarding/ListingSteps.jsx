@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { cleanExtraPhones, ExtraPhonesField, validateExtraPhones } from '../common/ExtraPhones';
 import { PhotoUploader } from '../common/Listing';
 import { get } from '../../lib/api';
 import { Field } from '../ui';
@@ -11,7 +12,7 @@ import { Field } from '../ui';
 const tenDigits = (v) => String(v || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
 const isMobile = (v) => /^[6-9]\d{9}$/.test(tenDigits(v));
 
-export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), location: base.city || '', website: '', photos: [] });
+export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), extraPhones: [], location: base.city || '', website: '', photos: [] });
 export const emptyService = (base = {}) => ({ businessName: '', categoryId: '', priceFrom: '', experienceYears: '', location: base.city || '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), description: '', photos: [] });
 
 export function validateBusiness(b) {
@@ -21,6 +22,8 @@ export function validateBusiness(b) {
   if (b.description.trim().length < 10) e.description = 'Tell people what you do (at least 10 characters)';
   if (!isMobile(b.phone)) e.phone = 'Enter a valid 10-digit mobile number';
   if (b.whatsapp && !isMobile(b.whatsapp)) e.whatsapp = 'Enter a valid 10-digit number';
+  const extra = validateExtraPhones(b.extraPhones || []);
+  if (Object.keys(extra).length) e.extraPhones = extra;
   if (b.location.trim().length < 2) e.location = 'Enter the address or area';
   if (b.website && !/^https?:\/\/\S+\.\S+/.test(b.website.trim())) e.website = 'Start with https://';
   return e;
@@ -43,6 +46,7 @@ export const toBusinessPayload = (b) => ({
   category: b.category,
   description: b.description.trim(),
   phone: tenDigits(b.phone),
+  extraPhones: cleanExtraPhones(b.extraPhones || [], b.phone),
   whatsapp: b.whatsapp ? tenDigits(b.whatsapp) : null,
   location: b.location.trim(),
   website: b.website.trim() || null,
@@ -92,6 +96,7 @@ export function BusinessStep({ value: b, onChange, errors = {} }) {
         <Field as="textarea" label="What do you do? *" placeholder="Products or services, since when, what makes you special…" maxLength={1500} value={b.description} onChange={set('description')} error={errors.description} className="sm:col-span-2" />
         <PhoneField label="Business phone *" value={b.phone} onChange={set('phone')} error={errors.phone} />
         <PhoneField label="WhatsApp" value={b.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
+        <ExtraPhonesField value={b.extraPhones || []} onChange={set('extraPhones')} errors={errors.extraPhones || {}} />
         <Field label="Address / area *" placeholder="e.g. Tarapur MIDC, Boisar" value={b.location} onChange={set('location')} error={errors.location} />
         <Field label="Website or Instagram (optional)" placeholder="https://…" value={b.website} onChange={set('website')} error={errors.website} />
         <div className="sm:col-span-2">

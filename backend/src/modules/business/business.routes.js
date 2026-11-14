@@ -36,6 +36,11 @@ const schema = z.object({
   category: z.enum(BUSINESS_CATEGORIES),
   description: z.string().trim().max(1500).optional().nullable(),
   phone,
+  extraPhones: z
+    .array(phone)
+    .max(4, 'You can add up to 4 more numbers')
+    .optional()
+    .transform((v) => (v ? [...new Set(v)] : v)),
   whatsapp: phone.optional().nullable().or(z.literal('').transform(() => null)),
   website: z.string().trim().url('Enter a valid URL (https://...)').optional().nullable().or(z.literal('').transform(() => null)),
   location: z.string().trim().min(2).max(120),
@@ -48,6 +53,7 @@ const select = {
   category: true,
   description: true,
   phone: true,
+  extraPhones: true,
   whatsapp: true,
   website: true,
   location: true,
@@ -61,7 +67,7 @@ const select = {
 // Sample listings (added by the admin) never carry a phone number
 const shape = (b) => {
   const isSample = Boolean(b.user?.profile?.isDemo);
-  return { ...b, ...(isSample && { phone: null, whatsapp: null }), isSample, owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null, user: undefined };
+  return { ...b, ...(isSample && { phone: null, extraPhones: [], whatsapp: null }), isSample, owner: b.user?.profile ? { userId: b.userId, ...b.user.profile } : null, user: undefined };
 };
 
 /** GET /business/categories */
@@ -90,7 +96,7 @@ router.get(
       prisma.business.findMany({ where, select, orderBy: { createdAt: 'desc' }, skip, take }),
       prisma.business.count({ where }),
     ]);
-    res.json(pageResult(rows.map((b) => ({ ...shape(b), phone: undefined, whatsapp: undefined })), total, { page, limit }));
+    res.json(pageResult(rows.map((b) => ({ ...shape(b), phone: undefined, extraPhones: undefined, whatsapp: undefined })), total, { page, limit }));
   }),
 );
 
@@ -111,7 +117,7 @@ router.get(
   h(async (req, res) => {
     const b = await prisma.business.findUnique({ where: { id: req.params.id }, select });
     if (!b || (b.status !== 'APPROVED' && b.userId !== req.user?.id && !isAdminSession(req.user))) throw ApiError.notFound('Business not found');
-    res.json({ ...shape(b), ...(!req.user && { phone: null, whatsapp: null }), isOwner: b.userId === req.user?.id });
+    res.json({ ...shape(b), ...(!req.user && { phone: null, extraPhones: [], whatsapp: null }), isOwner: b.userId === req.user?.id });
   }),
 );
 
