@@ -120,11 +120,11 @@ export default function EditProfile() {
           {next ? (
             section === 'photos' ? (
               // photos are saved as soon as they are added, so this just moves on
-              <button type="button" className="btn btn-primary" onClick={() => go(next[0])}>
+              <button type="button" className="btn btn-primary min-w-0 flex-1 !whitespace-normal !px-3 text-center leading-tight sm:flex-none sm:!px-5" onClick={() => go(next[0])}>
                 Next: {next[2]} <Icon name="arrow" size={17} />
               </button>
             ) : (
-              <button type="button" className="btn btn-primary" onClick={saveAndNext} disabled={saving}>
+              <button type="button" className="btn btn-primary min-w-0 flex-1 !whitespace-normal !px-3 text-center leading-tight sm:flex-none sm:!px-5" onClick={saveAndNext} disabled={saving}>
                 {saving ? (
                   <Spinner size={16} />
                 ) : (
@@ -135,11 +135,11 @@ export default function EditProfile() {
               </button>
             )
           ) : (
-            <div className="flex gap-2">
-              <button type="button" className="btn btn-outline" onClick={saveOnly} disabled={saving || !isDirty}>
+            <div className="flex min-w-0 flex-1 justify-end gap-2">
+              <button type="button" className="btn btn-outline min-w-0 !px-3 sm:!px-5" onClick={saveOnly} disabled={saving || !isDirty}>
                 Save changes
               </button>
-              <button type="button" className="btn btn-primary" onClick={done} disabled={saving}>
+              <button type="button" className="btn btn-primary min-w-0 !px-3 sm:!px-5" onClick={done} disabled={saving}>
                 {saving ? (
                   <Spinner size={16} />
                 ) : (

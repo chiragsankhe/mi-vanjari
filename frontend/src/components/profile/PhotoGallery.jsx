@@ -1,7 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '../../lib/utils';
+import { cn, thumb } from '../../lib/utils';
+
+/** small version of a photo for the thumbnail row (the full photo is only loaded for the big view) */
+const thumbUrl = (url) => thumb(url, 160);
 import { Icon, Img } from '../ui';
 
 const AUTOPLAY_MS = 3000;
@@ -150,6 +153,40 @@ function Lightbox({ photos, index, setIndex, onClose, alt, watermark }) {
 }
 
 /**
+ * Row of small photos under the big one. However many photos there are, it never makes the page wider:
+ * it is exactly as wide as the screen allows, shows the thumbnails that fit, and the rest are a swipe/scroll away.
+ * The selected photo is kept in view while the gallery changes by itself.
+ */
+function ThumbStrip({ photos, index, onPick }) {
+  const box = useRef(null);
+  useEffect(() => {
+    const el = box.current;
+    const cur = el?.children[index];
+    if (!el || !cur) return;
+    const left = cur.offsetLeft - (el.clientWidth - cur.clientWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }, [index]);
+  return (
+    <div className="mt-2.5 flex items-center gap-2">
+      {/* w-0 + min-w-full: the strip's own width never counts towards the page width (a long row used to stretch the whole layout) */}
+      <div ref={box} className="no-scrollbar flex w-0 min-w-0 flex-1 snap-x gap-2 overflow-x-auto overscroll-x-contain scroll-smooth">
+        {photos.map((ph, i) => (
+          <button
+            key={ph.id || i}
+            onClick={() => onPick(i)}
+            className={cn('relative size-14 shrink-0 snap-start overflow-hidden rounded-md border-2 transition sm:size-16', i === index ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100')}
+            aria-label={`Show photo ${i + 1}`}
+          >
+            <img src={thumbUrl(ph.url)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+          </button>
+        ))}
+      </div>
+      <span className="shrink-0 text-[11px] whitespace-nowrap text-muted">{photos.length} photos</span>
+    </div>
+  );
+}
+
+/**
  * Profile photo carousel.
  *  • Shows "2 / 4" and story-style progress bars when there are several photos
  *  • Auto-advances every 3 s; pauses on hover, keyboard focus, touch, and while the viewer is open
@@ -269,21 +306,7 @@ export function PhotoGallery({ photos: raw, locked, alt, watermark, children, as
         {children}
       </div>
 
-      {multi && thumbs && !mini && (
-        <div className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto">
-          {photos.map((ph, i) => (
-            <button
-              key={ph.id || i}
-              onClick={() => goTo(i)}
-              className={cn('relative size-14 shrink-0 overflow-hidden rounded-md border-2 transition', i === index ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100')}
-              aria-label={`Show photo ${i + 1}`}
-            >
-              <img src={ph.url} alt="" className="size-full object-cover" />
-            </button>
-          ))}
-          <span className="ml-auto self-center pl-2 text-[11px] whitespace-nowrap text-muted">{n} photos</span>
-        </div>
-      )}
+      {multi && thumbs && !mini && <ThumbStrip photos={photos} index={index} onPick={goTo} />}
 
       <AnimatePresence>{open && <Lightbox photos={photos} index={index} setIndex={(f) => setIndex(f)} onClose={() => setOpen(false)} alt={alt} watermark={watermark} />}</AnimatePresence>
     </>

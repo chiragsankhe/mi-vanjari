@@ -24,11 +24,11 @@ export const NAV_LINKS = [
 
 export function Brand({ inverse = false }) {
   return (
-    <Link to="/" className="flex shrink-0 items-center gap-2.5 text-left sm:gap-3" aria-label="Mi Vanjari home">
-      <BrandMark size={40} inverse={inverse} />
-      <span>
+    <Link to="/" className="flex min-w-0 shrink items-center gap-2.5 text-left sm:gap-3" aria-label="Mi Vanjari home">
+      <BrandMark size={40} inverse={inverse} className="shrink-0" />
+      <span className="min-w-0">
         <b className={cn('heading-deva block text-[17px] leading-tight font-bold md:text-lg', inverse && 'text-white')}>मी वंजारी</b>
-        <small className={cn('block text-[9px] tracking-[0.06em] whitespace-nowrap', inverse ? 'text-[#bcaea3]' : 'text-muted')}>आपली माणसं, आपलं जग</small>
+        <small className={cn('block truncate text-[9px] tracking-[0.06em]', inverse ? 'text-[#bcaea3]' : 'text-muted')}>आपली माणसं, आपलं जग</small>
       </span>
     </Link>
   );
@@ -70,10 +70,10 @@ function UserMenu() {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((o) => !o)} className="relative flex items-center gap-2 rounded-full border border-line bg-white py-1 pr-3 pl-1 transition hover:border-primary/40" aria-haspopup="menu" aria-expanded={open}>
+      <button onClick={() => setOpen((o) => !o)} className="relative flex items-center gap-2 rounded-full border border-line bg-white py-1 pr-1 pl-1 transition hover:border-primary/40 sm:pr-3" aria-haspopup="menu" aria-expanded={open}>
         <Avatar src={user?.profile?.photoUrl} name={user?.profile?.fullName || 'Me'} size={32} />
         <span className="hidden max-w-[110px] truncate text-[13px] font-semibold lg:block">{user?.profile?.fullName?.split(' ')[0] || 'Account'}</span>
-        <Icon name="chevron-down" size={14} className="text-muted" />
+        <Icon name="chevron-down" size={14} className="hidden text-muted sm:block" />
         {total > 0 && <span className="absolute -top-1 -right-1 hidden min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-white ring-2 ring-ivory md:grid">{total > 99 ? '99+' : total}</span>}
       </button>
       <AnimatePresence>
@@ -169,7 +169,7 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-2 sm:gap-3 xl:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3 xl:ml-0">
           <LangToggle className="hidden sm:block" />
           {status !== 'loading' && <AlertsBell />}
           {status === 'authed' ? (
@@ -187,7 +187,7 @@ export function Header() {
           ) : (
             <span className="h-9 w-28" />
           )}
-          <button className="grid size-10 place-items-center rounded-lg text-ink hover:bg-sand xl:hidden" onClick={() => setDrawer(true)} aria-label="Open menu">
+          <button className="grid size-9 place-items-center rounded-lg text-ink hover:bg-sand sm:size-10 xl:hidden" onClick={() => setDrawer(true)} aria-label="Open menu">
             <Icon name="menu" />
           </button>
         </div>

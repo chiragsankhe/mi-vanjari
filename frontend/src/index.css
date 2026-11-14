@@ -51,6 +51,8 @@
 
 @layer base {
   html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+  /* safety net: a stray wide element (a long row of photos, a long word) can never make the whole page slide sideways on a phone */
+  html, body { max-width: 100%; overflow-x: clip; }
   body {
     background: var(--color-ivory);
     color: var(--color-ink);
