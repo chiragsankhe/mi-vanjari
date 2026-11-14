@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PhotoManager } from '../../components/profile/PhotoManager';
-import { BasicSection, cleanProfile, ContactFields, FamilySection, KundliSection, LifestyleSection, profileDefaults, profileFormSchema, ReachSection, STEP_FIELDS, WorkSection } from '../../components/profile/ProfileForm';
+import { BasicSection, cleanProfile, FamilySection, KundliSection, LifestyleSection, profileDefaults, profileFormSchema, ReachSection, STEP_FIELDS, WorkSection } from '../../components/profile/ProfileForm';
 import { Icon, PageHeader, Spinner, Tabs } from '../../components/ui';
 import { errorMessage, put } from '../../lib/api';
 import { useAuth } from '../../store/auth';
@@ -14,22 +14,22 @@ import { useAuth } from '../../store/auth';
 /** The pages of the profile form, in order. [id, tab name, short name used on the Next button] */
 const ORDER = [
   ['basic', 'About you', 'About you'],
-  ['work', 'Location & work', 'Location & work'],
-  ['family', 'Family', 'Family'],
-  ['more', 'Lifestyle & about', 'Lifestyle'],
-  ['kundli', 'Kundli & partner', 'Kundli & partner'],
   ['photos', 'Photos', 'Photos'],
+  ['work', 'Education & work', 'Education & work'],
+  ['more', 'Lifestyle & about', 'Lifestyle & about'],
+  ['family', 'Family', 'Family'],
   ['reach', 'Contact & privacy', 'Contact & privacy'],
+  ['kundli', 'Kundli & partner', 'Kundli & partner'],
 ];
 
 /** Fields checked before leaving a page. */
 const PAGE_FIELDS = {
-  basic: ['fullName', 'email', 'phone', ...STEP_FIELDS.personal, 'bio'],
-  work: [...STEP_FIELDS.contact.filter((f) => f !== 'fullName' && f !== 'email' && f !== 'phone'), ...STEP_FIELDS.work],
-  family: STEP_FIELDS.family,
+  basic: STEP_FIELDS.personal,
+  work: STEP_FIELDS.work,
   more: STEP_FIELDS.more,
-  kundli: STEP_FIELDS.kundli,
+  family: STEP_FIELDS.family,
   reach: STEP_FIELDS.reach,
+  kundli: STEP_FIELDS.kundli,
 };
 
 export default function EditProfile() {
@@ -97,20 +97,13 @@ export default function EditProfile() {
         <div className="card mt-3 p-5 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div key={section} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              {section === 'basic' && (
-                <>
-                  <div className="mb-5 grid gap-4 border-b border-line pb-5 sm:grid-cols-2">
-                    <ContactFields form={form} phone={user.phone} phoneVerified={user.phoneVerified} requireEmail={false} />
-                  </div>
-                  <BasicSection form={form} />
-                </>
-              )}
-              {section === 'work' && <WorkSection form={form} />}
-              {section === 'family' && <FamilySection form={form} />}
-              {section === 'more' && <LifestyleSection form={form} />}
-              {section === 'kundli' && <KundliSection form={form} />}
+              {section === 'basic' && <BasicSection form={form} />}
               {section === 'photos' && <PhotoManager />}
-              {section === 'reach' && <ReachSection form={form} />}
+              {section === 'work' && <WorkSection form={form} />}
+              {section === 'more' && <LifestyleSection form={form} />}
+              {section === 'family' && <FamilySection form={form} />}
+              {section === 'reach' && <ReachSection form={form} phone={user.phone} phoneVerified={user.phoneVerified} />}
+              {section === 'kundli' && <KundliSection form={form} />}
             </motion.div>
           </AnimatePresence>
         </div>

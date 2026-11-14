@@ -308,13 +308,20 @@ export function profileDefaults(p = {}) {
 
 /** Which form fields belong to which step (used to validate one step at a time). */
 export const STEP_FIELDS = {
-  contact: ['fullName', 'email', 'phone', 'currentCity', 'currentDistrict', 'currentState', 'nativeVillage', 'nativeDistrict', 'nativeState'],
-  personal: ['dateOfBirth', 'gender', 'maritalStatus', 'heightCm', 'motherTongue', 'createdBy', 'weightKg', 'bloodGroup', 'languages', 'religion', 'community', 'subCaste', 'gotra', 'devak', 'kuldaivat', 'bodyType', 'physicalStatus', 'physicalDetails'],
+  // quick sign-up for community / business / services members
+  contact: ['fullName', 'currentCity', 'currentDistrict', 'currentState', 'nativeVillage', 'nativeDistrict', 'nativeState', 'email', 'phone'],
+  // 1. About you (+ where you live)
+  personal: ['fullName', 'dateOfBirth', 'gender', 'maritalStatus', 'heightCm', 'motherTongue', 'createdBy', 'weightKg', 'bloodGroup', 'languages', 'currentCity', 'currentDistrict', 'currentState', 'nativeVillage', 'nativeDistrict', 'nativeState'],
+  // 2. Education & work
   work: ['highestQualification', 'degrees', 'employmentType', 'occupation', 'jobDesignation', 'companyName', 'workingCity', 'experienceYears', 'businessName', 'businessType', 'businessYears', 'annualIncome', 'workDetails'],
+  // 3. Lifestyle, physical information & about me
+  more: ['diet', 'drinking', 'smoking', 'hobbies', 'interests', 'bodyType', 'physicalStatus', 'physicalDetails', 'bio', 'careerGoals', 'marriageExpectations'],
+  // 4. Family
   family: ['fatherName', 'fatherOccupation', 'motherName', 'motherOccupation', 'brothers', 'marriedBrothers', 'sisters', 'marriedSisters', 'familyType', 'familyValues', 'aboutFamily'],
-  more: ['diet', 'drinking', 'smoking', 'hobbies', 'interests', 'bio', 'careerGoals', 'marriageExpectations'],
-  kundli: ['timeOfBirth', 'placeOfBirth', 'prefAgeMin', 'prefAgeMax', 'prefOccupation', 'prefName'],
-  reach: ['familyContacts', 'accountType'],
+  // 5. Contact & privacy
+  reach: ['email', 'phone', 'familyContacts', 'accountType'],
+  // 6. Kundli: religion & community, birth details, partner preferences
+  kundli: ['religion', 'community', 'subCaste', 'gotra', 'devak', 'kuldaivat', 'timeOfBirth', 'placeOfBirth', 'prefAgeMin', 'prefAgeMax', 'prefOccupation', 'prefName'],
 };
 
 const star = (on) => (on ? ' *' : '');
@@ -359,29 +366,42 @@ function LocationFields({ form, withVillageHint = true }) {
   );
 }
 
-/** Step 1 for every member: who you are and where you live. Community-only members fill just this. */
+/** Quick sign-up for community / business / services members: name and where you live, then email & mobile. */
 export function ContactSection({ form, phone, phoneVerified, email }) {
   const { register, formState } = form;
   const e = formState.errors;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Field label="Full name *" placeholder="e.g. Aditya Chavan" autoComplete="name" error={e.fullName?.message} {...register('fullName')} className="sm:col-span-2" />
-      <ContactFields form={form} phone={phone} phoneVerified={phoneVerified} hideEmail={Boolean(email)} />
       <LocationFields form={form} />
+      <ContactFields form={form} phone={phone} phoneVerified={phoneVerified} hideEmail={Boolean(email)} />
     </div>
   );
 }
 
-/** Personal details + religion & community + physical information. */
+const ageOf = (dob) => {
+  if (!dob) return null;
+  const years = Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 864e5));
+  return years >= 0 && years < 120 ? years : null;
+};
+
+/** About you: name, age, gender first — then the basics, and where you live. */
 export function BasicSection({ form, withName = true }) {
   const { register, formState, watch, setValue } = form;
   const e = formState.errors;
   const M = !!watch('isMatrimonial');
-  const physical = watch('physicalStatus');
+  const age = ageOf(watch('dateOfBirth'));
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {withName && <Field label="Full name *" placeholder="e.g. Aditya Chavan" error={e.fullName?.message} {...register('fullName')} className="sm:col-span-2" />}
-      <Field label={`Date of birth${star(true)}`} type="date" max={new Date(Date.now() - 18 * 365.25 * 864e5).toISOString().slice(0, 10)} error={e.dateOfBirth?.message} {...register('dateOfBirth')} />
+      {withName && <Field label="Full name *" placeholder="e.g. Aditya Chavan" autoComplete="name" error={e.fullName?.message} {...register('fullName')} className="sm:col-span-2" />}
+      <Field
+        label="Date of birth *"
+        type="date"
+        max={new Date(Date.now() - 18 * 365.25 * 864e5).toISOString().slice(0, 10)}
+        hint={age != null ? `Age: ${age} years` : 'Your age is worked out from this'}
+        error={e.dateOfBirth?.message}
+        {...register('dateOfBirth')}
+      />
       <div>
         <span className="field-label">Gender *</span>
         <Segment
@@ -414,37 +434,14 @@ export function BasicSection({ form, withName = true }) {
         <ChipsInput form={form} name="languages" label="Languages you know" options={LANGUAGES} className="sm:col-span-2" />
       </MoreFields>
 
-      <GroupTitle hint="Pre-filled for the Vanjari community — change it if needed.">Religion & community</GroupTitle>
-      <SelectOther form={form} name="religion" label={`Religion${star(M)}`} options={RELIGIONS} />
-      <SelectOther form={form} name="community" label={`Community${star(M)}`} options={COMMUNITIES} />
-      <MoreFields form={form} names={['subCaste', 'gotra', 'devak', 'kuldaivat']} title="Gotra, Devak & more (optional)">
-        <Field label="Sub-community / sub-caste" placeholder="optional" {...register('subCaste')} />
-        <Field label="Gotra" placeholder="e.g. Kashyap" {...register('gotra')} />
-        <Field label="Devak" placeholder="e.g. Panchpallav" {...register('devak')} />
-        <Field label="Kuldaivat (family deity)" placeholder="e.g. Khandoba" {...register('kuldaivat')} />
-      </MoreFields>
-
-      <GroupTitle hint="All optional — share only what you are comfortable with.">Physical information</GroupTitle>
-      <SelectOther form={form} name="bodyType" label="Body type" options={BODY_TYPES} />
-      <SelectOther form={form} name="physicalStatus" label="Physical status" options={PHYSICAL_STATUS} hint="Most people choose “Fully fit”." />
-      {physical && physical !== FIT && (
-        <Field
-          as="textarea"
-          rows={3}
-          label="Anything you want families to know (optional)"
-          placeholder="e.g. a past surgery or illness, and how you are now. Honest details build trust."
-          maxLength={500}
-          error={e.physicalDetails?.message}
-          {...register('physicalDetails')}
-          className="sm:col-span-2"
-        />
-      )}
+      <GroupTitle>Where you live</GroupTitle>
+      <LocationFields form={form} />
     </div>
   );
 }
 
 /** Education + work. One question decides what else is asked, so nobody sees fields that do not apply. */
-export function WorkSection({ form, withLocation = true }) {
+export function WorkSection({ form }) {
   const { register, formState, watch } = form;
   const e = formState.errors;
   const M = !!watch('isMatrimonial');
@@ -452,13 +449,6 @@ export function WorkSection({ form, withLocation = true }) {
   const { job, business } = employmentGroups(type);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {withLocation && (
-        <>
-          <GroupTitle>Where you live</GroupTitle>
-          <LocationFields form={form} />
-        </>
-      )}
-
       <GroupTitle hint="Choose your highest qualification. You can add the full degree details below (optional).">Education</GroupTitle>
       <SelectOther form={form} name="highestQualification" label={`Highest qualification${star(M)}`} options={QUALIFICATIONS} className="sm:col-span-2" />
       <MoreFields form={form} names={['degrees.0.degree']} title="Add degree details — college, specialization (optional)">
@@ -500,6 +490,47 @@ export function WorkSection({ form, withLocation = true }) {
   );
 }
 
+/** Lifestyle, physical information and "about me". */
+export function LifestyleSection({ form }) {
+  const { register, formState, watch } = form;
+  const e = formState.errors;
+  const physical = watch('physicalStatus');
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <GroupTitle hint="All optional.">Lifestyle</GroupTitle>
+      <SelectOther form={form} name="diet" label="Diet" options={DIETS} />
+      <SelectOther form={form} name="drinking" label="Drinking" options={HABITS} />
+      <SelectOther form={form} name="smoking" label="Smoking" options={HABITS} />
+      <div className="hidden sm:block" />
+      <ChipsInput form={form} name="hobbies" label="Hobbies" options={HOBBIES} className="sm:col-span-2" />
+      <ChipsInput form={form} name="interests" label="Interests" options={INTERESTS} className="sm:col-span-2" />
+
+      <GroupTitle hint="All optional — share only what you are comfortable with.">Physical information</GroupTitle>
+      <SelectOther form={form} name="bodyType" label="Body type" options={BODY_TYPES} />
+      <SelectOther form={form} name="physicalStatus" label="Physical status" options={PHYSICAL_STATUS} hint="Most people choose “Fully fit”." />
+      {physical && physical !== FIT && (
+        <Field
+          as="textarea"
+          rows={3}
+          label="Anything you want families to know (optional)"
+          placeholder="e.g. a past surgery or illness, and how you are now. Honest details build trust."
+          maxLength={500}
+          error={e.physicalDetails?.message}
+          {...register('physicalDetails')}
+          className="sm:col-span-2"
+        />
+      )}
+
+      <GroupTitle>About me</GroupTitle>
+      <Field as="textarea" rows={4} label="About myself" placeholder="A few lines about you, your values and interests…" maxLength={600} error={e.bio?.message} {...register('bio')} className="sm:col-span-2" />
+      <MoreFields form={form} names={['careerGoals', 'marriageExpectations']} title="Career goals & expectations (optional)">
+        <Field as="textarea" rows={3} label="My career goals" maxLength={600} {...register('careerGoals')} className="sm:col-span-2" />
+        <Field as="textarea" rows={3} label="Expectations from marriage" maxLength={600} {...register('marriageExpectations')} className="sm:col-span-2" />
+      </MoreFields>
+    </div>
+  );
+}
+
 /** Family background. */
 export function FamilySection({ form }) {
   const { register, formState } = form;
@@ -530,56 +561,18 @@ export function FamilySection({ form }) {
   );
 }
 
-/** Lifestyle & habits + about me. */
-export function LifestyleSection({ form }) {
-  const { register, formState } = form;
-  const e = formState.errors;
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <GroupTitle hint="All optional.">Lifestyle</GroupTitle>
-      <SelectOther form={form} name="diet" label="Diet" options={DIETS} />
-      <SelectOther form={form} name="drinking" label="Drinking" options={HABITS} />
-      <SelectOther form={form} name="smoking" label="Smoking" options={HABITS} />
-      <div className="hidden sm:block" />
-      <ChipsInput form={form} name="hobbies" label="Hobbies" options={HOBBIES} className="sm:col-span-2" />
-      <ChipsInput form={form} name="interests" label="Interests" options={INTERESTS} className="sm:col-span-2" />
-
-      <GroupTitle>About me</GroupTitle>
-      <Field as="textarea" rows={4} label="About myself" placeholder="A few lines about you, your values and interests…" maxLength={600} error={e.bio?.message} {...register('bio')} className="sm:col-span-2" />
-      <MoreFields form={form} names={['careerGoals', 'marriageExpectations']} title="Career goals & expectations (optional)">
-        <Field as="textarea" rows={3} label="My career goals" maxLength={600} {...register('careerGoals')} className="sm:col-span-2" />
-        <Field as="textarea" rows={3} label="Expectations from marriage" maxLength={600} {...register('marriageExpectations')} className="sm:col-span-2" />
-      </MoreFields>
-    </div>
-  );
-}
-
-/** Birth details (Rashi & Nakshatra are worked out automatically) + what you look for in a partner. */
-export function KundliSection({ form }) {
-  const { register, formState, watch } = form;
-  const e = formState.errors;
-  const M = !!watch('isMatrimonial');
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <GroupTitle hint="We calculate your Rashi, Nakshatra and Kundali matching automatically from these.">Birth details</GroupTitle>
-      <Field label={`Exact birth time${star(M)}`} type="time" hint="Ask your parents — it makes the Kundali accurate" error={e.timeOfBirth?.message} {...register('timeOfBirth')} />
-      <Field label={`Birth place${star(M)}`} placeholder="e.g. Palghar" error={e.placeOfBirth?.message} {...register('placeOfBirth')} />
-
-      <GroupTitle hint="Keep it simple — only what matters most. All optional.">Partner preferences</GroupTitle>
-      <Field label="Preferred age — from" type="number" inputMode="numeric" min={18} max={80} {...register('prefAgeMin')} />
-      <Field label="Preferred age — to" type="number" inputMode="numeric" min={18} max={80} error={e.prefAgeMax?.message} {...register('prefAgeMax')} />
-      <SelectOther form={form} name="prefOccupation" label="Preferred occupation" options={OCCUPATIONS} placeholder="Any" />
-      <Field label="Preferred name (optional)" placeholder="e.g. a name your family likes" {...register('prefName')} />
-    </div>
-  );
-}
-
-/** Contact person, privacy, and the matrimony switch. */
-export function ReachSection({ form, showMatrimonial = true }) {
+/** Contact: your email & mobile, the contact person families call, privacy and the matrimony switch. */
+export function ReachSection({ form, showMatrimonial = true, phone, phoneVerified, email, showContactFields = true }) {
   const { watch, setValue, formState } = form;
   const isMatrimonial = watch('isMatrimonial');
   return (
     <div className="space-y-6">
+      {showContactFields && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GroupTitle hint="Your own contact details. Your mobile number is never shown publicly.">Your email & mobile</GroupTitle>
+          <ContactFields form={form} phone={phone} phoneVerified={phoneVerified} hideEmail={Boolean(email)} />
+        </div>
+      )}
       {showMatrimonial && (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-white p-4">
           <input type="checkbox" className="mt-1 size-4 accent-[var(--color-primary)]" checked={!!isMatrimonial} onChange={(ev) => setValue('isMatrimonial', ev.target.checked, { shouldDirty: true })} />
@@ -606,6 +599,36 @@ export function ReachSection({ form, showMatrimonial = true }) {
           {watch('accountType') === 'PRIVATE' ? 'Only members whose follow request you accept can see your photos and details.' : 'Verified community members can see your profile details. Your phone number stays hidden.'}
         </p>
       </div>
+    </div>
+  );
+}
+
+/** Kundli & partner: religion & community first, then birth details (Rashi & Nakshatra are worked out automatically), then what you look for. */
+export function KundliSection({ form }) {
+  const { register, formState, watch } = form;
+  const e = formState.errors;
+  const M = !!watch('isMatrimonial');
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <GroupTitle hint="Pre-filled for the Vanjari community — change it if needed.">Religion & community</GroupTitle>
+      <SelectOther form={form} name="religion" label={`Religion${star(M)}`} options={RELIGIONS} />
+      <SelectOther form={form} name="community" label={`Community${star(M)}`} options={COMMUNITIES} />
+      <MoreFields form={form} names={['subCaste', 'gotra', 'devak', 'kuldaivat']} title="Gotra, Devak & more (optional)">
+        <Field label="Sub-community / sub-caste" placeholder="optional" {...register('subCaste')} />
+        <Field label="Gotra" placeholder="e.g. Kashyap" {...register('gotra')} />
+        <Field label="Devak" placeholder="e.g. Panchpallav" {...register('devak')} />
+        <Field label="Kuldaivat (family deity)" placeholder="e.g. Khandoba" {...register('kuldaivat')} />
+      </MoreFields>
+
+      <GroupTitle hint="We calculate your Rashi, Nakshatra and Kundali matching automatically from these.">Birth details</GroupTitle>
+      <Field label={`Exact birth time${star(M)}`} type="time" hint="Ask your parents — it makes the Kundali accurate" error={e.timeOfBirth?.message} {...register('timeOfBirth')} />
+      <Field label={`Birth place${star(M)}`} placeholder="e.g. Palghar" error={e.placeOfBirth?.message} {...register('placeOfBirth')} />
+
+      <GroupTitle hint="Keep it simple — only what matters most. All optional.">Partner preferences</GroupTitle>
+      <Field label="Preferred age — from" type="number" inputMode="numeric" min={18} max={80} {...register('prefAgeMin')} />
+      <Field label="Preferred age — to" type="number" inputMode="numeric" min={18} max={80} error={e.prefAgeMax?.message} {...register('prefAgeMax')} />
+      <SelectOther form={form} name="prefOccupation" label="Preferred occupation" options={OCCUPATIONS} placeholder="Any" />
+      <Field label="Preferred name (optional)" placeholder="e.g. a name your family likes" {...register('prefName')} />
     </div>
   );
 }

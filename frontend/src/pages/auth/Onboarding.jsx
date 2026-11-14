@@ -24,12 +24,12 @@ const GOALS = [
 
 const STEP_INFO = {
   contact: ['user', 'Basic details', 'मूलभूत माहिती'],
-  personal: ['heart', 'About you', 'तुमच्याबद्दल'],
+  personal: ['user', 'About you', 'तुमच्याबद्दल'],
   work: ['graduation', 'Education & work', 'शिक्षण आणि काम'],
-  family: ['users', 'Family', 'कुटुंब'],
   more: ['sparkle', 'Lifestyle & about', 'आवडीनिवडी'],
+  family: ['users', 'Family', 'कुटुंब'],
+  reach: ['phone', 'Contact & privacy', 'संपर्क'],
   kundli: ['zodiac', 'Kundli & partner', 'कुंडली आणि अपेक्षा'],
-  reach: ['phone', 'Contact', 'संपर्क'],
   business: ['briefcase', 'Your business', 'व्यवसाय'],
   service: ['tent', 'Wedding service', 'लग्न सेवा'],
   pay: ['rupee', 'Membership', 'सदस्यत्व'],
@@ -66,7 +66,7 @@ export default function Onboarding() {
   const B = goals.includes('BUSINESS');
   const S = goals.includes('SERVICES');
   const steps = useMemo(
-    () => ['contact', ...(M ? ['personal', 'work', 'family', 'more', 'kundli', 'reach'] : []), ...(B ? ['business'] : []), ...(S ? ['service'] : []), ...(M ? [...(payNeeded ? ['pay'] : []), 'photos'] : [])],
+    () => [...(M ? ['personal', 'work', 'more', 'family', 'reach', 'kundli'] : ['contact']), ...(B ? ['business'] : []), ...(S ? ['service'] : []), ...(M ? [...(payNeeded ? ['pay'] : []), 'photos'] : [])],
     [M, B, S, payNeeded],
   );
   const lastFormIdx = steps.findLastIndex((s) => !['pay', 'photos'].includes(s));
@@ -147,7 +147,7 @@ export default function Onboarding() {
 
   const next = async () => {
     if (!(await validateStep(current))) return;
-    if (current === 'contact') {
+    if (idx === 0) {
       // prefill the listing's area with the city from step 1 (still editable)
       const city = form.getValues('currentCity')?.trim();
       if (city) {
@@ -231,12 +231,18 @@ export default function Onboarding() {
                   <ContactSection form={form} phone={user?.phone} phoneVerified={user?.phoneVerified} email={user?.email} />
                 </>
               )}
-              {current === 'personal' && <BasicSection form={form} withName={false} />}
-              {current === 'work' && <WorkSection form={form} withLocation={false} />}
-              {current === 'family' && <FamilySection form={form} />}
+              {current === 'personal' && (
+                <>
+                  <h2 className="mb-1 font-serif text-2xl font-semibold">About you</h2>
+                  <p className="mb-5 text-sm text-muted">Your name, age and gender first, then a few basics and where you live.</p>
+                  <BasicSection form={form} />
+                </>
+              )}
+              {current === 'work' && <WorkSection form={form} />}
               {current === 'more' && <LifestyleSection form={form} />}
+              {current === 'family' && <FamilySection form={form} />}
+              {current === 'reach' && <ReachSection form={form} showMatrimonial={false} phone={user?.phone} phoneVerified={user?.phoneVerified} email={user?.email} />}
               {current === 'kundli' && <KundliSection form={form} />}
-              {current === 'reach' && <ReachSection form={form} showMatrimonial={false} />}
               {current === 'business' && (
                 <BusinessStep
                   value={business}
