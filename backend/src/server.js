@@ -32,7 +32,28 @@ async function start() {
   });
   server.listen(env.PORT, () => {
     logger.info(`🚀 Mi Vanjari on port ${env.PORT}  (login email: ${env.mailProvider || "dev codes on screen"}, sms: ${env.otpProvider}, photos: ${env.storageDriver}, payments: ${env.paymentsLive ? "live" : "off/test"})`);
+    startKeepAlive();
   });
+}
+
+/**
+ * Render's free plan puts a service to sleep after ~15 minutes without visitors (the next visitor then waits up to a minute).
+ * While the app is awake it asks for its own public address every 10 minutes — that goes through Render's front door like a real
+ * visitor, so the idle timer keeps resetting. Only runs on Render (RENDER_EXTERNAL_URL is set there); set KEEP_ALIVE=off to disable.
+ */
+function startKeepAlive() {
+  const base = process.env.RENDER_EXTERNAL_URL;
+  if (!base || process.env.KEEP_ALIVE === 'off') return;
+  const ping = async () => {
+    try {
+      const res = await fetch(`${base}/api/v1/health`, { headers: { 'User-Agent': 'mivanjari-keepalive' }, signal: AbortSignal.timeout(20_000) });
+      logger.debug({ status: res.status }, 'keep-alive ping');
+    } catch (err) {
+      logger.warn({ err: err.message }, 'keep-alive ping failed');
+    }
+  };
+  setInterval(ping, 10 * 60 * 1000).unref();
+  logger.info('⏰ Keep-alive on: pinging own health check every 10 minutes (Render free plan stays awake)');
 }
 
 async function shutdown(signal) {
