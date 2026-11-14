@@ -75,72 +75,75 @@ function PackageEditor({ providerId, pkg, onClose }) {
 
 function PackageCard({ pkg, provider, authed, onLogin, onEdit, onDelete }) {
   const [img, setImg] = useState(0);
+  const [open, setOpen] = useState(false);
   const photos = pkg.photos || [];
+  const includes = pkg.includes || [];
   const message = `Namaskar! I'm interested in the "${pkg.name}" package (${formatINR(pkg.price)}) from ${provider.businessName} that I saw on Mi Vanjari.`;
+  const hasMore = (pkg.description || '').length > 90 || includes.length > 4 || Boolean(pkg.details);
+  const shown = open ? includes : includes.slice(0, 4);
   return (
-    <article className="card overflow-hidden p-2.5">
-      {photos.length > 0 && (
-        <div>
-          <div className="aspect-[16/10] overflow-hidden rounded-lg bg-sand">
+    <article className="card p-2.5">
+      <div className="flex gap-3">
+        {photos.length > 0 && (
+          <button type="button" onClick={() => setImg((i) => (i + 1) % photos.length)} className="relative size-[84px] shrink-0 overflow-hidden rounded-lg bg-sand sm:size-24" aria-label={photos.length > 1 ? 'Next photo' : pkg.name}>
             <Img src={photos[img]} alt={pkg.name} fallbackIcon={provider.category.icon} className="size-full object-cover" />
-          </div>
-          {photos.length > 1 && (
-            <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
-              {photos.map((u, i) => (
-                <button key={u} type="button" onClick={() => setImg(i)} className={cn('size-14 shrink-0 overflow-hidden rounded-md border-2', i === img ? 'border-primary' : 'border-transparent opacity-70')} aria-label={`Photo ${i + 1}`}>
-                  <img src={u} alt="" className="size-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      <div className="p-3">
-        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-          <h3 className="font-serif text-lg leading-snug font-semibold">{pkg.name}</h3>
-          <b className="font-serif text-xl text-primary">{formatINR(pkg.price)}</b>
-        </div>
-        {pkg.duration && (
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
-            <Icon name="calendar" size={13} /> {pkg.duration}
-          </p>
-        )}
-        {pkg.description && <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{pkg.description}</p>}
-        {pkg.includes?.length > 0 && (
-          <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-            {pkg.includes.map((x) => (
-              <li key={x} className="flex items-start gap-2 text-[13px]">
-                <Icon name="check" size={15} className="mt-0.5 shrink-0 text-leaf" /> <span>{x}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {pkg.details && <p className="mt-3 rounded-lg bg-sand px-3 py-2 text-xs leading-relaxed whitespace-pre-line text-[#5b534d]">{pkg.details}</p>}
-
-        {provider.isOwner ? (
-          <div className="mt-4 flex gap-2">
-            <button type="button" className="btn btn-outline btn-sm flex-1" onClick={() => onEdit(pkg)}>
-              <Icon name="edit" size={15} /> Edit
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm text-primary" onClick={() => onDelete(pkg)} aria-label={`Delete ${pkg.name}`}>
-              <Icon name="trash" size={15} /> Delete
-            </button>
-          </div>
-        ) : provider.isSample ? null : authed && provider.phone ? (
-          <div className="mt-4 flex gap-2">
-            <a href={telLink(provider.phone)} className="btn btn-primary btn-sm flex-1">
-              <Icon name="phone" size={16} /> Call
-            </a>
-            <a href={whatsappLink(provider.whatsapp || provider.phone, message)} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm flex-1">
-              <Icon name="whatsapp" size={16} /> WhatsApp
-            </a>
-          </div>
-        ) : (
-          <button type="button" className="btn btn-outline btn-sm mt-4 w-full" onClick={onLogin}>
-            <Icon name="lock" size={15} /> Log in to enquire
+            {photos.length > 1 && <span className="absolute right-1 bottom-1 rounded-full bg-black/60 px-1.5 text-[9px] font-semibold text-white">{img + 1}/{photos.length}</span>}
           </button>
         )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-serif text-[14.5px] leading-snug font-semibold">{pkg.name}</h3>
+            <b className="shrink-0 font-serif text-[15px] text-primary">{formatINR(pkg.price)}</b>
+          </div>
+          {pkg.duration && (
+            <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+              <Icon name="calendar" size={11} /> {pkg.duration}
+            </p>
+          )}
+          {pkg.description && <p className={cn('mt-1 text-[12.5px] leading-snug text-[#4b4641]', !open && 'line-clamp-2')}>{pkg.description}</p>}
+        </div>
       </div>
+
+      {includes.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-1">
+          {shown.map((x) => (
+            <li key={x} className="inline-flex items-center gap-1 rounded-full bg-sand px-2 py-0.5 text-[11px] text-[#4b4641]">
+              <Icon name="check" size={11} className="text-leaf" /> {x}
+            </li>
+          ))}
+          {!open && includes.length > 4 && <li className="rounded-full px-1.5 py-0.5 text-[11px] text-muted">+{includes.length - 4} more</li>}
+        </ul>
+      )}
+      {open && pkg.details && <p className="mt-2 rounded-lg bg-sand px-2.5 py-1.5 text-[11.5px] leading-snug whitespace-pre-line text-[#5b534d]">{pkg.details}</p>}
+      {hasMore && (
+        <button type="button" onClick={() => setOpen((o) => !o)} className="mt-1.5 text-[11.5px] font-semibold text-primary">
+          {open ? 'Show less' : 'Show more'}
+        </button>
+      )}
+
+      {provider.isOwner ? (
+        <div className="mt-2 flex gap-2">
+          <button type="button" className="btn btn-outline btn-sm h-8 flex-1 text-xs" onClick={() => onEdit(pkg)}>
+            <Icon name="edit" size={14} /> Edit
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm h-8 text-xs text-primary" onClick={() => onDelete(pkg)} aria-label={`Delete ${pkg.name}`}>
+            <Icon name="trash" size={14} /> Delete
+          </button>
+        </div>
+      ) : provider.isSample ? null : authed && provider.phone ? (
+        <div className="mt-2 flex gap-2">
+          <a href={telLink(provider.phone)} className="btn btn-primary btn-sm h-8 flex-1 text-xs">
+            <Icon name="phone" size={14} /> Call
+          </a>
+          <a href={whatsappLink(provider.whatsapp || provider.phone, message)} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm h-8 flex-1 text-xs">
+            <Icon name="whatsapp" size={14} /> WhatsApp
+          </a>
+        </div>
+      ) : (
+        <button type="button" className="btn btn-outline btn-sm mt-2 h-8 w-full text-xs" onClick={onLogin}>
+          <Icon name="lock" size={14} /> Log in to enquire
+        </button>
+      )}
     </article>
   );
 }
@@ -180,7 +183,7 @@ export default function PackagesSection({ provider, authed, onLogin }) {
           <b>Add your packages.</b> Families love to compare — for example “Bridal Makeup Package”, “Engagement Package” or “Party Makeup Package”, each with its own price, photos and what is included.
         </div>
       )}
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-2.5 xl:grid-cols-2">
         {packages.map((pk) => (
           <PackageCard key={pk.id} pkg={pk} provider={provider} authed={authed} onLogin={onLogin} onEdit={setEditing} onDelete={confirmDelete} />
         ))}

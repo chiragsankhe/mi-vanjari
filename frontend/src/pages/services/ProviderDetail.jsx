@@ -63,7 +63,7 @@ export default function ProviderDetail() {
         {/* On phones the order is: photos → About → info card → packages → reviews. On desktop the info card is a sticky right column. */}
         <div className="space-y-5 lg:col-start-1 lg:row-start-1">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden p-2.5">
-            <div className="aspect-[16/10] overflow-hidden rounded-lg">
+            <div className="aspect-[16/9] overflow-hidden rounded-lg sm:aspect-[16/10]">
               <Img src={p.photos?.[img]} alt={p.businessName} fallbackIcon={p.category.icon} className="size-full object-cover" />
             </div>
             {p.photos?.length > 1 && (
@@ -76,14 +76,14 @@ export default function ProviderDetail() {
               </div>
             )}
           </motion.div>
-          <Reveal className="card p-6">
+          <Reveal className="card p-4 sm:p-6">
             <h2 className="font-serif text-lg font-semibold">About</h2>
             <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.description || 'No description yet.'}</p>
           </Reveal>
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-max">
-          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-6 shadow-[var(--shadow-card)]">
+          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-4 shadow-[var(--shadow-card)] sm:p-6">
             <div className="flex flex-wrap gap-2">
               <Badge tone="red">{p.category.name}</Badge>
               {p.subcategories?.map((s) => (
@@ -94,7 +94,7 @@ export default function ProviderDetail() {
               {p.isFeatured && <Badge>Featured</Badge>}
               {p.status !== 'APPROVED' && <Badge tone="gray">{p.status === 'PENDING' ? 'Awaiting approval' : 'Needs changes'}</Badge>}
             </div>
-            <h1 className="mt-3 font-serif text-3xl font-semibold">
+            <h1 className="mt-2.5 font-serif text-2xl font-semibold sm:mt-3 sm:text-3xl">
               {p.businessName} {p.isSample && <SampleTag className="align-middle" />}
             </h1>
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
