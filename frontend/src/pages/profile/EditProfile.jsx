@@ -1,18 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PhotoManager } from '../../components/profile/PhotoManager';
 import { BasicSection, cleanProfile, FamilySection, KundliSection, LifestyleSection, profileDefaults, profileFormSchema, ReachSection, STEP_FIELDS, WorkSection } from '../../components/profile/ProfileForm';
 import { Icon, PageHeader, Spinner, Tabs } from '../../components/ui';
 import { errorMessage, put } from '../../lib/api';
 import { useAuth } from '../../store/auth';
+import EditHub from './EditHub';
 
 /** The pages of the profile form, in order. [id, tab name, short name used on the Next button] */
-const ORDER = [
+const ALL_STEPS = [
   ['basic', 'About you', 'About you'],
   ['photos', 'Photos', 'Photos'],
   ['work', 'Education & work', 'Education & work'],
@@ -32,19 +33,42 @@ const PAGE_FIELDS = {
   kundli: STEP_FIELDS.kundli,
 };
 
+/** Matrimony-only pages: hidden for members who are not on Matrimony (unless a link asks for one directly). */
+const MATRIMONY_ONLY = ['more', 'family', 'kundli'];
+
+/**
+ * /me/edit → the simple page (photo, name, city, contact + a card per section).
+ * /me/edit?section=… → the step-by-step form used for the Matrimony profile.
+ */
 export default function EditProfile() {
+  const [params] = useSearchParams();
+  return params.get('section') ? <EditSteps /> : <EditHub />;
+}
+
+function EditSteps() {
   const user = useAuth((s) => s.user);
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
+  const [saving, setSaving] = useState(false);
+  const form = useForm({ resolver: zodResolver(profileFormSchema), defaultValues: { ...profileDefaults(user.profile), phone: user.phone?.slice(-10) || '' }, mode: 'onTouched' });
+  const { isDirty } = form.formState; // read here so react-hook-form keeps it up to date
+
+  // "Join Matrimony" on the simple page lands here with the matrimony switch already on
+  useEffect(() => {
+    if (location.state?.join && !user.profile?.isMatrimonial) form.setValue('isMatrimonial', true, { shouldDirty: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const requested = params.get('section') || 'basic';
+  const isMatrimonial = !!form.watch('isMatrimonial');
+  // members who are not on Matrimony only see: About you · Photos · Education & work · Contact & privacy
+  const ORDER = isMatrimonial ? ALL_STEPS : ALL_STEPS.filter(([id]) => !MATRIMONY_ONLY.includes(id) || id === requested);
   const section = ORDER.some(([id]) => id === requested) ? requested : 'basic';
   const at = ORDER.findIndex(([id]) => id === section);
   const prev = ORDER[at - 1];
   const next = ORDER[at + 1];
-  const [saving, setSaving] = useState(false);
-  const form = useForm({ resolver: zodResolver(profileFormSchema), defaultValues: { ...profileDefaults(user.profile), phone: user.phone?.slice(-10) || '' }, mode: 'onTouched' });
-  const { isDirty } = form.formState; // read here so react-hook-form keeps it up to date
 
   const go = (id) => {
     setParams({ section: id }, { replace: true });
@@ -90,6 +114,9 @@ export default function EditProfile() {
     <>
       <PageHeader eyebrow="Your profile" title="प्रोफाइल संपादित करा" subtitle="Keep your details up to date — complete profiles get more meaningful connections." icon="user" />
       <div className="container-page max-w-4xl py-8">
+        <Link to="/me/edit" className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline">
+          <Icon name="arrow-left" size={15} /> Back to edit profile
+        </Link>
         <Tabs id="edit" value={section} onChange={go} tabs={ORDER.map(([value, label]) => ({ value, label }))} />
         <p className="mt-3 text-xs text-muted">
           Step {at + 1} of {ORDER.length} · only the starred (*) answers are needed, everything else is optional.

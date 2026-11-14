@@ -11,6 +11,7 @@ import { useAuth } from '../../store/auth';
 import { BusinessCard } from '../business/BusinessDirectory';
 import { RashiLink } from '../../components/common/RashiReport';
 import { FamilyContactsCard } from '../../components/profile/FamilyContactsCard';
+import { ChangePhotoButton } from '../../components/profile/ChangePhoto';
 import { PostCard } from '../community/Community';
 
 const DASH_TABS = [
@@ -219,6 +220,8 @@ export default function MyProfile() {
       <motion.section initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="card relative mx-3 -mt-9 max-w-[960px] p-5 sm:mx-auto sm:-mt-[70px] sm:p-8 md:px-11">
         <div className="absolute -top-12 sm:-top-16">
           <Avatar src={p.photoUrl} name={p.fullName} size={typeof window !== 'undefined' && window.innerWidth < 640 ? 96 : 130} className="border-[5px] border-white shadow-[var(--shadow-card)]" />
+          {/* one tap to change the profile photo */}
+          <ChangePhotoButton badge className="absolute bottom-1 left-0" label="Change profile photo" />
         </div>
         <div className="flex justify-end gap-2">
           <Link to="/settings" className="btn btn-ghost btn-sm" aria-label="Settings">
