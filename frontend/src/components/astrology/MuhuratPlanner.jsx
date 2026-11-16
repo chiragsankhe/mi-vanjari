@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { get } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { PlaceInput } from '../common/PlaceInput';
-import { Icon, Spinner } from '../ui';
+import { Icon, Modal, Spinner } from '../ui';
 
 // ── formatting ───────────────────────────────────────────────────────────────
 /** minutes since local midnight → "6:42 AM" (values past 24:00 belong to the next morning) */
@@ -109,6 +109,102 @@ const PURPOSE = {
   munj: { mr: 'मुंज', en: 'Munj (Upanayan)', best: 'Best times for the munj', hint: 'Done from Magh to Jyeshtha (Uttarayan); Tuesday and Saturday avoided.' },
   general: { mr: 'इतर शुभ कार्य', en: 'Any shubh kaam', best: 'Best times for a new beginning', hint: 'Any good work: a time clear of Rahu Kaal, Yamaganda, Gulika and bad Choghadiya.' },
 };
+
+/**
+ * "How is this muhurat calculated?" — shown from the ⓘ button on each card.
+ * Mirrors the rules in backend/src/services/astrology/daily.js (keep the two in step).
+ */
+const HOW = {
+  vivah: {
+    days: ['Adhik maas (अधिक मास)', 'Chaturmas — Ashadhi to Kartiki Ekadashi (चातुर्मास)', 'Kharmas — Sun in Dhanu or Meena (खरमास)', 'Guru asta — Jupiter set (गुरू अस्त)', 'Shukra asta — Venus set (शुक्र अस्त)'],
+    nakshatras: 'Rohini, Mrigashira, Magha, Uttara Phalguni, Hasta, Swati, Anuradha, Mula, Uttara Ashadha, Uttara Bhadrapada, Revati',
+    tithis: 'Any tithi except Pratipada, Chaturthi, Ashtami, Navami, Chaturdashi (both pakshas) and Amavasya',
+    strong: 'Shukla Dwitiya, Tritiya, Panchami, Saptami, Dashami, Ekadashi, Dwadashi, Trayodashi',
+    weekdays: 'All days allowed; Monday, Wednesday, Thursday and Friday rate highest',
+  },
+  engagement: {
+    days: ['Adhik maas (अधिक मास)', 'Guru asta — Jupiter set (गुरू अस्त)', 'Shukra asta — Venus set (शुक्र अस्त)', 'Tuesday (मंगळवार)'],
+    nakshatras: 'The wedding nakshatras plus Ashwini, Shravana and Dhanishtha',
+    tithis: 'Same as the wedding: Pratipada, Chaturthi, Ashtami, Navami, Chaturdashi and Amavasya are left out',
+    strong: 'Shukla Dwitiya, Tritiya, Panchami, Saptami, Dashami, Ekadashi, Dwadashi, Trayodashi',
+    weekdays: 'Tuesday avoided; Monday, Wednesday, Thursday and Friday rate highest',
+  },
+  grihapravesh: {
+    days: ['Adhik maas (अधिक मास)', 'Chaturmas (चातुर्मास)', 'Kharmas (खरमास)', 'Guru asta / Shukra asta (गुरू / शुक्र अस्त)', 'Sunday and Tuesday (रविवार, मंगळवार)'],
+    nakshatras: 'Rohini, Mrigashira, Uttara Phalguni, Chitra, Anuradha, Uttara Ashadha, Shravana, Dhanishtha, Shatabhisha, Uttara Bhadrapada, Revati (the fixed and gentle nakshatras)',
+    tithis: 'Pratipada, Chaturthi, Ashtami, Navami, Chaturdashi and Amavasya are left out',
+    strong: 'Dwitiya, Tritiya, Panchami, Saptami, Dashami, Ekadashi, Dwadashi, Trayodashi (Shukla paksha)',
+    weekdays: 'Sunday and Tuesday avoided; Monday, Wednesday, Thursday and Friday rate highest',
+  },
+  munj: {
+    days: ['Months other than Magh, Phalgun, Chaitra, Vaishakh and Jyeshtha (munj is done in Uttarayan)', 'Adhik maas (अधिक मास)', 'Chaturmas (चातुर्मास)', 'Guru asta / Shukra asta (गुरू / शुक्र अस्त)', 'Tuesday and Saturday (मंगळवार, शनिवार)'],
+    nakshatras: 'Ashwini, Rohini, Mrigashira, Punarvasu, Pushya, Uttara Phalguni, Hasta, Chitra, Swati, Uttara Ashadha, Shravana, Dhanishtha, Shatabhisha, Uttara Bhadrapada, Revati',
+    tithis: 'Only Shukla Dwitiya, Tritiya, Panchami, Saptami, Dashami to Trayodashi, and Krishna Dwitiya, Tritiya, Panchami',
+    strong: 'Shukla Dwitiya, Tritiya, Panchami, Dashami, Ekadashi, Dwadashi',
+    weekdays: 'Tuesday and Saturday avoided; Monday, Wednesday, Thursday and Friday rate highest',
+  },
+  general: {
+    days: ['Adhik maas, Chaturmas, Kharmas and Guru/Shukra asta are still marked for the day'],
+    nakshatras: 'No restriction — any nakshatra',
+    tithis: 'No restriction — any tithi',
+    strong: 'A good Choghadiya (Amrit, Shubh or Labh)',
+    weekdays: 'All days',
+  },
+};
+
+function Rule({ title, children }) {
+  return (
+    <div className="rounded-xl border border-line bg-white p-3">
+      <b className="block text-[13px] text-primary">{title}</b>
+      <div className="mt-1 text-[13px] leading-relaxed text-[#4b4641]">{children}</div>
+    </div>
+  );
+}
+
+function PurposeInfo({ purpose }) {
+  const p = PURPOSE[purpose];
+  const h = HOW[purpose];
+  return (
+    <div className="p-5 sm:p-6">
+      {/* the dialog's own close button sits top-right, so the heading leaves room for it */}
+      <div className="pr-12">
+        <p className="text-[11px] font-bold tracking-[0.14em] text-primary uppercase">How it is calculated</p>
+        <h3 className="mt-1 font-serif text-2xl font-semibold">
+          <span className="heading-deva">{p.mr}</span> · {p.en}
+        </h3>
+      </div>
+
+      <ol className="mt-4 space-y-2 text-[13px] leading-relaxed text-[#4b4641]">
+        <li><b>1. Your place.</b> Sunrise and sunset are worked out for the village or city you choose — the day is counted from sunrise, like a panchang.</li>
+        <li><b>2. The panchang, minute by minute.</b> From the exact positions of the Sun and Moon (sidereal, Lahiri ayanamsa) we find the tithi, nakshatra, yoga and karana, and the time each one changes during the day.</li>
+        <li><b>3. Is the whole day allowed?</b> Some periods rule out the full day — listed below.</li>
+        <li><b>4. Which moments are favourable?</b> The nakshatra and tithi must suit this ceremony (below). Vyatipata and Vaidhriti yoga and Bhadra (Vishti karana) are always left out.</li>
+        <li><b>5. Clear of bad periods.</b> Rahu Kaal, Yamaganda, Gulika Kaal and a bad Choghadiya (Rog, Kaal, Udveg) are removed. What is left, 25 minutes or longer, is shown in <span className="font-semibold text-leaf">green</span>.</li>
+        <li><b>6. ★ Very good</b> when it also falls in a good Choghadiya, on a strong tithi and on a Monday, Wednesday, Thursday or Friday.</li>
+      </ol>
+
+      <div className="mt-4 grid gap-2">
+        <Rule title="Days left out completely">
+          <ul className="list-disc space-y-0.5 pl-5">
+            {h.days.map((d) => (
+              <li key={d}>{d}</li>
+            ))}
+          </ul>
+        </Rule>
+        <Rule title="Favourable nakshatras">{h.nakshatras}</Rule>
+        <Rule title="Tithi">{h.tithis}</Rule>
+        <Rule title="Makes it ★ very good">{h.strong}</Rule>
+        <Rule title="Weekdays">{h.weekdays}</Rule>
+      </div>
+
+      <p className="mt-4 rounded-xl bg-gold-soft/70 p-3 text-[12px] leading-relaxed text-[#6b5320]">
+        These are the classical Marathi panchang rules (Muhurta Chintamani). Family traditions differ — please confirm the final date and time with your guruji.
+        <br />
+        <span className="heading-deva">हे पारंपरिक पंचांगाचे नियम आहेत. अंतिम मुहूर्त आपल्या गुरुजींकडून निश्चित करून घ्या.</span>
+      </p>
+    </div>
+  );
+}
 
 function DayDetail({ day, purpose }) {
   const st = STATUS[day.status];
@@ -264,6 +360,7 @@ function DayDetail({ day, purpose }) {
 export function MuhuratPlanner() {
   const today = new Date();
   const [purpose, setPurpose] = useState('vivah');
+  const [info, setInfo] = useState(null); // which card's "how it is calculated" is open
   const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() + 1 });
   const [selected, setSelected] = useState(iso(today));
   const [placeText, setPlaceText] = useState('Palghar');
@@ -302,20 +399,33 @@ export function MuhuratPlanner() {
           {/* one tap per kind of ceremony — each has its own panchang rules */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="What is it for?">
             {Object.entries(PURPOSE).map(([key, p]) => (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={purpose === key}
-                onClick={() => setPurpose(key)}
-                className={cn('rounded-xl border px-3 py-2 text-left transition', purpose === key ? 'border-primary bg-primary-soft text-primary shadow-sm' : 'border-line bg-white hover:border-primary/40')}
-              >
-                <b className="heading-deva block text-[15px] leading-tight">{p.mr}</b>
-                <small className={cn('text-[11px]', purpose === key ? 'text-primary' : 'text-muted')}>{p.en}</small>
-              </button>
+              <div key={key} className={cn('relative rounded-xl border transition', purpose === key ? 'border-primary bg-primary-soft text-primary shadow-sm' : 'border-line bg-white hover:border-primary/40')}>
+                <button type="button" role="radio" aria-checked={purpose === key} onClick={() => setPurpose(key)} className="block w-full py-2 pr-10 pl-3 text-left">
+                  <b className="heading-deva block text-[15px] leading-tight">{p.mr}</b>
+                  <small className={cn('text-[11px]', purpose === key ? 'text-primary' : 'text-muted')}>{p.en}</small>
+                </button>
+                {/* ⓘ how this muhurat is worked out */}
+                <button
+                  type="button"
+                  onClick={() => setInfo(key)}
+                  className={cn('absolute top-1.5 right-1.5 grid size-7 place-items-center rounded-full border font-serif text-[14px] font-bold italic transition', purpose === key ? 'border-primary/40 bg-white text-primary' : 'border-line bg-sand/60 text-muted hover:text-primary')}
+                  aria-label={`How the ${p.en} muhurat is calculated`}
+                  title="How is it calculated?"
+                >
+                  i
+                </button>
+              </div>
             ))}
           </div>
-          <p className="mt-2 text-[11px] text-muted">{PURPOSE[purpose].hint}</p>
+          <p className="mt-2 text-[11px] text-muted">
+            {PURPOSE[purpose].hint}{' '}
+            <button type="button" onClick={() => setInfo(purpose)} className="font-semibold text-primary underline-offset-2 hover:underline">
+              How is it calculated?
+            </button>
+          </p>
+          <Modal open={Boolean(info)} onClose={() => setInfo(null)} label="How the muhurat is calculated">
+            {info && <PurposeInfo purpose={info} />}
+          </Modal>
         </div>
         <PlaceInput
           label="Place (sunrise & timings)"
