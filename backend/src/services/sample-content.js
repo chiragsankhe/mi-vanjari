@@ -5,8 +5,7 @@ import { prisma } from '../lib/prisma.js';
  *
  * Honest by design:
  *  • everything is tagged "Sample" in the site (Profile.isDemo)
- *  • community members carry free stock portraits (Unsplash) and community surnames; names and stories are made up
- *  • matrimony samples keep illustrated avatars: a real person's face must never stand for a made-up marriage profile
+ *  • sample members and matrimony samples carry free stock portraits (Unsplash) and community surnames; names and stories are made up
  *  • student achievers show a study photo, not a child's face
  *  • sample profiles cannot be messaged or followed, and have no phone numbers
  *  • the few matrimony profiles carry the "Sample" tag, no contact details, and cannot be messaged, followed or paid for
@@ -66,6 +65,9 @@ const PORTRAIT = {
   snehal: '1596196524143-569109d9a645', prakash: '1758685734463-98672a67dd1c', manisha: '1725611224180-4a50ef13a0e8', vijay: '1667655787062-b675b26d5c4b',
   saroj: '1759840278381-bf7d5e332050', dinesh: '1781106784036-8c6a4842a37d', meena: '1597897569252-9df44c7de0db', ganesh: '1778692258270-bc0e80e975c0',
   ashwini: '1774437891793-2013f7b5a04a',
+  // matrimony samples
+  'm-riya': '1770838447151-05a876cdee3d', 'm-neha': '1646979201169-e83d743bfa8d', 'm-komal': '1767607740661-05e668190cdc',
+  'm-akash': '1757744705465-ea08b0ddc38a', 'm-rohan': '1729157661483-ed21901ed892', 'm-yogesh': '1782323709687-43675cbddd46',
 };
 
 // key, name, gender, city, village, occupation, birth year, bio
@@ -313,7 +315,7 @@ export async function addSampleContent() {
   for (const [i, [key, name, gender, year, city, heightCm, degree, occupation, annualIncome, gotra, familyType, bio]] of MATRIMONY.entries()) {
     const email = emailOf(key);
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) continue;
-    const url = avatar(name, BG[(i + 1) % BG.length]);
+    const url = PORTRAIT[key] ? portrait(PORTRAIT[key]) : avatar(name, BG[(i + 1) % BG.length]);
     await prisma.user.create({
       data: {
         email,
@@ -354,11 +356,11 @@ export async function removeSampleContent() {
 }
 
 /**
- * Sample accounts added by an older version (cartoon avatars on community members) are rebuilt once with the current
+ * Sample accounts added by an older version (any cartoon avatar left) are rebuilt once with the current
  * names and portraits. Only sample users are touched. Returns true when it rebuilt them.
  */
 export async function refreshOldSampleContent() {
-  const old = await prisma.profile.findFirst({ where: { isDemo: true, isMatrimonial: false, profilePhotoUrl: { contains: 'dicebear' }, user: { email: { endsWith: SAMPLE_DOMAIN } } }, select: { id: true } });
+  const old = await prisma.profile.findFirst({ where: { isDemo: true, profilePhotoUrl: { contains: 'dicebear' }, user: { email: { endsWith: SAMPLE_DOMAIN } } }, select: { id: true } });
   if (!old) return false;
   await removeSampleContent();
   await addSampleContent();
