@@ -352,3 +352,15 @@ export async function removeSampleContent() {
   const { count } = await prisma.user.deleteMany({ where: { email: { endsWith: SAMPLE_DOMAIN } } });
   return { removed: count, ...(await sampleStatus()) };
 }
+
+/**
+ * Sample accounts added by an older version (cartoon avatars on community members) are rebuilt once with the current
+ * names and portraits. Only sample users are touched. Returns true when it rebuilt them.
+ */
+export async function refreshOldSampleContent() {
+  const old = await prisma.profile.findFirst({ where: { isDemo: true, isMatrimonial: false, profilePhotoUrl: { contains: 'dicebear' }, user: { email: { endsWith: SAMPLE_DOMAIN } } }, select: { id: true } });
+  if (!old) return false;
+  await removeSampleContent();
+  await addSampleContent();
+  return true;
+}
