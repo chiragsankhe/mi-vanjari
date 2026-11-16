@@ -232,6 +232,8 @@ model Profile {
   // Privacy & status
   accountType AccountType @default(PUBLIC)
   showPhone   Boolean     @default(false) // reveal phone to accepted followers
+  /// show the mobile number to logged-in members in Community → Members (the member turns it on)
+  phoneInDirectory Boolean @default(false)
   isActive    Boolean     @default(true)
   isVerified  Boolean     @default(false)
   /// sample content added from Admin → Settings (shown with a "Sample" tag; cannot be messaged or followed)

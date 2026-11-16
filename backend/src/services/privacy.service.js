@@ -70,6 +70,7 @@ export function toProfileCard(profile, { full, followStatus = 'NONE', matchScore
     gender: profile.gender,
     currentCity: profile.currentCity,
     currentState: profile.currentState,
+    nativeVillage: profile.nativeVillage,
     gotra: profile.gotra,
     // Height is shown even on private (locked) cards: it isn't identifying, and the height filter reveals it anyway
     heightCm: profile.heightCm,

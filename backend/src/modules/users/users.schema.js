@@ -183,6 +183,7 @@ export const updateProfileSchema = profileSchema.innerType().partial();
 export const settingsSchema = z.object({
   accountType: z.enum(['PUBLIC', 'PRIVATE']).optional(),
   showPhone: z.boolean().optional(),
+  phoneInDirectory: z.boolean().optional(),
   isMatrimonial: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });

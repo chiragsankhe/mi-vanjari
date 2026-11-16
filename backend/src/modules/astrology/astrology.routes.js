@@ -5,7 +5,7 @@ import { optionalAuth } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { computeBirthChart, gunaMilan } from '../../services/astrology/engine.js';
 import { computeKundali } from '../../services/astrology/chart.js';
-import { computeDay, computeMonth } from '../../services/astrology/daily.js';
+import { computeDay, computeMonth, MUHURAT_PURPOSES } from '../../services/astrology/daily.js';
 import { resolveBirthPlace, searchPlaces, utcOffsetHours } from '../../services/astrology/lookup.js';
 import { placesLimiter } from '../../middleware/rateLimit.js';
 import { monthPanchang } from '../../services/astrology/panchang.js';
@@ -78,7 +78,7 @@ router.post(
 
 const dayQuery = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  purpose: z.enum(['vivah', 'general']).default('vivah'),
+  purpose: z.enum(MUHURAT_PURPOSES).default('vivah'),
   place: z.string().trim().max(120).optional(),
   lat: z.coerce.number().min(-90).max(90).optional(),
   lon: z.coerce.number().min(-180).max(180).optional(),

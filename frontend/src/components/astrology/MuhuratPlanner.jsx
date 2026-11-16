@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { get } from '../../lib/api';
 import { cn } from '../../lib/utils';
 import { PlaceInput } from '../common/PlaceInput';
-import { Icon, Segment, Spinner } from '../ui';
+import { Icon, Spinner } from '../ui';
 
 // ── formatting ───────────────────────────────────────────────────────────────
 /** minutes since local midnight → "6:42 AM" (values past 24:00 belong to the next morning) */
@@ -101,6 +101,15 @@ function Changes({ segs, name }) {
   );
 }
 
+/** The kinds of muhurat people look for. The rules for each live on the server (services/astrology/daily.js). */
+const PURPOSE = {
+  vivah: { mr: 'विवाह', en: 'Wedding', best: 'Best times for the wedding', hint: 'Classical vivah rules: no Adhik maas, Chaturmas, Kharmas or Guru/Shukra asta.' },
+  engagement: { mr: 'साखरपुडा', en: 'Engagement', best: 'Best times for the engagement (sakharpuda)', hint: 'Engagement nakshatras and tithis; Tuesday avoided; no Adhik maas or Guru/Shukra asta.' },
+  grihapravesh: { mr: 'गृहप्रवेश', en: 'Griha Pravesh', best: 'Best times to enter the new home', hint: 'Fixed and gentle nakshatras; no Chaturmas or Kharmas; Sunday and Tuesday avoided.' },
+  munj: { mr: 'मुंज', en: 'Munj (Upanayan)', best: 'Best times for the munj', hint: 'Done from Magh to Jyeshtha (Uttarayan); Tuesday and Saturday avoided.' },
+  general: { mr: 'इतर शुभ कार्य', en: 'Any shubh kaam', best: 'Best times for a new beginning', hint: 'Any good work: a time clear of Rahu Kaal, Yamaganda, Gulika and bad Choghadiya.' },
+};
+
 function DayDetail({ day, purpose }) {
   const st = STATUS[day.status];
   const bar = [
@@ -150,7 +159,7 @@ function DayDetail({ day, purpose }) {
 
       <div className="card p-4 sm:p-5">
         <h4 className="mb-3 flex items-center gap-2 font-serif text-lg font-semibold">
-          <Icon name="check" size={18} className="text-leaf" /> {purpose === 'vivah' ? 'Best times for the wedding' : 'Best times for a new beginning'}
+          <Icon name="check" size={18} className="text-leaf" /> {PURPOSE[purpose].best}
         </h4>
         {day.windows.length ? (
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -167,8 +176,8 @@ function DayDetail({ day, purpose }) {
               ? 'This day is not recommended (see the reason above).'
               : day.status === 'possible'
                 ? 'The panchang is favourable, but every favourable moment overlaps Rahu Kaal, Yamaganda, Gulika or a bad Choghadiya. Ask your priest for the exact time.'
-                : purpose === 'vivah'
-                  ? 'No suitable wedding time on this day: the nakshatra, tithi or yoga is not favourable. Try the green days in the calendar.'
+                : purpose !== 'general'
+                  ? `No suitable time for ${PURPOSE[purpose].en.toLowerCase()} on this day: the nakshatra, tithi or yoga is not favourable. Try the green days in the calendar.`
                   : 'No clear good time on this day.'}
           </p>
         )}
@@ -290,15 +299,23 @@ export function MuhuratPlanner() {
       <div className="card grid gap-4 p-4 sm:p-5 md:grid-cols-2 md:items-end">
         <div>
           <span className="field-label">What is it for?</span>
-          <Segment
-            id="muhurat-purpose"
-            value={purpose}
-            onChange={setPurpose}
-            options={[
-              { value: 'vivah', label: 'Vivah · विवाह' },
-              { value: 'general', label: 'Any shubh kaam' },
-            ]}
-          />
+          {/* one tap per kind of ceremony — each has its own panchang rules */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="What is it for?">
+            {Object.entries(PURPOSE).map(([key, p]) => (
+              <button
+                key={key}
+                type="button"
+                role="radio"
+                aria-checked={purpose === key}
+                onClick={() => setPurpose(key)}
+                className={cn('rounded-xl border px-3 py-2 text-left transition', purpose === key ? 'border-primary bg-primary-soft text-primary shadow-sm' : 'border-line bg-white hover:border-primary/40')}
+              >
+                <b className="heading-deva block text-[15px] leading-tight">{p.mr}</b>
+                <small className={cn('text-[11px]', purpose === key ? 'text-primary' : 'text-muted')}>{p.en}</small>
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{PURPOSE[purpose].hint}</p>
         </div>
         <PlaceInput
           label="Place (sunrise & timings)"
@@ -321,7 +338,7 @@ export function MuhuratPlanner() {
               <b className="block font-serif text-lg font-semibold">
                 {MONTHS[cursor.m - 1]} {cursor.y}
               </b>
-              <small className="text-[11px] text-muted">{month.isFetching && !month.data ? 'Calculating…' : purpose === 'vivah' ? `${suitable} suitable ${suitable === 1 ? 'day' : 'days'}` : 'Tap a day'}</small>
+              <small className="text-[11px] text-muted">{month.isFetching && !month.data ? 'Calculating…' : purpose !== 'general' ? `${suitable} suitable ${suitable === 1 ? 'day' : 'days'} for ${PURPOSE[purpose].en.toLowerCase()}` : 'Tap a day'}</small>
             </div>
             <button type="button" onClick={() => move(1)} className="grid size-10 place-items-center rounded-full border border-line bg-white hover:bg-sand" aria-label="Next month">
               <Icon name="arrow" size={16} />

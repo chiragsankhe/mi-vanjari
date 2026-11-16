@@ -87,6 +87,9 @@ export default function Settings() {
             <Row icon="phone" title="Show my phone number" desc="Reveal your number to accepted followers only">
               <Toggle label="Show phone" checked={p.showPhone} disabled={update.isPending} onChange={(v) => update.mutate({ showPhone: v })} />
             </Row>
+            <Row icon="users" title="Show my number in the Members list" desc="Logged-in community members can see and call your mobile number in Community → Members">
+              <Toggle label="Show my number in the Members list" checked={!!p.phoneInDirectory} disabled={update.isPending} onChange={(v) => update.mutate({ phoneInDirectory: v })} />
+            </Row>
             <Row icon="heart" title="Matrimonial listing" desc="Appear in matrimonial search results">
               <Toggle label="Matrimonial listing" checked={p.isMatrimonial} disabled={update.isPending} onChange={(v) => update.mutate({ isMatrimonial: v })} />
             </Row>

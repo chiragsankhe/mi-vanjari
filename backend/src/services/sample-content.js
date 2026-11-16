@@ -5,7 +5,9 @@ import { prisma } from '../lib/prisma.js';
  *
  * Honest by design:
  *  • everything is tagged "Sample" in the site (Profile.isDemo)
- *  • people have illustrated avatars, never real photos; names and stories are made up
+ *  • community members carry free stock portraits (Unsplash) and community surnames; names and stories are made up
+ *  • matrimony samples keep illustrated avatars: a real person's face must never stand for a made-up marriage profile
+ *  • student achievers show a study photo, not a child's face
  *  • sample profiles cannot be messaged or followed, and have no phone numbers
  *  • the few matrimony profiles carry the "Sample" tag, no contact details, and cannot be messaged, followed or paid for
  *  • sample numbers are never counted in the public member statistics
@@ -56,66 +58,75 @@ const IMG = {
 const nameKey = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, '');
 const avatar = (seed, bg) => `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${bg}&scale=85`;
 const BG = ['ffd5dc', 'ffdfbf', 'c0aede', 'd1d4f9', 'b6e3f4', 'e8d5b5'];
+// free Unsplash portraits for the sample community members (adults only), cropped around the face
+const portrait = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&crop=faces&w=600&h=600&q=75`;
+const PORTRAIT = {
+  sunita: '1774437891540-05ee35e087dc', rahul: '1637651808680-d054b0744fe8', pooja: '1789500381106-ba13068a6520', amit: '1769598250411-815c984c33c3',
+  kavita: '1763017707624-213684457a9d', santosh: '1774437678561-c321687f6986', rekha: '1774438533054-5a0cc8d24586', nilesh: '1589386417686-0d34b5903d23',
+  snehal: '1596196524143-569109d9a645', prakash: '1758685734463-98672a67dd1c', manisha: '1725611224180-4a50ef13a0e8', vijay: '1667655787062-b675b26d5c4b',
+  saroj: '1759840278381-bf7d5e332050', dinesh: '1781106784036-8c6a4842a37d', meena: '1597897569252-9df44c7de0db', ganesh: '1778692258270-bc0e80e975c0',
+  ashwini: '1774437891793-2013f7b5a04a',
+};
 
 // key, name, gender, city, village, occupation, birth year, bio
 const MEMBERS = [
   ['sunita', 'Sunita Patil', 'FEMALE', 'Palghar', 'Kelve', 'School teacher', 1988, 'Teaching maths to village children for 12 years. Love rangoli and Sunday family lunches.'],
-  ['rahul', 'Rahul Gaikwad', 'MALE', 'Boisar', 'Tarapur', 'Civil engineer', 1990, 'Builds homes for a living. Cricket on weekends with the Boisar boys.'],
-  ['pooja', 'Pooja Shinde', 'FEMALE', 'Vasai', 'Nalasopara', 'Staff nurse', 1993, 'Nursing is service. Happy to guide girls who want to study nursing.'],
-  ['amit', 'Amit Jadhav', 'MALE', 'Dahanu', 'Gholvad', 'Dairy farmer', 1985, 'Third-generation dairy farmer. Fresh milk, ghee and a lot of patience.'],
-  ['kavita', 'Kavita More', 'FEMALE', 'Talasari', 'Kochai', 'Shop & decoration business', 1991, 'Runs a small store and does wedding mandap flowers on the side.'],
-  ['santosh', 'Santosh Pawar', 'MALE', 'Wada', 'Kudus', 'Transport & hall owner', 1983, 'Trucks, a mangal karyalay and too many phone calls.'],
-  ['rekha', 'Rekha Kale', 'FEMALE', 'Jawhar', 'Vikramgad', 'Homemaker & Warli artist', 1987, 'Warli paintings, village stories and monsoon walks.'],
-  ['nilesh', 'Nilesh Bhoir', 'MALE', 'Mumbai', 'Virar', 'Software developer', 1994, 'Writes code in Mumbai, always up for a trek to Kalsubai.'],
-  ['snehal', 'Snehal Chavan', 'FEMALE', 'Pune', 'Mokhada', 'Chartered accountant', 1992, 'First CA in the family. Believes every girl should finish her education.'],
-  ['prakash', 'Prakash Waghmare', 'MALE', 'Nashik', 'Peth', 'Catering owner', 1980, 'Feeding weddings and functions since 2008. Misal is my speciality.'],
-  ['manisha', 'Manisha Dhumal', 'FEMALE', 'Thane', 'Shahapur', 'Wedding photographer', 1991, 'Candid wedding stories. Camera in one hand, chai in the other.'],
-  ['vijay', 'Vijay Kharat', 'MALE', 'Palghar', 'Mahim', 'Sound & DJ, agro centre', 1989, 'Sound systems for every function, and seeds & fertilisers for every farm.'],
-  ['saroj', 'Saroj Waghmare', 'FEMALE', 'Boisar', 'Chilhar', 'Makeup artist', 1992, 'Bridal and party makeup artist. A happy bride is my best advertisement.'],
-  ['dinesh', 'Dinesh Joshi', 'MALE', 'Nashik', 'Trimbak', 'Pandit & purohit', 1979, 'Performing vivah, griha pravesh and satyanarayan poojas for 20 years.'],
-  ['meena', 'Meena Gawde', 'FEMALE', 'Vasai', 'Virar', 'Boutique & jewellery owner', 1986, 'Bridal wear and traditional jewellery on rent and for sale.'],
-  ['ganesh', 'Ganesh Raut', 'MALE', 'Thane', 'Murbad', 'Wedding planner', 1988, 'I plan weddings so that families can enjoy them.'],
-  ['ashwini', 'Ashwini Bhagat', 'FEMALE', 'Palghar', 'Saphale', 'Printing & invitation cards', 1990, 'Invitation cards, banners and digital invites, delivered on time.'],
+  ['rahul', 'Rahul Sankhe', 'MALE', 'Boisar', 'Tarapur', 'Civil engineer', 1990, 'Builds homes for a living. Cricket on weekends with the Boisar boys.'],
+  ['pooja', 'Pooja Vade', 'FEMALE', 'Vasai', 'Nalasopara', 'Staff nurse', 1993, 'Nursing is service. Happy to guide girls who want to study nursing.'],
+  ['amit', 'Amit Pimple', 'MALE', 'Dahanu', 'Gholvad', 'Dairy farmer', 1985, 'Third-generation dairy farmer. Fresh milk, ghee and a lot of patience.'],
+  ['kavita', 'Kavita Bore', 'FEMALE', 'Talasari', 'Kochai', 'Shop & decoration business', 1991, 'Runs a small store and does wedding mandap flowers on the side.'],
+  ['santosh', 'Santosh Sankhe', 'MALE', 'Wada', 'Kudus', 'Transport & hall owner', 1983, 'Trucks, a mangal karyalay and too many phone calls.'],
+  ['rekha', 'Rekha Pimple', 'FEMALE', 'Jawhar', 'Vikramgad', 'Homemaker & Warli artist', 1987, 'Warli paintings, village stories and monsoon walks.'],
+  ['nilesh', 'Nilesh Vade', 'MALE', 'Mumbai', 'Virar', 'Software developer', 1994, 'Writes code in Mumbai, always up for a trek to Kalsubai.'],
+  ['snehal', 'Snehal Patil', 'FEMALE', 'Pune', 'Mokhada', 'Chartered accountant', 1992, 'First CA in the family. Believes every girl should finish her education.'],
+  ['prakash', 'Prakash Bore', 'MALE', 'Nashik', 'Peth', 'Catering owner', 1980, 'Feeding weddings and functions since 2008. Misal is my speciality.'],
+  ['manisha', 'Manisha Sankhe', 'FEMALE', 'Thane', 'Shahapur', 'Wedding photographer', 1991, 'Candid wedding stories. Camera in one hand, chai in the other.'],
+  ['vijay', 'Vijay Patil', 'MALE', 'Palghar', 'Mahim', 'Sound & DJ, agro centre', 1989, 'Sound systems for every function, and seeds & fertilisers for every farm.'],
+  ['saroj', 'Saroj Vade', 'FEMALE', 'Boisar', 'Chilhar', 'Makeup artist', 1992, 'Bridal and party makeup artist. A happy bride is my best advertisement.'],
+  ['dinesh', 'Dinesh Pimple', 'MALE', 'Nashik', 'Trimbak', 'Pandit & purohit', 1979, 'Performing vivah, griha pravesh and satyanarayan poojas for 20 years.'],
+  ['meena', 'Meena Patil', 'FEMALE', 'Vasai', 'Virar', 'Boutique & jewellery owner', 1986, 'Bridal wear and traditional jewellery on rent and for sale.'],
+  ['ganesh', 'Ganesh Pimple', 'MALE', 'Thane', 'Murbad', 'Wedding planner', 1988, 'I plan weddings so that families can enjoy them.'],
+  ['ashwini', 'Ashwini Sankhe', 'FEMALE', 'Palghar', 'Saphale', 'Printing & invitation cards', 1990, 'Invitation cards, banners and digital invites, delivered on time.'],
 ];
 
 // Matrimony samples — key, name, gender, birth year, city, height cm, degree, occupation, income, gotra, family, bio
 const MATRIMONY = [
   ['m-riya', 'Riya Patil', 'FEMALE', 1998, 'Palghar', 160, 'B.Sc. Nursing', 'Staff nurse', '₹3–5 lakh', 'Kashyap', 'JOINT', 'Sample profile. Family-oriented, loves cooking and classical dance.'],
-  ['m-neha', 'Neha Shinde', 'FEMALE', 1996, 'Thane', 163, 'MBA (HR)', 'HR executive', '₹6–8 lakh', 'Vatsa', 'NUCLEAR', 'Sample profile. Working in Thane; enjoys travel and music.'],
-  ['m-komal', 'Komal Gaikwad', 'FEMALE', 1999, 'Vasai', 158, 'B.Ed.', 'School teacher', '₹3–4 lakh', 'Bharadwaj', 'JOINT', 'Sample profile. Loves teaching and long walks by the sea.'],
-  ['m-akash', 'Akash Jadhav', 'MALE', 1995, 'Boisar', 175, 'B.E. Mechanical', 'Production engineer', '₹6–8 lakh', 'Kashyap', 'JOINT', 'Sample profile. Engineer, cricket lover, close with his family.'],
-  ['m-rohan', 'Rohan Pawar', 'MALE', 1993, 'Nashik', 178, 'B.Com., MBA', 'Bank manager', '₹8–10 lakh', 'Vatsa', 'NUCLEAR', 'Sample profile. Bank manager who enjoys trekking and photography.'],
-  ['m-yogesh', 'Yogesh More', 'MALE', 1994, 'Dahanu', 172, 'B.Sc. Agriculture', 'Farmer & dairy owner', '₹5–7 lakh', 'Bharadwaj', 'JOINT', 'Sample profile. Modern farmer with a dairy business and a big heart.'],
+  ['m-neha', 'Neha Sankhe', 'FEMALE', 1996, 'Thane', 163, 'MBA (HR)', 'HR executive', '₹6–8 lakh', 'Vatsa', 'NUCLEAR', 'Sample profile. Working in Thane; enjoys travel and music.'],
+  ['m-komal', 'Komal Vade', 'FEMALE', 1999, 'Vasai', 158, 'B.Ed.', 'School teacher', '₹3–4 lakh', 'Bharadwaj', 'JOINT', 'Sample profile. Loves teaching and long walks by the sea.'],
+  ['m-akash', 'Akash Pimple', 'MALE', 1995, 'Boisar', 175, 'B.E. Mechanical', 'Production engineer', '₹6–8 lakh', 'Kashyap', 'JOINT', 'Sample profile. Engineer, cricket lover, close with his family.'],
+  ['m-rohan', 'Rohan Bore', 'MALE', 1993, 'Nashik', 178, 'B.Com., MBA', 'Bank manager', '₹8–10 lakh', 'Vatsa', 'NUCLEAR', 'Sample profile. Bank manager who enjoys trekking and photography.'],
+  ['m-yogesh', 'Yogesh Patil', 'MALE', 1994, 'Dahanu', 172, 'B.Sc. Agriculture', 'Farmer & dairy owner', '₹5–7 lakh', 'Bharadwaj', 'JOINT', 'Sample profile. Modern farmer with a dairy business and a big heart.'],
 ];
 
 // owner key, name, category, description, location, photos
 const BUSINESSES = [
-  ['amit', 'Jadhav Dairy Farm & Milk Products', 'Dairy & Poultry', 'Fresh cow and buffalo milk, ghee, paneer and dahi from our own farm, delivered every morning.', 'Dahanu', [IMG.cows, IMG.field]],
-  ['santosh', 'Pawar Transport & Logistics', 'Transport', 'Goods transport across Maharashtra and Gujarat. Trucks of all sizes, on-time delivery.', 'Wada', [IMG.truck]],
-  ['kavita', 'More Kirana & General Store', 'Shop & Retail', 'Groceries, household items and daily needs. Home delivery within Talasari.', 'Talasari', [IMG.groceries, IMG.vegMarket]],
-  ['rahul', 'Gaikwad Construction & Interiors', 'Construction', 'Houses, shops and renovations with honest estimates and transparent progress updates.', 'Boisar', [IMG.construction]],
+  ['amit', 'Pimple Dairy Farm & Milk Products', 'Dairy & Poultry', 'Fresh cow and buffalo milk, ghee, paneer and dahi from our own farm, delivered every morning.', 'Dahanu', [IMG.cows, IMG.field]],
+  ['santosh', 'Sankhe Transport & Logistics', 'Transport', 'Goods transport across Maharashtra and Gujarat. Trucks of all sizes, on-time delivery.', 'Wada', [IMG.truck]],
+  ['kavita', 'Bore Kirana & General Store', 'Shop & Retail', 'Groceries, household items and daily needs. Home delivery within Talasari.', 'Talasari', [IMG.groceries, IMG.vegMarket]],
+  ['rahul', 'Sankhe Construction & Interiors', 'Construction', 'Houses, shops and renovations with honest estimates and transparent progress updates.', 'Boisar', [IMG.construction]],
   ['sunita', 'Patil Study Circle', 'Education', 'Evening tuitions for classes 8–10: maths, science and English. Small batches, personal attention.', 'Palghar', [IMG.books, IMG.study]],
-  ['nilesh', 'Bhoir Web & App Studio', 'IT & Services', 'Websites, apps and digital marketing for small businesses and shops.', 'Mumbai', [IMG.team]],
-  ['vijay', 'Kharat Agro Centre', 'Agriculture', 'Quality seeds, fertilisers and crop-care advice for farmers around Palghar.', 'Palghar', [IMG.corn, IMG.field]],
-  ['prakash', 'Waghmare Misal & Snacks', 'Food & Catering', 'Famous misal pav, vada pav and snacks. Bulk orders for functions and offices.', 'Nashik', [IMG.plated]],
+  ['nilesh', 'Vade Web & App Studio', 'IT & Services', 'Websites, apps and digital marketing for small businesses and shops.', 'Mumbai', [IMG.team]],
+  ['vijay', 'Patil Agro Centre', 'Agriculture', 'Quality seeds, fertilisers and crop-care advice for farmers around Palghar.', 'Palghar', [IMG.corn, IMG.field]],
+  ['prakash', 'Bore Misal & Snacks', 'Food & Catering', 'Famous misal pav, vada pav and snacks. Bulk orders for functions and offices.', 'Nashik', [IMG.plated]],
 ];
 
 // owner key, name, category slug, description, location, priceFrom, years, photos, featured, subcategories, packages
 // package = [name, price, duration, description, services included, details, photos]
 const SERVICES = [
-  ['prakash', 'Waghmare Catering – Weddings & Functions', 'catering', 'Traditional Maharashtrian wedding menus, live counters and sweets. Hygienic kitchen, trained serving staff. Tasting before you book.', 'Nashik, Palghar, Thane', 350, 12, [IMG.buffet, IMG.plated], true,
+  ['prakash', 'Bore Catering – Weddings & Functions', 'catering', 'Traditional Maharashtrian wedding menus, live counters and sweets. Hygienic kitchen, trained serving staff. Tasting before you book.', 'Nashik, Palghar, Thane', 350, 12, [IMG.buffet, IMG.plated], true,
     ['Wedding Caterers', 'Maharashtrian Food', 'Veg Catering', 'Live Food Counters'], [
       ['Classic Veg Thali (per plate)', 350, 'Minimum 200 plates', 'A full Maharashtrian vegetarian wedding thali served buffet style.', ['2 sabzi + 1 usal', 'Varan bhaat, poli, puri', 'Two sweets', 'Salad, papad, pickle', 'Buttermilk'], 'Serving staff and utensils included. Tasting on request.', ['buffet']],
       ['Premium Wedding Menu (per plate)', 550, 'Minimum 150 plates', 'A grand menu with starters, live counters and desserts for the big day.', ['Welcome drink', '3 starters', 'Live chaat & pav-bhaji counter', 'Full thali with 3 sweets', 'Ice cream'], 'Decorated counters and uniformed staff included.', ['plated', 'buffet']],
       ['Haldi & Sakharpuda Snacks (per plate)', 180, 'Up to 100 guests', 'Light snacks and tea for small functions.', ['Misal pav / vada pav', 'Sheera', 'Tea & coffee'], null, ['plated']],
     ]],
-  ['manisha', 'Manisha Dhumal Photography', 'photography', 'Candid wedding photography and cinematic videos. Pre-wedding shoots, albums and same-week sneak peeks.', 'Thane, Mumbai, Palghar', 25000, 8, [IMG.camera, IMG.camera2], true,
+  ['manisha', 'Manisha Sankhe Photography', 'photography', 'Candid wedding photography and cinematic videos. Pre-wedding shoots, albums and same-week sneak peeks.', 'Thane, Mumbai, Palghar', 25000, 8, [IMG.camera, IMG.camera2], true,
     ['Wedding Photographer', 'Pre-Wedding Shoot', 'Cinematic Video', 'Wedding Albums'], [
       ['Wedding Day Photography', 25000, 'Full day (10 hours)', 'Candid and traditional photography of all wedding rituals.', ['2 photographers', 'Unlimited photos', '300 edited photos', 'Online gallery'], 'Travel outside Thane charged extra.', ['camera', 'camera2']],
       ['Photo + Cinematic Video', 45000, 'Full day', 'Photography plus a cinematic highlight film and full ceremony video.', ['2 photographers + 1 videographer', '5-minute highlight film', 'Full ceremony video', '30-page album'], null, ['camera2', 'camera']],
       ['Pre-Wedding Shoot', 12000, '4 hours', 'An outdoor shoot for the couple at a location near you.', ['1 location', '50 edited photos', '1-minute reel'], 'Outfit changes up to 3.', ['couple']],
     ]],
-  ['vijay', 'Kharat Sound & DJ', 'dj-music', 'Powerful sound, lights and DJ for sangeet, haldi and baraat. Banjo and dhol groups arranged on request.', 'Palghar, Boisar, Vasai', 15000, 6, [IMG.concert, IMG.concert2], false,
+  ['vijay', 'Patil Sound & DJ', 'dj-music', 'Powerful sound, lights and DJ for sangeet, haldi and baraat. Banjo and dhol groups arranged on request.', 'Palghar, Boisar, Vasai', 15000, 6, [IMG.concert, IMG.concert2], false,
     ['DJ Sound System', 'Banjo Party', 'Dhol Tasha Pathak'], [
       ['Sangeet DJ Night', 15000, '5 hours', 'DJ, sound and dance-floor lights for your sangeet or reception.', ['DJ console & operator', 'Line-array speakers', 'Moving-head lights', 'Fog machine'], 'Generator backup on request.', ['concert', 'concert2']],
       ['Baraat Banjo + Dhol', 12000, '2 hours', 'A lively baraat with banjo and dhol-tasha team.', ['8-member banjo party', 'Dhol & tasha', 'Decorated bandwagon'], 'Within 30 km of Palghar.', ['concert2']],
@@ -126,7 +137,7 @@ const SERVICES = [
       ['Complete Wedding Decoration', 55000, 'Full event', 'Entrance, mandap, stage, aisle, dining area and haldi corner.', ['Entrance arch', 'Mandap & stage', 'Aisle flowers', 'Dining area decor', 'Haldi corner'], 'Theme can be customised.', ['decor', 'hall']],
       ['Haldi Decoration', 8000, '3 hours', 'A cheerful yellow-and-marigold haldi set-up.', ['Marigold backdrop', 'Seating', 'Props'], null, ['flowers']],
     ]],
-  ['santosh', 'Pawar Mangal Karyalay', 'wedding-halls', 'Spacious hall with dining area, bridal rooms and parking for 200 vehicles. Generator backup.', 'Wada', 40000, 15, [IMG.hall, IMG.decor], false,
+  ['santosh', 'Sankhe Mangal Karyalay', 'wedding-halls', 'Spacious hall with dining area, bridal rooms and parking for 200 vehicles. Generator backup.', 'Wada', 40000, 15, [IMG.hall, IMG.decor], false,
     ['Marriage Hall', 'Community Hall', 'Guest House'], [
       ['Hall – Full Day', 40000, '12 hours', 'The main hall with dining area and parking.', ['600 seating capacity', 'Dining hall', 'Parking for 200 vehicles', 'Generator backup'], 'Decoration and catering are separate.', ['hall']],
       ['Hall + Guest Rooms', 65000, '2 days', 'Hall for two days with 10 rooms for the family.', ['Hall for 2 days', '10 AC rooms', 'Bridal & groom rooms'], null, ['hall', 'decor']],
@@ -139,37 +150,37 @@ const SERVICES = [
       ['Haldi Makeup Package', 4000, '1 hour', 'A light, natural look for the haldi.', ['Light makeup', 'Simple hairstyle', 'Flower styling'], null, ['makeup2']],
       ['Party Makeup Package', 3000, '1 hour', 'Quick party makeup for guests and family members.', ['Makeup', 'Basic hairstyle'], 'Groups of 4 or more get a discount.', ['makeup2', 'makeup3']],
     ]],
-  ['dinesh', 'Joshi Guruji – Vivah & Pooja Services', 'pandit-rituals', 'Experienced pandit for vivah, griha pravesh, satyanarayan pooja and more. Kundali matching and muhurat guidance. All materials can be arranged.', 'Nashik, Palghar, Thane', 1100, 20, [IMG.flowers, IMG.rings], false,
+  ['dinesh', 'Pimple Guruji – Vivah & Pooja Services', 'pandit-rituals', 'Experienced pandit for vivah, griha pravesh, satyanarayan pooja and more. Kundali matching and muhurat guidance. All materials can be arranged.', 'Nashik, Palghar, Thane', 1100, 20, [IMG.flowers, IMG.rings], false,
     ['Pandit', 'Pooja Services', 'Kundali Matching', 'Muhurat Consultation', 'Havan'], [
       ['Vivah Sanskar – Full Ceremony', 11000, 'Full ceremony', 'The complete Marathi vivah vidhi with mantras explained in simple language.', ['Pandit & assistant', 'All wedding rituals', 'Pooja material list', 'Muhurat guidance'], 'Samagri can be arranged for an extra charge.', ['flowers', 'rings']],
       ['Satyanarayan Pooja', 3100, '2 hours', 'Satyanarayan katha and pooja at your home.', ['Pandit', 'Katha & aarti', 'Prasad guidance'], null, ['flowers']],
       ['Griha Pravesh Pooja', 5100, '3 hours', 'Vastu shanti and griha pravesh with havan.', ['Pandit', 'Vastu pooja', 'Havan'], null, ['flowers']],
       ['Kundali Matching & Muhurat', 1100, '45 minutes', 'Gun-milan and an auspicious date for the wedding.', ['Kundali matching', 'Muhurat suggestions'], 'Birth details of both sides are needed.', ['rings']],
     ]],
-  ['meena', 'Gawde Boutique & Jewellers', 'clothes-jewellery', 'Bridal lehengas, paithani sarees and traditional Maharashtrian jewellery on rent or for sale. Fitting and alterations in-house.', 'Vasai, Virar, Nalasopara', 5000, 9, [IMG.clothes, IMG.pearls, IMG.bracelet], false,
+  ['meena', 'Patil Boutique & Jewellers', 'clothes-jewellery', 'Bridal lehengas, paithani sarees and traditional Maharashtrian jewellery on rent or for sale. Fitting and alterations in-house.', 'Vasai, Virar, Nalasopara', 5000, 9, [IMG.clothes, IMG.pearls, IMG.bracelet], false,
     ['Bridal Lehenga', 'Wedding Sarees', 'Traditional Jewellery', 'Dress Rental'], [
       ['Bridal Lehenga on Rent', 12000, '3 days', 'Designer lehenga with blouse and dupatta, altered to fit.', ['Lehenga set', 'Fitting & alterations', 'Dry cleaning'], 'Refundable deposit of ₹10,000.', ['clothes']],
       ['Traditional Jewellery Set (Rent)', 5000, '3 days', 'Nath, haar, bangles and earrings for the bride.', ['Nath', 'Long haar', 'Bangles', 'Earrings'], null, ['pearls', 'bracelet', 'earrings']],
       ['Paithani Saree Collection', 9000, 'Per saree (rent)', 'Handwoven-look paithani sarees for the wedding.', ['Saree', 'Blouse stitching', 'Draping help'], null, ['clothes']],
     ]],
-  ['santosh', 'Pawar Wedding Cars & Buses', 'transportation', 'Decorated wedding cars, guest buses and tempo travellers with experienced drivers.', 'Wada, Palghar, Vasai', 6000, 12, [IMG.car, IMG.suv], false,
+  ['santosh', 'Sankhe Wedding Cars & Buses', 'transportation', 'Decorated wedding cars, guest buses and tempo travellers with experienced drivers.', 'Wada, Palghar, Vasai', 6000, 12, [IMG.car, IMG.suv], false,
     ['Wedding Car Rental', 'Decorated Cars', 'Bus Rental', 'Tempo Traveller'], [
       ['Decorated Wedding Car', 6000, '8 hours', 'A flower-decorated car for the couple.', ['Car with driver', 'Flower decoration', 'Fuel within 50 km'], null, ['car']],
       ['Guest Bus (50 seats)', 18000, 'Full day', 'AC bus to take guests from the venue to the hall.', ['AC bus', 'Driver & helper', 'Fuel within 100 km'], null, ['suv']],
       ['Tempo Traveller (12 seats)', 7000, 'Full day', 'Comfortable tempo traveller for family members.', ['12-seater', 'Driver', 'Fuel within 80 km'], null, ['suv', 'car']],
     ]],
-  ['ashwini', 'Bhagat Cards & Digital Invites', 'invitations-printing', 'Wedding invitation cards, WhatsApp video invitations, banners and welcome boards. Design proofs shared before printing.', 'Palghar, Boisar, Dahanu', 1500, 8, [IMG.gifts, IMG.rings], false,
+  ['ashwini', 'Sankhe Cards & Digital Invites', 'invitations-printing', 'Wedding invitation cards, WhatsApp video invitations, banners and welcome boards. Design proofs shared before printing.', 'Palghar, Boisar, Dahanu', 1500, 8, [IMG.gifts, IMG.rings], false,
     ['Wedding Invitation Cards', 'Digital Invitations', 'WhatsApp Video Invitations', 'Wedding Banners'], [
       ['Premium Invitation Cards (100)', 6000, '5 days', 'Laminated card with gold foil, envelope and Marathi / English text.', ['Design proof', '100 cards', 'Envelopes', 'Free delivery in Palghar'], null, ['gifts']],
       ['WhatsApp Video Invitation', 1500, '2 days', 'A short animated invitation for sharing on WhatsApp.', ['Custom design', 'Your photos & music', 'HD video'], null, ['rings']],
       ['Banner & Welcome Boards', 3500, '2 days', 'Flex banner, welcome board and mandap name board.', ['Flex banner', 'Welcome board', 'Name boards'], null, ['gifts', 'rings']],
     ]],
-  ['ganesh', 'Raut Wedding Planners', 'planning-management', 'We plan and run your wedding from the first call to the last guest — vendors, schedule, decoration, food and guests.', 'Thane, Palghar, Mumbai', 25000, 10, [IMG.couple, IMG.table], true,
+  ['ganesh', 'Pimple Wedding Planners', 'planning-management', 'We plan and run your wedding from the first call to the last guest — vendors, schedule, decoration, food and guests.', 'Thane, Palghar, Mumbai', 25000, 10, [IMG.couple, IMG.table], true,
     ['Wedding Planner', 'Event Manager', 'Wedding Coordinator', 'Complete Wedding Packages'], [
       ['Day-of Coordination', 25000, 'Wedding day', 'A coordinator and team run the schedule so the family can relax.', ['Coordinator + 3 helpers', 'Vendor coordination', 'Guest management'], null, ['table']],
       ['Complete Wedding Planning', 125000, '3 months', 'Full planning: venue, vendors, budget, decor, food, invites and the wedding day.', ['Planning meetings', 'Vendor booking', 'Budget tracking', 'On-site team', 'All rituals schedule'], 'Vendor charges are billed separately.', ['couple', 'table']],
     ]],
-  ['vijay', 'Kharat Tent, Chairs & Generator Rental', 'other-services', 'Chairs, tables, tents, coolers and generators for weddings and functions. Delivery and set-up included.', 'Palghar, Boisar, Vasai', 4500, 6, [IMG.balloons, IMG.decor], false,
+  ['vijay', 'Patil Tent, Chairs & Generator Rental', 'other-services', 'Chairs, tables, tents, coolers and generators for weddings and functions. Delivery and set-up included.', 'Palghar, Boisar, Vasai', 4500, 6, [IMG.balloons, IMG.decor], false,
     ['Chairs & Tables Rental', 'Generator', 'AC/Cooler Rental'], [
       ['200 Chairs + 10 Tables', 6000, 'Per day', 'Plastic chairs and tables with delivery and pick-up.', ['200 chairs', '10 tables', 'Delivery & pick-up'], null, ['balloons']],
       ['25 kVA Generator', 4500, 'Per day', 'Silent generator with operator. Fuel extra.', ['Generator', 'Operator', 'Cables'], 'Diesel is charged at actual.', ['decor']],
@@ -179,13 +190,13 @@ const SERVICES = [
 // owner key, type, name, details
 const ACHIEVEMENTS = [
   ['sunita', 'ACADEMIC', 'Sakshi Patil', { schoolName: 'Zilla Parishad School, Palghar', grade: '10th', percentage: 94.2, year: 2025, description: 'Topped her school in the 10th board exams and wants to become a doctor.' }],
-  ['rahul', 'ACADEMIC', 'Omkar Gaikwad', { schoolName: 'Junior College, Boisar', grade: '12th', stream: 'Science', percentage: 91.5, year: 2025, description: 'Scored 91.5% in HSC Science and cleared the engineering entrance exam.' }],
-  ['pooja', 'ACADEMIC', 'Ankita Shinde', { schoolName: 'Vasai Girls High School', grade: '10th', percentage: 89.8, year: 2025, description: 'Won the district-level science exhibition and scored 89.8% in the board exams.' }],
-  ['amit', 'ACADEMIC', 'Tejas Jadhav', { schoolName: 'Dahanu High School', grade: '10th', percentage: 92.0, year: 2024, description: 'A dairy farmer’s son who studies by the cow shed lamp — 92% in SSC.' }],
-  ['snehal', 'PROFESSIONAL', 'CA Snehal Chavan', { role: 'Chartered Accountant', company: 'Own practice', city: 'Pune', description: 'Cleared CA in the first attempt and now helps small businesses with accounts and tax.' }],
-  ['nilesh', 'PROFESSIONAL', 'Nilesh Bhoir', { role: 'Senior Software Engineer', company: 'A product company', city: 'Mumbai', description: 'Mentors students from the community who want to start a tech career.' }],
-  ['pooja', 'PROFESSIONAL', 'Pooja Shinde', { role: 'Staff Nurse', company: 'District hospital', city: 'Vasai', description: 'Recognised for 5 years of dedicated patient care.' }],
-  ['rahul', 'PROFESSIONAL', 'Er. Rahul Gaikwad', { role: 'Civil Engineer', company: 'Gaikwad Construction', city: 'Boisar', description: 'Started with a single site; now employs 20 people from nearby villages.' }],
+  ['rahul', 'ACADEMIC', 'Omkar Sankhe', { schoolName: 'Junior College, Boisar', grade: '12th', stream: 'Science', percentage: 91.5, year: 2025, description: 'Scored 91.5% in HSC Science and cleared the engineering entrance exam.' }],
+  ['pooja', 'ACADEMIC', 'Ankita Vade', { schoolName: 'Vasai Girls High School', grade: '10th', percentage: 89.8, year: 2025, description: 'Won the district-level science exhibition and scored 89.8% in the board exams.' }],
+  ['amit', 'ACADEMIC', 'Tejas Pimple', { schoolName: 'Dahanu High School', grade: '10th', percentage: 92.0, year: 2024, description: 'A dairy farmer’s son who studies by the cow shed lamp — 92% in SSC.' }],
+  ['snehal', 'PROFESSIONAL', 'CA Snehal Patil', { role: 'Chartered Accountant', company: 'Own practice', city: 'Pune', description: 'Cleared CA in the first attempt and now helps small businesses with accounts and tax.' }],
+  ['nilesh', 'PROFESSIONAL', 'Nilesh Vade', { role: 'Senior Software Engineer', company: 'A product company', city: 'Mumbai', description: 'Mentors students from the community who want to start a tech career.' }],
+  ['pooja', 'PROFESSIONAL', 'Pooja Vade', { role: 'Staff Nurse', company: 'District hospital', city: 'Vasai', description: 'Recognised for 5 years of dedicated patient care.' }],
+  ['rahul', 'PROFESSIONAL', 'Er. Rahul Sankhe', { role: 'Civil Engineer', company: 'Sankhe Construction', city: 'Boisar', description: 'Started with a single site; now employs 20 people from nearby villages.' }],
 ];
 
 // author key, text, image key, days ago, likes
@@ -226,7 +237,7 @@ export async function addSampleContent() {
   const ids = {};
   for (const [i, [key, name, gender, city, village, occupation, year, bio]] of MEMBERS.entries()) {
     const email = emailOf(key);
-    const url = avatar(name, BG[i % BG.length]);
+    const url = PORTRAIT[key] ? portrait(PORTRAIT[key]) : avatar(name, BG[i % BG.length]);
     const user = await prisma.user.upsert({
       where: { email },
       update: {},
@@ -329,7 +340,8 @@ export async function addSampleContent() {
   let achievements = 0;
   for (const [i, [key, type, name, details]] of ACHIEVEMENTS.entries()) {
     if (await have('achievement', { userId: ids[key], name })) continue;
-    await prisma.achievement.create({ data: { userId: ids[key], type, name, photoUrl: avatar(name, BG[(i + 2) % BG.length]), isVerified: true, createdAt: daysAgo(20 - i), ...details } });
+    const pic = type === 'PROFESSIONAL' && PORTRAIT[key] ? portrait(PORTRAIT[key]) : photo(i % 2 ? IMG.study : IMG.books, 600);
+    await prisma.achievement.create({ data: { userId: ids[key], type, name, photoUrl: pic, isVerified: true, createdAt: daysAgo(20 - i), ...details } });
     achievements++;
   }
   return { ...(await sampleStatus()), added: { posts, businesses, services, achievements, packages, matrimony } };

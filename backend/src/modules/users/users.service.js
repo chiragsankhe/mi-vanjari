@@ -19,6 +19,7 @@ export async function sessionUser(userId) {
   const profile = user.profile ? toProfileDetail(user.profile, user, { isSelf: true, connected: true }) : null;
   if (profile) {
     profile.showPhone = user.profile.showPhone;
+    profile.phoneInDirectory = user.profile.phoneInDirectory;
     profile.isActive = user.profile.isActive;
     profile.timeOfBirth = user.profile.timeOfBirth;
     profile.placeOfBirth = user.profile.placeOfBirth;

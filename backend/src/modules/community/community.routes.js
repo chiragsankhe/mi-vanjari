@@ -60,8 +60,14 @@ router.get(
         ],
       }),
     };
-    const [rows, total] = await Promise.all([prisma.profile.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take }), prisma.profile.count({ where })]);
-    res.json(pageResult(await toCards(req.user.id, rows), total, { page, limit }));
+    const [rows, total] = await Promise.all([
+      prisma.profile.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take, include: { user: { select: { phone: true } } } }),
+      prisma.profile.count({ where }),
+    ]);
+    // the members list is a simple directory: name, place and — only when the member chose to share it — their mobile number
+    const phoneOf = new Map(rows.map((p) => [p.userId, p.phoneInDirectory && !p.isDemo ? p.user?.phone || null : null]));
+    const cards = await toCards(req.user.id, rows.map(({ user, ...p }) => p));
+    res.json(pageResult(cards.map((c) => ({ ...c, phone: phoneOf.get(c.userId) || null })), total, { page, limit }));
   }),
 );
 

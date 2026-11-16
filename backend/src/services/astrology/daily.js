@@ -129,6 +129,25 @@ const VIVAH_STRONG_TITHI = new Set([2, 3, 5, 7, 10, 11, 12, 13]);
 const BAD_YOGAS = new Set([16, 26]); // Vyatipata and Vaidhriti: avoided for every auspicious work (other yogas only matter in rare partial-ghati rules)
 const GOOD_WEEKDAYS = new Set([1, 3, 4, 5]); // Mon, Wed, Thu, Fri rate higher; Sun/Tue/Sat are allowed but not 'best'
 
+/**
+ * What each kind of muhurat needs (classical Muhurta-Chintamani / Marathi panchang rules).
+ *  nak     = favourable nakshatras (0 = Ashwini … 26 = Revati)
+ *  tithiOk = tithis allowed (1–15 Shukla, 16–30 Krishna) — or badTithi = tithis to avoid
+ *  strong  = tithis that make a time "very good"
+ *  badDays = weekdays avoided for this work (0 = Sunday)
+ *  blocks  = whole-day reasons that rule the day out
+ */
+const PURPOSES = {
+  vivah: { nak: VIVAH_NAKSHATRAS, badTithi: VIVAH_BAD_TITHI, strong: VIVAH_STRONG_TITHI, badDays: new Set(), blocks: ['adhik', 'chaturmas', 'kharmas', 'guru-asta', 'shukra-asta'] },
+  // साखरपुडा / वाङ्निश्चय: marriage nakshatras plus Ashwini, Shravana, Dhanishtha; not on Tuesday
+  engagement: { nak: new Set([0, 3, 4, 9, 11, 12, 14, 16, 18, 20, 21, 22, 25, 26]), badTithi: VIVAH_BAD_TITHI, strong: VIVAH_STRONG_TITHI, badDays: new Set([2]), blocks: ['adhik', 'guru-asta', 'shukra-asta'] },
+  // गृहप्रवेश: the fixed (sthira) and soft (mridu) nakshatras; not in Chaturmas or Kharmas; not on Sunday or Tuesday
+  grihapravesh: { nak: new Set([3, 4, 11, 13, 16, 20, 21, 22, 23, 25, 26]), badTithi: VIVAH_BAD_TITHI, strong: new Set([2, 3, 5, 7, 10, 11, 12, 13]), badDays: new Set([0, 2]), blocks: ['adhik', 'chaturmas', 'kharmas', 'guru-asta', 'shukra-asta'] },
+  // मुंज / उपनयन: Magh to Jyeshtha only; Shukla 2,3,5,7,10–13 and Krishna 2,3,5; not on Tuesday or Saturday
+  munj: { nak: new Set([0, 3, 4, 6, 7, 11, 12, 13, 14, 20, 21, 22, 23, 25, 26]), tithiOk: new Set([2, 3, 5, 7, 10, 11, 12, 13, 17, 18, 20]), strong: new Set([2, 3, 5, 10, 11, 12]), badDays: new Set([2, 6]), blocks: ['adhik', 'chaturmas', 'guru-asta', 'shukra-asta', 'munj-season'] },
+};
+export const MUHURAT_PURPOSES = ['vivah', 'engagement', 'grihapravesh', 'munj', 'general'];
+
 /** Lunar month (amanta) for a moment, from the two surrounding new moons. */
 function lunarMonth(t) {
   const sun = (m) => Math.floor(sunSid(m) / 30);
@@ -198,13 +217,19 @@ export function computeDay({ date, lat, lon, utcOffset = 5.5, purpose = 'vivah' 
   const venusRetro = A.EclipticLongitude(A.Body.Venus, at(rise + 86_400_000)) - A.EclipticLongitude(A.Body.Venus, at(rise)) < 0 && Math.abs(A.EclipticLongitude(A.Body.Venus, at(rise + 86_400_000)) - A.EclipticLongitude(A.Body.Venus, at(rise))) < 90;
   const venusAsta = A.AngleFromSun(A.Body.Venus, at(rise)) < (venusRetro ? 8 : 10);
 
-  const dayNotes = []; // reasons the whole day is not suitable for a wedding
+  const rule = PURPOSES[purpose]; // undefined for 'general'
+  let dayNotes = []; // reasons the whole day is not suitable for this work
   if (month.adhik) dayNotes.push({ key: 'adhik', en: 'Adhik maas (extra month)', mr: 'अधिक मास' });
   if (chaturmas) dayNotes.push({ key: 'chaturmas', en: 'Chaturmas (Ashadhi to Kartiki Ekadashi)', mr: 'चातुर्मास' });
   if (kharmas) dayNotes.push({ key: 'kharmas', en: 'Kharmas (Sun in Dhanu / Meena)', mr: 'खरमास' });
   if (jupiterAsta) dayNotes.push({ key: 'guru-asta', en: 'Guru asta (Jupiter set)', mr: 'गुरू अस्त' });
   if (venusAsta) dayNotes.push({ key: 'shukra-asta', en: 'Shukra asta (Venus set)', mr: 'शुक्र अस्त' });
+  if (purpose === 'munj' && ![10, 11, 0, 1, 2].includes(month.index)) dayNotes.push({ key: 'munj-season', en: 'Munj is done from Magh to Jyeshtha (Uttarayan)', mr: 'मुंज माघ ते ज्येष्ठ या काळात करतात' });
+  if (rule?.badDays.has(weekday)) dayNotes.push({ key: 'weekday', en: `${WEEKDAYS[weekday][0]} is avoided for this work`, mr: `${WEEKDAYS[weekday][1]} हा दिवस टाळतात` });
+  if (rule) dayNotes = dayNotes.filter((n) => n.key === 'weekday' || rule.blocks.includes(n.key));
   const wholeDayBlocked = dayNotes.length > 0;
+  const nakOk = (nk) => (rule ? rule.nak.has(nk) : true);
+  const tithiOk = (n) => (!rule ? true : rule.tithiOk ? rule.tithiOk.has(n) : !rule.badTithi.has(n));
 
   // ── good windows between sunrise and sunset ──
   const cuts = new Set([rise, set]);
@@ -227,10 +252,10 @@ export function computeDay({ date, lat, lon, utcOffset = 5.5, purpose = 'vivah' 
     const inBad = [rahu, yama, gulika].some((p) => mp >= p.start && mp < p.end);
     const cgQ = CHOG_META[cg.name].quality;
     // 1) is the panchang itself favourable at this moment?
-    const valid = purpose === 'vivah' ? !wholeDayBlocked && VIVAH_NAKSHATRAS.has(nk) && !VIVAH_BAD_TITHI.has(ti.number) && !BAD_YOGAS.has(yg) && !ka.bad : !BAD_YOGAS.has(yg) && !ka.bad;
+    const valid = rule ? !wholeDayBlocked && nakOk(nk) && tithiOk(ti.number) && !BAD_YOGAS.has(yg) && !ka.bad : !BAD_YOGAS.has(yg) && !ka.bad;
     // 2) …and is it also clear of Rahu / Yamaganda / Gulika and a bad Choghadiya?
     const clean = valid && !inBad && cgQ !== 'bad';
-    const strong = clean && cgQ === 'good' && (purpose !== 'vivah' || (VIVAH_STRONG_TITHI.has(ti.number) && GOOD_WEEKDAYS.has(weekday)));
+    const strong = clean && cgQ === 'good' && (!rule || (rule.strong.has(ti.number) && GOOD_WEEKDAYS.has(weekday)));
     pieces.push({ start: a, end: b, valid, clean, strong });
   }
   const merge = (keep) => {
@@ -279,7 +304,7 @@ export function computeDay({ date, lat, lon, utcOffset = 5.5, purpose = 'vivah' 
     choghadiya: chog.map((c) => ({ name: c.name, mr: CHOG_META[c.name].mr, quality: CHOG_META[c.name].quality, night: c.night, startMin: fmtMin(c.start, mid), endMin: fmtMin(c.end, mid) })),
     panchang: {
       tithi: tithiSegs.map((s) => ({ ...tithiInfo(s.index), startMin: fmtMin(s.start, mid), endMin: fmtMin(s.end, mid) })),
-      nakshatra: nakSegs.map((s) => ({ index: s.index, name: NAKSHATRAS[s.index].name, mr: NAKSHATRAS[s.index].mr, good: VIVAH_NAKSHATRAS.has(s.index), startMin: fmtMin(s.start, mid), endMin: fmtMin(s.end, mid) })),
+      nakshatra: nakSegs.map((s) => ({ index: s.index, name: NAKSHATRAS[s.index].name, mr: NAKSHATRAS[s.index].mr, good: (rule ? rule.nak : VIVAH_NAKSHATRAS).has(s.index), startMin: fmtMin(s.start, mid), endMin: fmtMin(s.end, mid) })),
       yoga: yogaSegs.map((s) => ({ index: s.index, name: YOGA_EN[s.index], bad: BAD_YOGAS.has(s.index), startMin: fmtMin(s.start, mid), endMin: fmtMin(s.end, mid) })),
       karana: karanaSegs.map((s) => ({ ...karanaInfo(s.index % 60), startMin: fmtMin(s.start, mid), endMin: fmtMin(s.end, mid) })),
     },

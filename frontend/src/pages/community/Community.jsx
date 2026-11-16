@@ -4,11 +4,11 @@ import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { VanjariFilm } from '../../components/history/VanjariFilm';
-import { ProfileCard, ProfileCardSkeleton, ReportDialogBody } from '../../components/profile/ProfileBits';
+import { ProfileCardSkeleton, ReportDialogBody } from '../../components/profile/ProfileBits';
 import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, Reveal, SampleTag, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
 import { useDebounce, usePaged } from '../../hooks';
 import { del, errorMessage, get, post, upload } from '../../lib/api';
-import { cn, timeAgo } from '../../lib/utils';
+import { cn, formatPhone, timeAgo } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 import { useUI } from '../../store/ui';
 
@@ -182,6 +182,44 @@ function Feed() {
   );
 }
 
+/** One line of the members directory: photo, name, place and — if the member shares it — their mobile number. */
+function MemberRow({ p }) {
+  const place = [p.currentCity, p.nativeVillage && p.nativeVillage !== p.currentCity ? p.nativeVillage : null].filter(Boolean).join(' · ');
+  return (
+    <div className="card flex items-center gap-3 p-2.5 sm:p-3">
+      <Link to={`/profile/${p.userId}`} className="shrink-0" aria-label={`Open ${p.fullName}`}>
+        <Avatar src={p.photoUrl} name={p.fullName} size={52} className="rounded-xl" />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link to={`/profile/${p.userId}`} className="flex items-center gap-1 hover:text-primary">
+          <b className="truncate font-serif text-[15px]">{p.fullName}</b>
+          {p.isVerified && <VerifiedDot size={13} />}
+          {p.isSample && <SampleTag className="ml-1" />}
+        </Link>
+        {place && (
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[12px] text-muted">
+            <Icon name="map" size={12} className="shrink-0" /> {place}
+          </p>
+        )}
+        {p.phone ? (
+          <a href={`tel:${p.phone}`} className="mt-0.5 flex items-center gap-1 text-[13px] font-semibold text-ink tabular-nums hover:text-primary">
+            <Icon name="phone" size={12} className="shrink-0 text-primary" /> {formatPhone(p.phone)}
+          </a>
+        ) : (
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+            <Icon name="lock" size={11} className="shrink-0" /> Number not shared
+          </p>
+        )}
+      </div>
+      {p.phone && (
+        <a href={`tel:${p.phone}`} className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-white shadow-sm" aria-label={`Call ${p.fullName}`}>
+          <Icon name="phone" size={17} />
+        </a>
+      )}
+    </div>
+  );
+}
+
 function Members() {
   const authed = useAuth((s) => s.status === 'authed');
   const openAuth = useUI((s) => s.openAuth);
@@ -233,7 +271,7 @@ function Members() {
             <Stagger key={dq} className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3" gap={0.03}>
               {items.map((p) => (
                 <StaggerItem key={p.userId}>
-                  <ProfileCard compact p={{ ...p, matchScore: null }} showShortlist={false} />
+                  <MemberRow p={p} />
                 </StaggerItem>
               ))}
             </Stagger>
