@@ -1,10 +1,12 @@
 import { prisma } from '../lib/prisma.js';
+import { computeBirthChart } from './astrology/engine.js';
 
 /**
  * Sample content — so a new visitor sees how the site looks when it is busy.
  *
  * Honest by design:
  *  • everything is tagged "Sample" in the site (Profile.isDemo)
+ *  • the grooms (Sahil, Tanmay, Abhishek, Siddhesh, Atharv) have every profile field filled in and several photos each
  *  • sample members and matrimony samples carry free stock portraits (Unsplash) and community surnames; names and stories are made up
  *  • student achievers show a study photo, not a child's face
  *  • sample profiles cannot be messaged or followed, and have no phone numbers
@@ -59,6 +61,8 @@ const avatar = (seed, bg) => `https://api.dicebear.com/9.x/lorelei/svg?seed=${en
 const BG = ['ffd5dc', 'ffdfbf', 'c0aede', 'd1d4f9', 'b6e3f4', 'e8d5b5'];
 // free Unsplash portraits for the sample community members (adults only), cropped around the face
 const portrait = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&crop=faces&w=600&h=600&q=75`;
+// 4:5 crop around the face, for the matrimony photo gallery
+const tall = (id) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&crop=faces&w=900&h=1125&q=75`;
 const PORTRAIT = {
   sunita: '1774437891540-05ee35e087dc', rahul: '1637651808680-d054b0744fe8', pooja: '1789500381106-ba13068a6520', amit: '1769598250411-815c984c33c3',
   kavita: '1763017707624-213684457a9d', santosh: '1774437678561-c321687f6986', rekha: '1774438533054-5a0cc8d24586', nilesh: '1589386417686-0d34b5903d23',
@@ -99,6 +103,67 @@ const MATRIMONY = [
   ['m-akash', 'Akash Pimple', 'MALE', 1995, 'Boisar', 175, 'B.E. Mechanical', 'Production engineer', '₹6–8 lakh', 'Kashyap', 'JOINT', 'Sample profile. Engineer, cricket lover, close with his family.'],
   ['m-rohan', 'Rohan Bore', 'MALE', 1993, 'Nashik', 178, 'B.Com., MBA', 'Bank manager', '₹8–10 lakh', 'Vatsa', 'NUCLEAR', 'Sample profile. Bank manager who enjoys trekking and photography.'],
   ['m-yogesh', 'Yogesh Patil', 'MALE', 1994, 'Dahanu', 172, 'B.Sc. Agriculture', 'Farmer & dairy owner', '₹5–7 lakh', 'Bharadwaj', 'JOINT', 'Sample profile. Modern farmer with a dairy business and a big heart.'],
+];
+
+
+// More matrimony samples (grooms) with every detail filled in and several photos each.
+// The photos of one groom come from the same free Unsplash photo shoot, so the gallery shows the same person.
+const GROOMS = [
+  {
+    key: 'm-sahil', name: 'Sahil Sankhe', dob: '1996-08-14', tob: '07:20', city: 'Boisar', village: 'Kurgaon', district: 'Palghar', height: 176, weight: 71, blood: 'B+', body: 'Athletic',
+    photos: ['1648577735298-385ccb9755c0', '1648577736141-58d4c7dcb66d', '1648577736128-2dea491616ea'],
+    quals: [{ degree: 'B.E. Electronics', institute: 'Mumbai University', year: 2018 }], highest: 'Engineering (B.E. / B.Tech)', employment: 'Private job', occupation: 'Engineer', designation: 'Assistant Manager – Quality', company: 'A pharma company, Tarapur MIDC', workCity: 'Boisar', exp: 6.5, income: '₹6–10 L',
+    gotra: 'Kashyap', devak: 'Panchpallav', kuldaivat: 'Khandoba of Jejuri', familyType: 'JOINT', father: 'Ramesh Sankhe', fatherJob: 'Farmer', mother: 'Sunita Sankhe', motherJob: 'Homemaker', brothers: 1, marriedBrothers: 1, sisters: 1, marriedSisters: 0,
+    values: 'Traditional', aboutFamily: 'A close joint family from Kurgaon with fields and a small dairy. Father farms, elder brother runs the dairy, mother manages the home. We celebrate every festival together.',
+    diet: 'Non-vegetarian', drinking: 'Never', smoking: 'Never', hobbies: ['Photography', 'Travelling', 'Cricket'], interests: ['Nature', 'Technology'], languages: ['Marathi', 'Hindi', 'English'],
+    bio: 'Sample profile. Quality engineer who loves weekend treks and photography. Close with family and looking for a caring, educated partner.',
+    goals: 'Grow into a plant quality head in the next 5 years and build a home near Boisar.', expect: 'Looking for a kind, family-minded and educated girl who is comfortable in a joint family.',
+    prefAge: [23, 28], prefEdu: 'Graduate', prefLoc: 'Palghar, Mumbai', prefJob: 'Working or homemaker', prefName: 'Any good family',
+  },
+  {
+    key: 'm-tanmay', name: 'Tanmay Pimple', dob: '1997-03-22', tob: '05:45', city: 'Palghar', village: 'Mahim', district: 'Palghar', height: 173, weight: 68, blood: 'O+', body: 'Average',
+    photos: ['1768807478320-fcfd3929acb2', '1768807478287-9e7953cfdca3'],
+    quals: [{ degree: 'B.Com.', institute: 'Mumbai University', year: 2018 }, { degree: 'MBA (Finance)', institute: 'Mumbai University', year: 2020 }], highest: 'Post-graduate (M.A. / M.Com. / M.Sc. / MBA)', employment: 'Private job', occupation: 'Bank employee', designation: 'Relationship Manager', company: 'A private bank', workCity: 'Palghar', exp: 4, income: '₹6–10 L',
+    gotra: 'Vatsa', devak: 'Surya-Pushpa', kuldaivat: 'Tulja Bhavani', familyType: 'NUCLEAR', father: 'Dilip Pimple', fatherJob: 'Government service', mother: 'Meena Pimple', motherJob: 'Teacher', brothers: 0, marriedBrothers: 0, sisters: 1, marriedSisters: 1,
+    values: 'Moderate', aboutFamily: 'A small, educated family in Palghar. Father is retired from a government office, mother teaches at a local school, elder sister is married and lives in Vasai.',
+    diet: 'Vegetarian', drinking: 'Never', smoking: 'Never', hobbies: ['Music', 'Reading', 'Yoga / Fitness'], interests: ['Business', 'Spirituality'], languages: ['Marathi', 'Hindi', 'English'],
+    bio: 'Sample profile. Bank manager in the making who enjoys music and early-morning runs. Believes in simple living and respect at home.',
+    goals: 'Become a branch manager and start a financial advisory firm on the side.', expect: 'A well-educated, understanding girl with good values; working or not, her choice.',
+    prefAge: [22, 27], prefEdu: 'Graduate or above', prefLoc: 'Maharashtra', prefJob: 'Any', prefName: 'Any good family',
+  },
+  {
+    key: 'm-abhishek', name: 'Abhishek Patil', dob: '1994-11-05', tob: '14:10', city: 'Vasai', village: 'Nalasopara', district: 'Palghar', height: 178, weight: 76, blood: 'A+', body: 'Athletic',
+    photos: ['1712425718137-491250cfde88', '1712425718085-cdd2b2298669'],
+    quals: [{ degree: 'B.E. Computer Engineering', institute: 'Mumbai University', year: 2016 }], highest: 'Engineering (B.E. / B.Tech)', employment: 'Private job', occupation: 'Software engineer', designation: 'Senior Software Engineer', company: 'An IT company, Mumbai', workCity: 'Mumbai', exp: 8, income: '₹10–20 L',
+    gotra: 'Bharadwaj', devak: 'Kadamb', kuldaivat: 'Jotiba of Kolhapur', familyType: 'NUCLEAR', father: 'Suresh Patil', fatherJob: 'Business', mother: 'Kavita Patil', motherJob: 'Homemaker', brothers: 1, marriedBrothers: 0, sisters: 0, marriedSisters: 0,
+    values: 'Moderate', aboutFamily: 'Father runs a hardware shop in Nalasopara; mother looks after the home. Younger brother is studying engineering. Weekends are for family lunch and cricket.',
+    diet: 'Non-vegetarian', drinking: 'Occasionally', smoking: 'Never', hobbies: ['Cricket', 'Movies', 'Travelling'], interests: ['Technology', 'Sports'], languages: ['Marathi', 'Hindi', 'English'],
+    bio: 'Sample profile. Software engineer working in Mumbai, loves cricket and long drives. Wants a partner to build a happy, balanced home with.',
+    goals: 'Move into an engineering-manager role and buy a flat in Vasai.', expect: 'An educated, independent and cheerful girl; a working partner is welcome.',
+    prefAge: [24, 29], prefEdu: 'Graduate or above', prefLoc: 'Mumbai, Vasai, Thane', prefJob: 'Working preferred', prefName: 'Any good family',
+  },
+  {
+    key: 'm-siddhesh', name: 'Siddhesh Vade', dob: '1995-06-18', tob: '09:35', city: 'Boisar', village: 'Dedale', district: 'Palghar', height: 172, weight: 70, blood: 'AB+', body: 'Average',
+    photos: ['1694871420544-e13a86f35772', '1616002851413-ebcc9611139d', '1694871420538-b40db58ae5af'],
+    quals: [{ degree: 'B.Sc. Agriculture', institute: 'Agricultural University', year: 2017 }], highest: 'Graduate (B.A. / B.Com. / B.Sc. / BBA)', employment: 'Own business', occupation: 'Business owner', business: 'Vade Agro & Dairy', bizType: 'Dairy / Poultry', bizYears: 5, income: '₹6–10 L',
+    gotra: 'Kashyap', devak: 'Ashok', kuldaivat: 'Khandoba of Jejuri', familyType: 'JOINT', father: 'Prakash Vade', fatherJob: 'Farmer', mother: 'Sangeeta Vade', motherJob: 'Farmer', brothers: 1, marriedBrothers: 0, sisters: 1, marriedSisters: 1,
+    values: 'Traditional', aboutFamily: 'A hard-working farming family in Dedale village with orchards and a dairy of 25 cows. Everyone eats together and every festival is celebrated in the old way.',
+    diet: 'Non-vegetarian', drinking: 'Never', smoking: 'Never', hobbies: ['Farming', 'Cricket', 'Social service'], interests: ['Business', 'Community work'], languages: ['Marathi', 'Hindi'],
+    bio: 'Sample profile. Agriculture graduate running the family dairy and agro business. Simple, honest and fond of village life.',
+    goals: 'Expand the dairy into a packaged milk brand for Palghar.', expect: 'A caring, practical girl who is happy with village and town life alike.',
+    prefAge: [22, 27], prefEdu: 'HSC or above', prefLoc: 'Palghar, Thane', prefJob: 'Any', prefName: 'Farming or business family',
+  },
+  {
+    key: 'm-atharv', name: 'Atharv Bore', dob: '1998-01-09', tob: '19:50', city: 'Thane', village: 'Wada', district: 'Thane', height: 175, weight: 66, blood: 'B-', body: 'Slim',
+    photos: ['1648577739099-f1e18f8563f0', '1648577737609-84b786caefa7'],
+    quals: [{ degree: 'B.Sc. IT', institute: 'Mumbai University', year: 2019 }], highest: 'Graduate (B.A. / B.Com. / B.Sc. / BBA)', employment: 'Self-employed / Freelance', occupation: 'Designer / Artist', business: 'Bore Visuals (photography & video)', bizType: 'Services', bizYears: 3, income: '₹3–6 L',
+    gotra: 'Vatsa', devak: 'Panchpallav', kuldaivat: 'Tulja Bhavani', familyType: 'NUCLEAR', father: 'Anil Bore', fatherJob: 'Private service', mother: 'Rekha Bore', motherJob: 'Homemaker', brothers: 0, marriedBrothers: 0, sisters: 1, marriedSisters: 0,
+    values: 'Liberal', aboutFamily: 'A cheerful family of four in Thane. Father works in a private firm, mother is a homemaker, younger sister is in college. Home is full of music and photographs.',
+    diet: 'Eggetarian', drinking: 'Occasionally', smoking: 'Never', hobbies: ['Photography', 'Music', 'Travelling'], interests: ['Art & crafts', 'Nature'], languages: ['Marathi', 'Hindi', 'English'],
+    bio: 'Sample profile. Wedding and travel photographer who runs his own small studio. Loves road trips, old Marathi songs and good coffee.',
+    goals: 'Grow the studio into a team of ten and shoot a full-length travel film.', expect: 'A friendly, open-minded girl who values family and enjoys travelling.',
+    prefAge: [21, 26], prefEdu: 'Graduate', prefLoc: 'Thane, Mumbai, Pune', prefJob: 'Any', prefName: 'Any good family',
+  },
 ];
 
 // owner key, name, category, description, location, photos
@@ -339,6 +404,46 @@ export async function addSampleContent() {
     matrimony++;
   }
 
+  // groom samples: every detail filled in, several photos each
+  for (const [i, g] of GROOMS.entries()) {
+    const email = emailOf(g.key);
+    if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) continue;
+    const chart = computeBirthChart(g.dob, g.tob);
+    const main = tall(g.photos[0]);
+    const urls = g.photos.map(tall);
+    await prisma.user.create({
+      data: {
+        email,
+        role: 'USER',
+        intents: ['MATRIMONY'],
+        lastActiveAt: daysAgo(i % 3),
+        createdAt: daysAgo(12 - i),
+        profile: {
+          create: {
+            fullName: g.name, gender: 'MALE', dateOfBirth: new Date(`${g.dob}T00:00:00Z`), maritalStatus: 'NEVER_MARRIED', heightCm: g.height, weightKg: g.weight, bloodGroup: g.blood, bodyType: g.body,
+            physicalStatus: 'Fully fit', createdBy: i % 2 ? 'Parents' : 'Self',
+            currentCity: g.city, currentDistrict: g.district, currentState: 'Maharashtra', currentCountry: 'India', nativeVillage: g.village, nativeDistrict: 'Palghar', nativeState: 'Maharashtra',
+            motherTongue: 'Marathi', languages: g.languages, religion: 'Hindu', community: 'Vanjari', gotra: g.gotra, devak: g.devak, kuldaivat: g.kuldaivat,
+            education: g.quals.map((q) => q.degree).join(', ').slice(0, 120), degrees: g.quals, highestQualification: g.highest,
+            employmentType: g.employment, occupation: g.occupation, jobDesignation: g.designation ?? null, companyName: g.company ?? null, workingCity: g.workCity ?? null, experienceYears: g.exp ?? null,
+            businessName: g.business ?? null, businessType: g.bizType ?? null, businessYears: g.bizYears ?? null, annualIncome: g.income,
+            workDetails: g.business ? `${g.business} — ${g.bizYears} years in business.` : `${g.designation}, ${g.exp} years of experience.`,
+            fatherName: g.father, fatherOccupation: g.fatherJob, motherName: g.mother, motherOccupation: g.motherJob, familyType: g.familyType,
+            brothers: g.brothers, marriedBrothers: g.marriedBrothers, sisters: g.sisters, marriedSisters: g.marriedSisters, siblingsCount: g.brothers + g.sisters,
+            familyValues: g.values, aboutFamily: g.aboutFamily, diet: g.diet, drinking: g.drinking, smoking: g.smoking, hobbies: g.hobbies, interests: g.interests,
+            bio: g.bio, careerGoals: g.goals, marriageExpectations: g.expect,
+            timeOfBirth: g.tob, placeOfBirth: g.city, rashi: chart.rashi.name, nakshatra: chart.nakshatra.name,
+            prefAgeMin: g.prefAge[0], prefAgeMax: g.prefAge[1], prefEducation: g.prefEdu, prefLocation: g.prefLoc, prefOccupation: g.prefJob, prefName: g.prefName,
+            profilePhotoUrl: main, profilePhotoBlurUrl: main,
+            isMatrimonial: true, isVerified: true, accountType: 'PUBLIC', isDemo: true, createdAt: daysAgo(12 - i),
+            photos: { create: urls.map((url, k) => ({ url, blurUrl: url, sortOrder: k })) },
+          },
+        },
+      },
+    });
+    matrimony++;
+  }
+
   let achievements = 0;
   for (const [i, [key, type, name, details]] of ACHIEVEMENTS.entries()) {
     if (await have('achievement', { userId: ids[key], name })) continue;
@@ -361,8 +466,18 @@ export async function removeSampleContent() {
  */
 export async function refreshOldSampleContent() {
   const old = await prisma.profile.findFirst({ where: { isDemo: true, profilePhotoUrl: { contains: 'dicebear' }, user: { email: { endsWith: SAMPLE_DOMAIN } } }, select: { id: true } });
-  if (!old) return false;
-  await removeSampleContent();
-  await addSampleContent();
-  return true;
+  if (old) {
+    await removeSampleContent();
+    await addSampleContent();
+    return true;
+  }
+  // sample content is on but newer sample profiles (e.g. the grooms) are missing: add just those (nothing is duplicated)
+  if ((await prisma.user.count({ where: { email: { endsWith: SAMPLE_DOMAIN } } })) > 0) {
+    const have = await prisma.user.count({ where: { email: { in: GROOMS.map((g) => emailOf(g.key)) } } });
+    if (have < GROOMS.length) {
+      await addSampleContent();
+      return true;
+    }
+  }
+  return false;
 }

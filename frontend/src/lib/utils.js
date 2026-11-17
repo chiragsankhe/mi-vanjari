@@ -103,6 +103,9 @@ export function thumb(url, width = 900) {
   try {
     if (url.includes('images.unsplash.com')) {
       const u = new URL(url);
+      // keep the crop shape when a height is given (e.g. 4:5 portraits): scale it together with the width
+      const w0 = Number(u.searchParams.get('w')), h0 = Number(u.searchParams.get('h'));
+      if (w0 && h0) u.searchParams.set('h', String(Math.round((h0 * width) / w0)));
       u.searchParams.set('w', String(width));
       u.searchParams.set('q', '80');
       u.searchParams.set('auto', 'format');
