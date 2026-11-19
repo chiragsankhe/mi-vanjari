@@ -11,10 +11,13 @@ import { Field } from '../ui';
  */
 
 const tenDigits = (v) => String(v || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
+const MAPS_RE = /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/)/i;
+const mapsError = (v) => (v && v.trim() && !MAPS_RE.test(v.trim()) ? 'Paste a Google Maps link (open the place in Google Maps → Share → Copy link)' : '');
+const MAPS_HINT = 'For the exact spot: open your place in Google Maps → Share → Copy link, and paste it here.';
 const isMobile = (v) => /^[6-9]\d{9}$/.test(tenDigits(v));
 
-export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), contactName: '', extraPhones: [], location: base.city || '', website: '', photos: [] });
-export const emptyService = (base = {}) => ({ businessName: '', categoryId: '', priceFrom: '', experienceYears: '', location: base.city || '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), description: '', photos: [] });
+export const emptyBusiness = (base = {}) => ({ name: '', category: '', description: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), contactName: '', extraPhones: [], location: base.city || '', mapUrl: '', website: '', photos: [] });
+export const emptyService = (base = {}) => ({ businessName: '', categoryId: '', priceFrom: '', experienceYears: '', location: base.city || '', mapUrl: '', phone: tenDigits(base.phone), whatsapp: tenDigits(base.phone), description: '', photos: [] });
 
 export function validateBusiness(b) {
   const e = {};
@@ -26,6 +29,7 @@ export function validateBusiness(b) {
   const extra = validateExtraPhones(b.extraPhones || []);
   if (Object.keys(extra).length) e.extraPhones = extra;
   if (b.location.trim().length < 2) e.location = 'Enter the address or area';
+  if (mapsError(b.mapUrl)) e.mapUrl = mapsError(b.mapUrl);
   if (b.website && !/^https?:\/\/\S+\.\S+/.test(b.website.trim())) e.website = 'Start with https://';
   return e;
 }
@@ -38,6 +42,7 @@ export function validateService(s) {
   if (s.location.trim().length < 2) e.location = 'Which areas do you serve?';
   if (!isMobile(s.phone)) e.phone = 'Enter a valid 10-digit mobile number';
   if (s.whatsapp && !isMobile(s.whatsapp)) e.whatsapp = 'Enter a valid 10-digit number';
+  if (mapsError(s.mapUrl)) e.mapUrl = mapsError(s.mapUrl);
   if (s.experienceYears !== '' && (Number(s.experienceYears) < 0 || Number(s.experienceYears) > 80)) e.experienceYears = 'Enter years between 0 and 80';
   return e;
 }
@@ -51,6 +56,7 @@ export const toBusinessPayload = (b) => ({
   extraContacts: cleanExtraContacts(b.extraPhones || [], b.phone),
   whatsapp: b.whatsapp ? tenDigits(b.whatsapp) : null,
   location: b.location.trim(),
+  mapUrl: (b.mapUrl || '').trim() || null,
   website: b.website.trim() || null,
   photos: b.photos,
 });
@@ -61,6 +67,7 @@ export const toServicePayload = (s) => ({
   priceFrom: Number(s.priceFrom),
   experienceYears: s.experienceYears === '' ? null : Number(s.experienceYears),
   location: s.location.trim(),
+  mapUrl: (s.mapUrl || '').trim() || null,
   phone: tenDigits(s.phone),
   whatsapp: s.whatsapp ? tenDigits(s.whatsapp) : null,
   description: s.description.trim() || null,
@@ -103,6 +110,7 @@ export function BusinessStep({ value: b, onChange, errors = {} }) {
         <PhoneField label="WhatsApp" value={b.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
         <ExtraPhonesField value={b.extraPhones || []} onChange={set('extraPhones')} errors={errors.extraPhones || {}} />
         <Field label="Address / area *" placeholder="e.g. Tarapur MIDC, Boisar" value={b.location} onChange={set('location')} error={errors.location} />
+        <Field label="Google Maps link (optional)" type="text" inputMode="url" placeholder="https://maps.app.goo.gl/…" hint={MAPS_HINT} value={b.mapUrl || ''} onChange={set('mapUrl')} error={errors.mapUrl} />
         <Field label="Website or Instagram (optional)" placeholder="https://…" value={b.website} onChange={set('website')} error={errors.website} />
         <div className="sm:col-span-2">
           <span className="field-label">Photos (optional) — shop, products, logo · add as many as you like</span>
@@ -135,6 +143,7 @@ export function ServiceStep({ value: s, onChange, errors = {} }) {
         <Field label="Brand / business name *" placeholder="e.g. Pimple Photography" value={s.businessName} onChange={set('businessName')} error={errors.businessName} />
         <Field label="Starting price (₹) *" type="number" inputMode="numeric" min={0} placeholder="e.g. 25000" value={s.priceFrom} onChange={set('priceFrom')} error={errors.priceFrom} />
         <Field label="Areas you serve *" placeholder="e.g. Palghar, Boisar, Dahanu" value={s.location} onChange={set('location')} error={errors.location} />
+        <Field label="Google Maps link (optional)" type="text" inputMode="url" placeholder="https://maps.app.goo.gl/…" hint={MAPS_HINT} value={s.mapUrl || ''} onChange={set('mapUrl')} error={errors.mapUrl} />
         <Field label="Years of experience" type="number" inputMode="numeric" min={0} max={80} placeholder="e.g. 5" value={s.experienceYears} onChange={set('experienceYears')} error={errors.experienceYears} />
         <PhoneField label="Booking phone *" value={s.phone} onChange={set('phone')} error={errors.phone} />
         <PhoneField label="WhatsApp" value={s.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
