@@ -33,9 +33,9 @@ export default function Services() {
           {(cats.data ?? Array.from({ length: 12 })).map((c, i) => (
             <StaggerItem key={c?.id || i}>
               {c ? (
-                <CategoryTile c={c} index={i} className="h-[170px] md:h-[210px]" />
+                <CategoryTile c={c} index={i} className="h-[128px] sm:h-[170px] md:h-[210px]" />
               ) : (
-                <Skeleton className="h-[170px] md:h-[210px]" />
+                <Skeleton className="h-[128px] sm:h-[170px] md:h-[210px]" />
               )}
             </StaggerItem>
           ))}

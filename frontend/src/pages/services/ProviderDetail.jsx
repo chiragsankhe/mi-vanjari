@@ -7,6 +7,7 @@ import PackagesSection from './Packages';
 import { toast } from 'sonner';
 import { ContactButtons, Stars } from '../../components/common/Listing';
 import { LocationCard, MapAddress } from '../../components/common/LocationCard';
+import { RichText } from '../../components/common/RichText';
 import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, SampleTag, Spinner } from '../../components/ui';
 import { errorMessage, get, post } from '../../lib/api';
 import { formatINR, timeAgo } from '../../lib/utils';
@@ -55,68 +56,63 @@ export default function ProviderDetail() {
 
   return (
     <div className="bg-[#fbf7f1] pb-14">
-      <div className="container-page pt-6">
-        <Link to={`/services/category/${p.category.slug}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary">
+      <div className="container-page pt-4 sm:pt-6">
+        <Link to={`/services/category/${p.category.slug}`} className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-primary sm:text-sm">
           <Icon name="arrow-left" size={16} /> {p.category.name}
         </Link>
       </div>
-      <div className="container-page mt-4 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-        {/* On phones the order is: photos → About → info card → packages → reviews. On desktop the info card is a sticky right column. */}
-        <div className="space-y-5 lg:col-start-1 lg:row-start-1">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden p-2.5">
-            <PhotoGallery photos={p.photos || []} alt={p.businessName} aspect="aspect-[16/9] sm:aspect-[16/10]" fit="object-center" fallbackIcon={p.category.icon} />
-          </motion.div>
-          <Reveal className="card p-4 sm:p-6">
-            <h2 className="font-serif text-lg font-semibold">About</h2>
-            <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.description || 'No description yet.'}</p>
-          </Reveal>
-          <LocationCard address={p.location} mapUrl={p.mapUrl} />
-        </div>
+      {/* Phones show: photos → details → About → Location → packages → reviews. Computers: a left column and a sticky details column. */}
+      <div className="container-page mt-3 grid gap-3 sm:gap-5 lg:grid-cols-[1.3fr_1fr] lg:gap-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card min-w-0 overflow-hidden p-2 sm:p-2.5 lg:col-start-1 lg:row-start-1">
+          <PhotoGallery photos={p.photos || []} alt={p.businessName} aspect="aspect-[16/10] sm:aspect-[16/10]" fit="object-center" fallbackIcon={p.category.icon} />
+        </motion.div>
 
-        <div className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-max">
-          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-4 shadow-[var(--shadow-card)] sm:p-6">
-            <div className="flex flex-wrap gap-2">
-              <Badge tone="red">{p.category.name}</Badge>
+        <div className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:h-max">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card p-3.5 shadow-[var(--shadow-card)] sm:p-6">
+            <div className="no-scrollbar -mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 sm:flex-wrap">
+              <Badge tone="red" className="shrink-0 !py-0.5 !text-[10.5px]">{p.category.name}</Badge>
               {p.subcategories?.map((s) => (
-                <Badge key={s.id} tone="gray">
+                <Badge key={s.id} tone="gray" className="shrink-0 !py-0.5 !text-[10.5px]">
                   {s.name}
                 </Badge>
               ))}
-              {p.isFeatured && <Badge>Featured</Badge>}
-              {p.status !== 'APPROVED' && <Badge tone="gray">{p.status === 'PENDING' ? 'Awaiting approval' : 'Needs changes'}</Badge>}
+              {p.isFeatured && <Badge className="shrink-0 !py-0.5 !text-[10.5px]">Featured</Badge>}
+              {p.status !== 'APPROVED' && <Badge tone="gray" className="shrink-0 !py-0.5 !text-[10.5px]">{p.status === 'PENDING' ? 'Awaiting approval' : 'Needs changes'}</Badge>}
             </div>
-            <h1 className="mt-2.5 font-serif text-2xl font-semibold sm:mt-3 sm:text-3xl">
+            <h1 className="mt-2 font-serif text-[22px] leading-tight font-semibold sm:mt-3 sm:text-3xl">
               {p.businessName} {p.isSample && <SampleTag className="align-middle" />}
             </h1>
-            <MapAddress address={p.location} mapUrl={p.mapUrl} className="mt-2" />
-            <div className="mt-3 flex items-center gap-2 text-sm">
-              <Stars value={p.ratingAvg} />
-              <b>{p.ratingAvg ? p.ratingAvg.toFixed(1) : 'New'}</b>
-              <span className="text-muted">· {p.ratingCount} reviews</span>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+              <span className="flex items-center gap-1.5">
+                <Stars value={p.ratingAvg} size={14} />
+                <b>{p.ratingAvg ? p.ratingAvg.toFixed(1) : 'New'}</b>
+                <span className="text-muted">· {p.ratingCount} reviews</span>
+              </span>
+              {p.priceFrom != null && (
+                <span className="ml-auto rounded-full bg-[#fff2cd] px-3 py-1 text-[12px] text-[#7c5f35]">
+                  From <b className="font-serif text-[16px] text-ink">{formatINR(p.priceFrom)}</b>
+                </span>
+              )}
             </div>
-            {p.priceFrom != null && (
-              <p className="mt-4 rounded-lg bg-sand px-4 py-3 text-sm">
-                Starting at <b className="font-serif text-xl">{formatINR(p.priceFrom)}</b>
-              </p>
-            )}
+            <MapAddress address={p.location} mapUrl={p.mapUrl} className="mt-2.5" />
             {authed || p.isSample ? (
-              <ContactButtons sample={p.isSample} phone={p.phone} whatsapp={p.whatsapp} name={p.businessName} className="mt-5" chat={{ type: 'SERVICE', id: p.id, ownerId: p.userId }} />
+              <ContactButtons sample={p.isSample} phone={p.phone} whatsapp={p.whatsapp} name={p.businessName} className="mt-3" chat={{ type: 'SERVICE', id: p.id, ownerId: p.userId }} />
             ) : (
-              <button className="btn btn-primary mt-5 w-full" onClick={() => openAuth()}>
+              <button className="btn btn-primary mt-3 w-full" onClick={() => openAuth()}>
                 <Icon name="lock" size={16} /> Log in to see contact
               </button>
             )}
             {(p.canEdit || p.isOwner) && (
-              <Link to={`/services/edit/${p.id}`} className="btn btn-outline mt-3 w-full">
-                <Icon name="edit" size={16} /> Edit listing
+              <Link to={`/services/edit/${p.id}`} className="btn btn-outline btn-sm mt-2.5 w-full">
+                <Icon name="edit" size={15} /> Edit listing
               </Link>
             )}
           </motion.div>
           {p.packages?.length > 0 && (
-            <div className="card p-5">
+            <div className="card p-4">
               <b className="text-sm">Part of combo packages</b>
               {p.packages.map((pk) => (
-                <Link key={pk.id} to="/services/combos" className="mt-3 flex items-center justify-between rounded-lg bg-sand px-3 py-2.5 text-sm hover:bg-primary-soft">
+                <Link key={pk.id} to="/services/combos" className="mt-2.5 flex items-center justify-between rounded-xl bg-sand px-3 py-2.5 text-sm hover:bg-primary-soft">
                   <span>{pk.title}</span>
                   <b>{formatINR(pk.price)}</b>
                 </Link>
@@ -125,7 +121,20 @@ export default function ProviderDetail() {
           )}
         </div>
 
-        <div className="space-y-5 lg:col-start-1 lg:row-start-2">
+        <div className="min-w-0 space-y-3 sm:space-y-5 lg:col-start-1 lg:row-start-2">
+          <Reveal className="card p-4 sm:p-6">
+            <h2 className="flex items-center gap-2.5 font-serif text-[17px] font-semibold sm:text-lg">
+              <span className="section-icon">
+                <Icon name="info" size={16} />
+              </span>
+              About
+            </h2>
+            <RichText className="mt-3" text={p.description} empty={<p className="mt-3 text-sm text-muted">No description yet.</p>} />
+          </Reveal>
+          <LocationCard address={p.location} mapUrl={p.mapUrl} />
+        </div>
+
+        <div className="min-w-0 space-y-4 sm:space-y-5 lg:col-start-1 lg:row-start-3">
           <PackagesSection provider={p} authed={authed} onLogin={() => openAuth()} />
           <Reveal className="space-y-4">
             <h2 className="flex items-center gap-3 font-serif text-xl font-semibold">

@@ -6,31 +6,37 @@ import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, PageHeader
 import { useDebounce, usePaged } from '../../hooks';
 import { ChatWithOwner } from '../../components/chat/ChatWithOwner';
 import AutoImage from '../../components/common/AutoImage';
+import { plainText } from '../../components/common/RichText';
 import { get } from '../../lib/api';
 import { cn } from '../../lib/utils';
 
 export function BusinessCard({ b }) {
   return (
-    <Link to={`/business/${b.id}`} className="group card card-hover flex h-full flex-col overflow-hidden p-2.5">
-      <div className="relative h-48 overflow-hidden rounded-lg">
+    <Link to={`/business/${b.id}`} className="group card card-hover flex h-full gap-3 overflow-hidden p-2 sm:flex-col sm:gap-0 sm:p-2.5">
+      <div className="relative h-[108px] w-[112px] shrink-0 overflow-hidden rounded-xl sm:h-48 sm:w-auto">
         <AutoImage photos={b.photos} alt={b.name} fallbackIcon="briefcase" className="transition duration-700 group-hover:scale-105" />
-        {b.isSample && <SampleTag className="absolute top-2.5 right-2.5 bg-white" />}
+        {b.isSample && <SampleTag className="absolute right-1.5 bottom-1.5 bg-white !px-1.5 !py-0 !text-[8px] sm:top-2.5 sm:right-2.5 sm:bottom-auto sm:!px-2 sm:!py-0.5 sm:!text-[10px]" />}
       </div>
-      <div className="flex flex-1 flex-col p-2.5 pt-3.5">
-        <span className="w-fit bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{b.category}</span>
-        <h2 className="mt-2 font-serif text-[19px] font-semibold">{b.name}</h2>
-        <p className="mt-1 line-clamp-2 text-xs text-muted">{b.description}</p>
-        <div className="mt-auto flex items-center gap-2 pt-4 text-xs text-muted">
-          <Avatar src={b.owner?.profilePhotoUrl} name={b.owner?.fullName || ''} size={24} />
-          <span className="flex min-w-0 items-center gap-1 truncate">
-            {b.owner?.fullName} {b.owner?.isVerified && <VerifiedDot size={12} />}
+      <div className="flex min-w-0 flex-1 flex-col py-0.5 sm:p-2.5 sm:pt-3.5">
+        <span className="w-fit max-w-full truncate rounded-full bg-[#fff0d0] px-2 py-0.5 text-[10px] font-semibold text-[#8b6100] sm:rounded-none sm:py-1">{b.category}</span>
+        <h2 className="mt-1 line-clamp-2 font-serif text-[15px] leading-snug font-semibold sm:mt-2 sm:text-[19px]">{b.name}</h2>
+        <p className="mt-0.5 line-clamp-1 text-[11.5px] text-muted sm:mt-1 sm:line-clamp-2 sm:text-xs">{plainText(b.description)}</p>
+        <div className="mt-auto flex items-center gap-2 pt-1.5 text-xs sm:pt-4">
+          <span className="hidden items-center gap-2 sm:flex">
+            <Avatar src={b.owner?.profilePhotoUrl} name={b.owner?.fullName || ''} size={24} />
+            <span className="flex min-w-0 items-center gap-1 truncate text-muted">
+              {b.owner?.fullName} {b.owner?.isVerified && <VerifiedDot size={12} />}
+            </span>
           </span>
-          <span className="ml-auto flex shrink-0 items-center gap-1">
-            <Icon name="map" size={13} /> {b.location}
+          <span className="flex min-w-0 items-center gap-1 rounded-full bg-[#e8f3f7] px-2 py-0.5 text-[11px] font-medium text-[#1f5d78] sm:ml-auto sm:shrink-0">
+            <Icon name="map" size={12} className="shrink-0 text-[#1f6f8b]" /> <span className="truncate">{b.location}</span>
+          </span>
+          <span className="ml-auto sm:hidden">
+            <ChatWithOwner type="BUSINESS" id={b.id} ownerId={b.owner?.userId} variant="icon" />
           </span>
         </div>
-        <div className="mt-3 flex gap-2">
-          <span className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border border-primary/35 bg-[#fff9f5] text-[11px] font-bold text-primary transition group-hover:bg-primary group-hover:text-white">
+        <div className="mt-3 hidden gap-2 sm:flex">
+          <span className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-primary/35 bg-[#fff9f5] text-[11px] font-bold text-primary transition group-hover:bg-primary group-hover:text-white">
             View business <Icon name="arrow" size={15} />
           </span>
           <ChatWithOwner type="BUSINESS" id={b.id} ownerId={b.owner?.userId} variant="icon" />
@@ -82,7 +88,7 @@ export default function BusinessDirectory() {
         {isError ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-80" />
             ))}
@@ -92,7 +98,7 @@ export default function BusinessDirectory() {
             Try another category or search term.
           </EmptyState>
         ) : (
-          <Stagger key={`${category}${ds}${dl}`} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger key={`${category}${ds}${dl}`} className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {items.map((b) => (
               <StaggerItem key={b.id} className="h-full">
                 <BusinessCard b={b} />

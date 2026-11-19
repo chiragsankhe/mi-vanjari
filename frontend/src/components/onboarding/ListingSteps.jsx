@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { cleanExtraContacts, ExtraPhonesField, validateExtraPhones } from '../common/ExtraPhones';
 import { PhotoUploader } from '../common/Listing';
+import { RichTextEditor } from '../common/RichText';
 import { get } from '../../lib/api';
 import { Field } from '../ui';
 
@@ -94,7 +95,9 @@ export function BusinessStep({ value: b, onChange, errors = {} }) {
             <option key={c}>{c}</option>
           ))}
         </Field>
-        <Field as="textarea" label="What do you do? *" placeholder="Products or services, since when, what makes you special…" maxLength={1500} value={b.description} onChange={set('description')} error={errors.description} className="sm:col-span-2" />
+        <div className="sm:col-span-2">
+          <RichTextEditor id="biz-about" label="What do you do? *" rows={5} placeholder="Products or services, since when, what makes you special…" value={b.description} onChange={(v) => set('description')(v)} error={errors.description} />
+        </div>
         <PhoneField label="Business phone *" value={b.phone} onChange={set('phone')} error={errors.phone} />
         <Field label="Person name for this number" placeholder="e.g. Ramesh Sankhe (owner)" maxLength={60} value={b.contactName || ''} onChange={set('contactName')} />
         <PhoneField label="WhatsApp" value={b.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
@@ -135,7 +138,9 @@ export function ServiceStep({ value: s, onChange, errors = {} }) {
         <Field label="Years of experience" type="number" inputMode="numeric" min={0} max={80} placeholder="e.g. 5" value={s.experienceYears} onChange={set('experienceYears')} error={errors.experienceYears} />
         <PhoneField label="Booking phone *" value={s.phone} onChange={set('phone')} error={errors.phone} />
         <PhoneField label="WhatsApp" value={s.whatsapp} onChange={set('whatsapp')} error={errors.whatsapp} />
-        <Field as="textarea" label="About your service" placeholder="What's included, packages, specialities…" maxLength={1500} value={s.description} onChange={set('description')} className="sm:col-span-2" />
+        <div className="sm:col-span-2">
+          <RichTextEditor id="svc-about" label="About your service" rows={5} placeholder="What's included, packages, specialities…" value={s.description} onChange={(v) => set('description')(v)} />
+        </div>
         <div className="sm:col-span-2">
           <span className="field-label">Portfolio photos (optional) — add as many as you like</span>
           <PhotoUploader value={s.photos} onChange={set('photos')} endpoint="/services/upload" />

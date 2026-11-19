@@ -1,3 +1,4 @@
+import { plainText } from '../../components/common/RichText';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useState } from 'react';
@@ -89,7 +90,7 @@ function ServicesQueue() {
                 {!s.category.isApproved && <b className="text-primary"> (new category)</b>}
                 {s.subcategories?.length > 0 && ` › ${s.subcategories.map((x) => x.name + (x.isApproved ? '' : ' (new)')).join(', ')}`} · {s._count?.servicePackages || 0} packages · {s.location} · {s.priceFrom ? `from ${formatINR(s.priceFrom)}` : 'no price'} · by {s.user.profile?.fullName || formatPhone(s.user.phone)} · {timeAgo(s.createdAt)}
               </p>
-              {s.description && <p className="mt-1 line-clamp-2 text-xs text-[#5b534d]">{s.description}</p>}
+              {s.description && <p className="mt-1 line-clamp-2 text-xs text-[#5b534d]">{plainText(s.description)}</p>}
             </div>
             <div className="flex flex-wrap gap-2">
               {s.status !== 'APPROVED' && (

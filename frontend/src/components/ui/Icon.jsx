@@ -207,10 +207,11 @@ const paths = {
   thumb: <path d="M7 11v9H4v-9Zm0 0 4-8c1.5 0 2.5 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.5 20H7" />,
 };
 
-export function Icon({ name, size = 20, className = '', strokeWidth = 1.8, filled = false }) {
+export function Icon({ name, size = 20, className = '', strokeWidth = 1.8, filled = false, style }) {
   return (
     <svg
       className={className}
+      style={style}
       width={size}
       height={size}
       viewBox="0 0 24 24"

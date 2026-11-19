@@ -11,8 +11,8 @@ import { cn } from '../../lib/utils';
 function AchieverCard({ a, rank }) {
   const academic = a.type === 'ACADEMIC';
   return (
-    <motion.article whileHover={{ y: -6 }} className="card relative h-full overflow-hidden p-2.5">
-      <div className="h-56">
+    <motion.article whileHover={{ y: -6 }} className="card relative flex h-full gap-3 overflow-hidden p-2 sm:block sm:p-2.5">
+      <div className="h-[116px] w-[104px] shrink-0 sm:h-56 sm:w-auto">
         <PhotoGallery photos={a.photoUrl ? [a.photoUrl] : []} alt={a.name} aspect="h-full" fit={a.isSample ? 'object-[center_35%]' : 'object-top'} fallbackIcon={academic ? 'graduation' : 'award'} thumbs={false} showCount={false}>
         {academic && a.percentage != null && (
           <span className="absolute right-2.5 bottom-2.5 rounded-lg bg-white/95 px-3 py-1.5 text-center shadow">
@@ -25,13 +25,13 @@ function AchieverCard({ a, rank }) {
         )}
         </PhotoGallery>
       </div>
-      <div className="p-2.5 pt-3.5">
-        <span className="inline-block bg-[#fff0d0] px-2 py-1 text-[10px] font-semibold text-[#8b6100]">{academic ? `Academic excellence · ${a.year ?? ''}` : 'Professional excellence'}</span>
-        <h2 className="mt-2 flex flex-wrap items-center gap-2 font-serif text-[19px] font-semibold">
+      <div className="min-w-0 flex-1 py-0.5 sm:p-2.5 sm:pt-3.5">
+        <span className="inline-block rounded-full bg-[#fff0d0] sm:rounded-none px-2 py-0.5 text-[10px] font-semibold text-[#8b6100] sm:py-1">{academic ? `Academic excellence · ${a.year ?? ''}` : 'Professional excellence'}</span>
+        <h2 className="mt-1 flex flex-wrap items-center gap-2 font-serif text-[16px] leading-snug font-semibold sm:mt-2 sm:text-[19px]">
           {a.name} {a.isSample && <SampleTag />}
         </h2>
         <p className="mt-1 text-xs text-muted">{academic ? [a.stream, a.schoolName].filter(Boolean).join(' · ') : [a.role, a.company, a.city].filter(Boolean).join(' · ')}</p>
-        {a.description && <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[#5b534d]">{a.description}</p>}
+        {a.description && <p className="mt-1 line-clamp-2 text-[11.5px] leading-snug text-[#5b534d] sm:mt-2 sm:line-clamp-3 sm:text-xs sm:leading-relaxed">{a.description}</p>}
         {a.linkedinUrl && (
           <a href={a.linkedinUrl} target="_blank" rel="noreferrer noopener" className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline">
             <Icon name="link" size={13} /> LinkedIn
@@ -87,7 +87,7 @@ export default function Achievers() {
           )}
         </div>
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-96" />
             ))}
@@ -97,7 +97,7 @@ export default function Achievers() {
             Know a student who topped their class or a professional making the community proud?
           </EmptyState>
         ) : (
-          <Stagger key={JSON.stringify(params)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger key={JSON.stringify(params)} className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {items.map((a, i) => (
               <StaggerItem key={a.id} className="h-full">
                 <AchieverCard a={a} rank={type === 'ACADEMIC' && year ? i + 1 : null} />

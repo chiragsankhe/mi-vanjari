@@ -9,6 +9,7 @@ import { cleanExtraContacts, ExtraPhonesField, validateExtraPhones } from '../..
 import { PhotoUploader } from '../../components/common/Listing';
 import { Field, Icon, PageHeader, Spinner } from '../../components/ui';
 import { errorMessage, get, post, put } from '../../lib/api';
+import { RichTextEditor } from '../../components/common/RichText';
 import { onInvalid } from '../../lib/formErrors';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
@@ -88,8 +89,14 @@ export default function BusinessForm() {
           <ExtraPhonesField value={extra} onChange={(v) => { setExtra(v); setExtraErrors({}); }} errors={extraErrors} />
           <Field label="Website" placeholder="https://" error={e.website?.message} {...form.register('website')} className="sm:col-span-2" />
           <div className="sm:col-span-2">
-            <Field as="textarea" rows={7} label="Description" placeholder="Products, services, timings, specialities…" error={e.description?.message} {...form.register('description')} />
-            <p className={cn('mt-1 text-right text-[11px]', (form.watch('description') || '').length > 5000 ? 'text-primary' : 'text-muted')}>{(form.watch('description') || '').length} / 5000</p>
+            <RichTextEditor
+              id="description"
+              label="About (description)"
+              value={form.watch('description') || ''}
+              onChange={(v) => form.setValue('description', v, { shouldDirty: true, shouldValidate: true })}
+              placeholder="Products, services, timings, specialities…"
+              error={e.description?.message}
+            />
           </div>
           <div className="sm:col-span-2">
             <span className="field-label">Photos — add as many as you like</span>

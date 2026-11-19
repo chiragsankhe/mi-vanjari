@@ -20,28 +20,29 @@ export function Stars({ value = 0, size = 14, className }) {
 
 export function ProviderCard({ p }) {
   return (
-    <Link to={`/services/provider/${p.id}`} className="group card card-hover block overflow-hidden p-2.5">
-      <div className="relative h-44 overflow-hidden rounded-lg">
+    <Link to={`/services/provider/${p.id}`} className="group card card-hover flex gap-3 overflow-hidden p-2 sm:block sm:p-2.5">
+      <div className="relative h-[108px] w-[112px] shrink-0 overflow-hidden rounded-xl sm:h-44 sm:w-auto">
         <AutoImage photos={p.photos} alt={p.businessName} fallbackIcon={p.category?.icon || 'tent'} className="transition duration-700 group-hover:scale-105" />
-        {p.priceFrom != null && <span className="absolute bottom-2.5 left-2.5 rounded-md bg-white px-2.5 py-1.5 text-[11px] font-bold">From {formatINR(p.priceFrom)}</span>}
+        {p.priceFrom != null && <span className="absolute bottom-2.5 left-2.5 hidden rounded-md bg-white px-2.5 py-1.5 text-[11px] font-bold sm:block">From {formatINR(p.priceFrom)}</span>}
         {p.isFeatured && (
-          <Badge className="absolute top-2.5 left-2.5">
-            <Icon name="star" size={11} filled /> Featured
+          <Badge className="absolute top-1.5 left-1.5 !px-1.5 !py-0.5 !text-[9px] sm:top-2.5 sm:left-2.5 sm:!px-2.5 sm:!py-1 sm:!text-[11px]">
+            <Icon name="star" size={10} filled /> <span className="hidden sm:inline">Featured</span>
           </Badge>
         )}
-        {p.isSample && <SampleTag className="absolute top-2.5 right-2.5 bg-white" />}
+        {p.isSample && <SampleTag className="absolute right-1.5 bottom-1.5 bg-white !px-1.5 !py-0 !text-[8px] sm:top-2.5 sm:right-2.5 sm:bottom-auto sm:!px-2 sm:!py-0.5 sm:!text-[10px]" />}
       </div>
-      <div className="p-2.5 pt-3.5">
-        <span className="text-[10px] font-bold tracking-[0.1em] text-primary uppercase">{p.category?.name}</span>
-        <h3 className="mt-1 font-serif text-[17px] font-semibold">{p.businessName}</h3>
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted">
-          <Icon name="map" size={13} /> {p.location}
+      <div className="min-w-0 flex-1 py-0.5 sm:p-2.5 sm:pt-3.5">
+        <span className="block truncate text-[10px] font-bold tracking-[0.08em] text-primary uppercase">{p.category?.name}</span>
+        <h3 className="mt-0.5 line-clamp-2 font-serif text-[15px] leading-snug font-semibold sm:mt-1 sm:text-[17px]">{p.businessName}</h3>
+        <p className="mt-1 flex items-center gap-1 text-[11.5px] text-[#1f5d78] sm:text-xs">
+          <Icon name="map" size={12} className="shrink-0 text-[#1f6f8b]" /> <span className="truncate">{p.location}</span>
         </p>
-        <div className="mt-2.5 flex items-center gap-2 text-xs">
-          <Stars value={p.ratingAvg} size={13} />
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs sm:mt-2.5 sm:gap-2">
+          <Stars value={p.ratingAvg} size={12} />
           <b>{p.ratingAvg ? p.ratingAvg.toFixed(1) : 'New'}</b>
           {p.ratingCount > 0 && <span className="text-muted">({p.ratingCount})</span>}
-          {!p.isSample && <ChatWithOwner type="SERVICE" id={p.id} ownerId={p.userId} variant="icon" className="ml-auto" />}
+          {p.priceFrom != null && <b className="ml-auto text-[12px] text-ink sm:hidden">{formatINR(p.priceFrom)}<small className="font-normal text-muted"> onwards</small></b>}
+          {!p.isSample && <ChatWithOwner type="SERVICE" id={p.id} ownerId={p.userId} variant="icon" className="ml-auto hidden sm:inline-flex" />}
         </div>
       </div>
     </Link>
@@ -55,11 +56,9 @@ export function ContactButtons({ phone, contactName, extraContacts = [], whatsap
   const numbers = [{ phone, name: contactName }, ...extraContacts].filter((c) => c.phone);
   return (
     <div className={cn('space-y-2', className)}>
-      {chat && <ChatWithOwner {...chat} label="Chat with owner" className="w-full" />}
       {/* The number itself is always shown: "Call" only works on a phone, so on a computer people can read or copy it */}
       {numbers.length > 0 && (
-        <div className="rounded-lg border border-line bg-white p-2.5">
-          <span className="mb-1 block text-[11px] font-semibold tracking-wide text-muted uppercase">{numbers.length > 1 ? 'Phone numbers' : 'Phone number'}</span>
+        <div className="rounded-xl border border-line bg-[#fffaf5] px-2.5 py-1.5">
           <ul className="divide-y divide-line">
             {numbers.map((c) => (
               <PhoneRow key={c.phone} number={c.phone} person={c.name} />
@@ -67,9 +66,12 @@ export function ContactButtons({ phone, contactName, extraContacts = [], whatsap
           </ul>
         </div>
       )}
-      <a href={whatsappLink(whatsapp || phone, `Namaskar! I found ${name} on Mi Vanjari.`)} target="_blank" rel="noreferrer" className="btn btn-outline w-full">
-        <Icon name="whatsapp" size={17} /> WhatsApp
-      </a>
+      <div className="grid grid-cols-2 gap-2">
+        {chat ? <ChatWithOwner {...chat} label="Chat" className="w-full" /> : <span />}
+        <a href={whatsappLink(whatsapp || phone, `Namaskar! I found ${name} on Mi Vanjari.`)} target="_blank" rel="noreferrer" className={cn('btn btn-outline min-h-10 !bg-[#f1faf4] !text-[#1f7a4d] !border-[#1f7a4d]/30', !chat && 'col-span-2')}>
+          <Icon name="whatsapp" size={17} /> WhatsApp
+        </a>
+      </div>
     </div>
   );
 }
