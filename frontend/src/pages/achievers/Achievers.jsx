@@ -87,7 +87,7 @@ export default function Achievers() {
           )}
         </div>
         {isLoading ? (
-          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-96" />
             ))}
@@ -97,7 +97,7 @@ export default function Achievers() {
             Know a student who topped their class or a professional making the community proud?
           </EmptyState>
         ) : (
-          <Stagger key={JSON.stringify(params)} className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <Stagger key={JSON.stringify(params)} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {items.map((a, i) => (
               <StaggerItem key={a.id} className="h-full">
                 <AchieverCard a={a} rank={type === 'ACADEMIC' && year ? i + 1 : null} />

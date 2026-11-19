@@ -20,7 +20,7 @@ export function Stars({ value = 0, size = 14, className }) {
 
 export function ProviderCard({ p }) {
   return (
-    <Link to={`/services/provider/${p.id}`} className="group card card-hover flex gap-3 overflow-hidden p-2 sm:block sm:p-2.5">
+    <Link to={`/services/provider/${p.id}`} className="group card card-hover flex min-w-0 gap-3 overflow-hidden p-2 sm:block sm:p-2.5">
       <div className="relative h-[108px] w-[112px] shrink-0 overflow-hidden rounded-xl sm:h-44 sm:w-auto">
         <AutoImage photos={p.photos} alt={p.businessName} fallbackIcon={p.category?.icon || 'tent'} className="transition duration-700 group-hover:scale-105" />
         {p.priceFrom != null && <span className="absolute bottom-2.5 left-2.5 hidden rounded-md bg-white px-2.5 py-1.5 text-[11px] font-bold sm:block">From {formatINR(p.priceFrom)}</span>}

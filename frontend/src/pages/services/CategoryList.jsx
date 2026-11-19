@@ -53,7 +53,7 @@ export default function CategoryList() {
         {query.isError ? (
           <ErrorState error={query.error} onRetry={query.refetch} />
         ) : query.isLoading ? (
-          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-72" />
             ))}
@@ -63,7 +63,7 @@ export default function CategoryList() {
             Know someone great? Invite them to list their service on Mi Vanjari.
           </EmptyState>
         ) : (
-          <Stagger key={`${dq}${dl}${sort}${sub}`} className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <Stagger key={`${dq}${dl}${sort}${sub}`} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {items.map((p) => (
               <StaggerItem key={p.id}>
                 <ProviderCard p={p} />

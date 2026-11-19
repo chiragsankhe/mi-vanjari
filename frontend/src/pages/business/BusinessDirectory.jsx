@@ -12,7 +12,7 @@ import { cn } from '../../lib/utils';
 
 export function BusinessCard({ b }) {
   return (
-    <Link to={`/business/${b.id}`} className="group card card-hover flex h-full gap-3 overflow-hidden p-2 sm:flex-col sm:gap-0 sm:p-2.5">
+    <Link to={`/business/${b.id}`} className="group card card-hover flex h-full min-w-0 gap-3 overflow-hidden p-2 sm:flex-col sm:gap-0 sm:p-2.5">
       <div className="relative h-[108px] w-[112px] shrink-0 overflow-hidden rounded-xl sm:h-48 sm:w-auto">
         <AutoImage photos={b.photos} alt={b.name} fallbackIcon="briefcase" className="transition duration-700 group-hover:scale-105" />
         {b.isSample && <SampleTag className="absolute right-1.5 bottom-1.5 bg-white !px-1.5 !py-0 !text-[8px] sm:top-2.5 sm:right-2.5 sm:bottom-auto sm:!px-2 sm:!py-0.5 sm:!text-[10px]" />}
@@ -88,7 +88,7 @@ export default function BusinessDirectory() {
         {isError ? (
           <ErrorState error={error} onRetry={refetch} />
         ) : isLoading ? (
-          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-80" />
             ))}
@@ -98,7 +98,7 @@ export default function BusinessDirectory() {
             Try another category or search term.
           </EmptyState>
         ) : (
-          <Stagger key={`${category}${ds}${dl}`} className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <Stagger key={`${category}${ds}${dl}`} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {items.map((b) => (
               <StaggerItem key={b.id} className="h-full">
                 <BusinessCard b={b} />
