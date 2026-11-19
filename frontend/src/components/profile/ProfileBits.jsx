@@ -1,3 +1,4 @@
+import FitImage from '../common/FitImage';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
@@ -157,12 +158,7 @@ export function ProfileCard({ p, showShortlist = true, compact = false }) {
   return (
     <Link to={`/profile/${p.userId}`} className="group card card-hover block overflow-hidden">
       <div className="relative h-[210px] overflow-hidden sm:h-[275px]">
-        <Img
-          src={p.photoUrl}
-          alt={p.fullName}
-          fallbackIcon="user"
-          className="size-full object-cover object-top transition duration-700 group-hover:scale-105"
-        />
+        <FitImage src={p.photoUrl} alt={p.fullName} fallbackIcon="user" imgClassName="transition duration-700 group-hover:scale-105" />
         {p.locked && (
           <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur">
             <Icon name="lock" size={11} /> {t('private_profile')}

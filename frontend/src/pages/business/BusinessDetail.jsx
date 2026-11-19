@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ContactButtons } from '../../components/common/Listing';
+import { LocationCard, MapAddress } from '../../components/common/LocationCard';
 import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import { ReportDialogBody } from '../../components/profile/ProfileBits';
 import { Avatar, ConfirmDialog, EmptyState, Icon, Modal, PageLoader, SampleTag, VerifiedDot } from '../../components/ui';
@@ -47,6 +48,7 @@ export default function BusinessDetail() {
             <h2 className="font-serif text-lg font-semibold">About the business</h2>
             <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{b.description || '—'}</p>
           </div>
+          <LocationCard address={b.location} mapUrl={b.mapUrl} />
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 lg:sticky lg:top-24 lg:h-max">
           <div className="card p-6 shadow-[var(--shadow-card)]">
@@ -54,9 +56,7 @@ export default function BusinessDetail() {
             <h1 className="mt-3 font-serif text-3xl font-semibold">
               {b.name} {b.isSample && <SampleTag className="align-middle" />}
             </h1>
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
-              <Icon name="map" size={15} /> {b.location}
-            </p>
+            <MapAddress address={b.location} mapUrl={b.mapUrl} className="mt-2" />
             {b.website && (
               <a href={b.website} target="_blank" rel="noreferrer noopener" className="mt-1 flex items-center gap-1.5 text-sm text-primary hover:underline">
                 <Icon name="link" size={15} /> {b.website.replace(/^https?:\/\//, '')}
@@ -80,7 +80,7 @@ export default function BusinessDetail() {
                 <Icon name="lock" size={16} /> Log in to see contact
               </button>
             )}
-            {b.isOwner ? (
+            {b.canEdit || b.isOwner ? (
               <div className="mt-3 flex gap-2">
                 <Link to={`/business/edit/${b.id}`} className="btn btn-outline flex-1">
                   <Icon name="edit" size={16} /> Edit

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { del, errorMessage, inBatches, put, upload } from '../../lib/api';
+import FitImage from '../common/FitImage';
 import { useAuth } from '../../store/auth';
 import { Icon, Spinner } from '../ui';
 
@@ -15,6 +16,14 @@ export function PhotoManager({ intro = true }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(null); // { done, total } while uploading
   const photos = user?.profile?.photos || [];
+  const [drag, setDrag] = useState(null);
+  const [over, setOver] = useState(null);
+  const move = (from, to) => {
+    if (to < 0 || to >= photos.length || from === to) return;
+    const ids = photos.map((p) => p.id);
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    run(() => put('/users/me/photos/order', { ids }));
+  };
 
   const run = async (fn) => {
     setBusy(true);
@@ -51,16 +60,45 @@ export function PhotoManager({ intro = true }) {
     <div>
       {intro && (
         <p className="mb-4 text-sm text-muted">
-          Add as many clear photos as you like — any size, straight from your phone camera. You can select several at once. The first photo is your profile picture. Photos are compressed and location data (EXIF) is removed automatically.
+          Add as many clear photos as you like — any size, straight from your phone camera. You can select several at once. Arrange them by dragging or with the arrows — the first photo is your profile picture. Photos are compressed and location data (EXIF) is removed automatically.
         </p>
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <AnimatePresence>
           {photos.map((ph, i) => (
-            <motion.div key={ph.id} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="group relative aspect-[4/5] overflow-hidden rounded-xl border border-line">
-              <img src={ph.url} alt="" className="size-full object-cover" />
+            <motion.div
+              key={ph.id}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              draggable={!busy}
+              onDragStart={() => setDrag(i)}
+              onDragOver={(e) => (e.preventDefault(), setOver(i))}
+              onDragLeave={() => setOver((o) => (o === i ? null : o))}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (drag != null) move(drag, i);
+                setDrag(null);
+                setOver(null);
+              }}
+              onDragEnd={() => (setDrag(null), setOver(null))}
+              className={`group relative aspect-[4/5] cursor-grab overflow-hidden rounded-xl border bg-sand ${over === i && drag !== i ? 'border-primary ring-2 ring-primary' : 'border-line'} ${drag === i ? 'opacity-40' : ''}`}
+            >
+              {/* the whole photo is shown (nothing cut off) */}
+              <FitImage src={ph.url} alt={`Photo ${i + 1}`} />
               {i === 0 && <span className="absolute top-2 left-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">Main</span>}
-              <div className="absolute inset-x-0 bottom-0 flex gap-1 bg-gradient-to-t from-black/60 p-2 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+              <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/60 p-2 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+                {photos.length > 1 && (
+                  <>
+                    <button type="button" disabled={busy || i === 0} onClick={() => move(i, i - 1)} className="grid size-7 place-items-center rounded-md bg-white/90 disabled:opacity-30" aria-label={`Move photo ${i + 1} left`}>
+                      <Icon name="chevron-left" size={14} />
+                    </button>
+                    <button type="button" disabled={busy || i === photos.length - 1} onClick={() => move(i, i + 1)} className="grid size-7 place-items-center rounded-md bg-white/90 disabled:opacity-30" aria-label={`Move photo ${i + 1} right`}>
+                      <Icon name="chevron-right" size={14} />
+                    </button>
+                  </>
+                )}
                 {i > 0 && (
                   <button type="button" className="flex-1 rounded-md bg-white/90 py-1 text-[11px] font-semibold" disabled={busy} onClick={() => run(() => put(`/users/me/photos/${ph.id}/primary`))}>
                     Make main

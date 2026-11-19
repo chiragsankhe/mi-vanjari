@@ -190,6 +190,19 @@ export async function makePrimaryPhoto(userId, photoId) {
   return sessionUser(userId);
 }
 
+/** Saves the order the member arranged their photos in (first = profile picture). */
+export async function reorderPhotos(userId, ids) {
+  const profile = await prisma.profile.findUnique({ where: { userId }, include: { photos: { select: { id: true } } } });
+  if (!profile) throw ApiError.notFound('Create your profile first');
+  const own = new Set(profile.photos.map((p) => p.id));
+  const wanted = [...new Set(ids)].filter((id) => own.has(id));
+  // photos missing from the list keep their place at the end
+  const order = [...wanted, ...profile.photos.map((p) => p.id).filter((id) => !wanted.includes(id))];
+  await prisma.$transaction(order.map((id, i) => prisma.profilePhoto.update({ where: { id }, data: { sortOrder: i } })));
+  await syncPrimaryPhoto(profile.id);
+  return sessionUser(userId);
+}
+
 export async function myStats(userId) {
   const [followers, following, views, posts] = await Promise.all([
     prisma.follow.count({ where: { receiverId: userId, status: 'ACCEPTED' } }),

@@ -7,6 +7,7 @@ import { upload } from '../../middleware/upload.js';
 import { validate } from '../../middleware/validate.js';
 import { normalizePhone } from '../../utils/format.js';
 import { ApiError, h, pageResult, paginate } from '../../utils/http.js';
+import { mapUrlField } from '../../utils/maps.js';
 
 const router = Router();
 
@@ -34,7 +35,7 @@ const phone = z.string().transform((v, ctx) => {
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
   category: z.enum(BUSINESS_CATEGORIES),
-  description: z.string().trim().max(1500).optional().nullable(),
+  description: z.string().trim().max(5000).optional().nullable(),
   phone,
   contactName: z.string().trim().max(60, 'Name is too long').optional().nullable().or(z.literal('').transform(() => null)),
   // older form: just numbers
@@ -46,7 +47,8 @@ const schema = z.object({
     .optional(),
   whatsapp: phone.optional().nullable().or(z.literal('').transform(() => null)),
   website: z.string().trim().url('Enter a valid URL (https://...)').optional().nullable().or(z.literal('').transform(() => null)),
-  location: z.string().trim().min(2).max(120),
+  location: z.string().trim().min(2).max(200),
+  mapUrl: mapUrlField,
   photos: z.array(z.string().url()).optional(),
 });
 
@@ -62,6 +64,7 @@ const select = {
   whatsapp: true,
   website: true,
   location: true,
+  mapUrl: true,
   photos: true,
   status: true,
   createdAt: true,
@@ -142,7 +145,7 @@ router.get(
   h(async (req, res) => {
     const b = await prisma.business.findUnique({ where: { id: req.params.id }, select });
     if (!b || (b.status !== 'APPROVED' && b.userId !== req.user?.id && !isAdminSession(req.user))) throw ApiError.notFound('Business not found');
-    res.json({ ...shape(b), ...(!req.user && { phone: null, extraPhones: [], extraContacts: [], contactName: null, whatsapp: null }), isOwner: b.userId === req.user?.id });
+    res.json({ ...shape(b), ...(!req.user && { phone: null, extraPhones: [], extraContacts: [], contactName: null, whatsapp: null }), isOwner: b.userId === req.user?.id, canEdit: Boolean(b.userId === req.user?.id || isAdminSession(req.user)) });
   }),
 );
 

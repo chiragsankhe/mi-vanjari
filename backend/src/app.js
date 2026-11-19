@@ -39,7 +39,7 @@ export function createApp() {
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
           mediaSrc: ["'self'", 'blob:', 'https:'],
           connectSrc: ["'self'", 'wss:', 'https://*.razorpay.com', 'https://accounts.google.com/gsi/'],
-          frameSrc: ['https://api.razorpay.com', 'https://checkout.razorpay.com', 'https://accounts.google.com/gsi/'],
+          frameSrc: ['https://api.razorpay.com', 'https://checkout.razorpay.com', 'https://accounts.google.com/gsi/', 'https://www.google.com/maps/', 'https://maps.google.com/'],
           workerSrc: ["'self'", 'blob:'],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],

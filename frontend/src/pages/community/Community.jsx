@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useScroll, useSpring } from 'motion/react';
 import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import FitImage from '../../components/common/FitImage';
 import { VanjariFilm } from '../../components/history/VanjariFilm';
 import { ProfileCardSkeleton, ReportDialogBody } from '../../components/profile/ProfileBits';
 import { Avatar, EmptyState, ErrorState, Icon, Img, LoadMoreSentinel, Modal, PageHeader, Reveal, SampleTag, Skeleton, Spinner, Stagger, StaggerItem, Tabs, VerifiedDot } from '../../components/ui';
@@ -146,7 +147,7 @@ export function PostCard({ post: p }) {
         )}
       </div>
       <p className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
-      {p.imageUrl && <Img src={p.imageUrl} alt="" className="max-h-[480px] w-full object-cover" />}
+      {p.imageUrl && <FitImage natural src={p.imageUrl} alt="" />}
       <div className="flex items-center gap-4 border-t border-line px-4 py-2.5">
         <motion.button whileTap={{ scale: 0.85 }} onClick={() => (authed ? like.mutate() : openAuth())} className={cn('flex items-center gap-1.5 text-sm transition', liked ? 'text-primary' : 'text-muted hover:text-primary')}>
           <motion.span animate={liked ? { scale: [1, 1.35, 1] } : {}}>

@@ -6,6 +6,7 @@ import { PhotoGallery } from '../../components/profile/PhotoGallery';
 import PackagesSection from './Packages';
 import { toast } from 'sonner';
 import { ContactButtons, Stars } from '../../components/common/Listing';
+import { LocationCard, MapAddress } from '../../components/common/LocationCard';
 import { Avatar, Badge, EmptyState, Icon, Img, PageLoader, Reveal, SampleTag, Spinner } from '../../components/ui';
 import { errorMessage, get, post } from '../../lib/api';
 import { formatINR, timeAgo } from '../../lib/utils';
@@ -69,6 +70,7 @@ export default function ProviderDetail() {
             <h2 className="font-serif text-lg font-semibold">About</h2>
             <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-[#4b4641]">{p.description || 'No description yet.'}</p>
           </Reveal>
+          <LocationCard address={p.location} mapUrl={p.mapUrl} />
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-max">
@@ -86,9 +88,7 @@ export default function ProviderDetail() {
             <h1 className="mt-2.5 font-serif text-2xl font-semibold sm:mt-3 sm:text-3xl">
               {p.businessName} {p.isSample && <SampleTag className="align-middle" />}
             </h1>
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
-              <Icon name="map" size={15} /> {p.location}
-            </p>
+            <MapAddress address={p.location} mapUrl={p.mapUrl} className="mt-2" />
             <div className="mt-3 flex items-center gap-2 text-sm">
               <Stars value={p.ratingAvg} />
               <b>{p.ratingAvg ? p.ratingAvg.toFixed(1) : 'New'}</b>
@@ -106,7 +106,7 @@ export default function ProviderDetail() {
                 <Icon name="lock" size={16} /> Log in to see contact
               </button>
             )}
-            {p.isOwner && (
+            {(p.canEdit || p.isOwner) && (
               <Link to={`/services/edit/${p.id}`} className="btn btn-outline mt-3 w-full">
                 <Icon name="edit" size={16} /> Edit listing
               </Link>

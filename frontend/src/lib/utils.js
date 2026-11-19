@@ -56,6 +56,11 @@ export const initials = (name = '') =>
 
 export const whatsappLink = (phone, text = '') => `https://wa.me/${String(phone).replace(/\D/g, '')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 
+/** Google Maps: the owner's exact link when there is one, otherwise a search for the address. */
+export const mapsLink = (address, mapUrl) => (mapUrl && /^https:\/\//.test(mapUrl) ? mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || '')}`);
+export const directionsLink = (address) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address || '')}`;
+export const mapsEmbed = (address) => `https://maps.google.com/maps?q=${encodeURIComponent(address || '')}&z=15&output=embed`;
+
 export const telLink = (phone) => `tel:${String(phone).replace(/\s/g, '')}`;
 
 export const formatPhone = (p) => {

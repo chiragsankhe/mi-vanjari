@@ -5,7 +5,8 @@ import { cn, thumb } from '../../lib/utils';
 
 /** small version of a photo for the thumbnail row (the full photo is only loaded for the big view) */
 const thumbUrl = (url) => thumb(url, 160);
-import { Icon, Img } from '../ui';
+import FitImage from '../common/FitImage';
+import { Icon } from '../ui';
 
 const AUTOPLAY_MS = 3000;
 const SWIPE_PX = 50;
@@ -249,7 +250,7 @@ export function PhotoGallery({ photos: raw, locked, alt, watermark, children, as
       >
         <AnimatePresence initial={false}>
           <motion.div key={index} initial={{ opacity: 0, scale: 1.03 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
-            <Img src={photos[index]?.url} alt={alt} fallbackIcon={fallbackIcon} className={cn('size-full object-cover', fit)} />
+            <FitImage src={photos[index]?.url} alt={alt} fallbackIcon={fallbackIcon} />
           </motion.div>
         </AnimatePresence>
         {watermark && <Watermark text={watermark} />}

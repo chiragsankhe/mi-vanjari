@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { cn, thumb } from '../../lib/utils';
-import { Img } from '../ui';
+import FitImage from './FitImage';
 
 const CHANGE_MS = 3000;
 
@@ -37,7 +37,7 @@ export default function AutoImage({ photos = [], alt = '', fallbackIcon = 'image
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <AnimatePresence initial={false}>
         <motion.div key={current || 'none'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }} className="absolute inset-0">
-          <Img src={thumb(current)} alt={alt} fallbackIcon={fallbackIcon} className={cn('size-full object-cover', className)} />
+          <FitImage src={thumb(current)} alt={alt} fallbackIcon={fallbackIcon} imgClassName={className} />
         </motion.div>
       </AnimatePresence>
       {n > 1 && (

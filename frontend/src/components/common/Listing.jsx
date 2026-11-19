@@ -125,7 +125,15 @@ export function PhoneRow({ number, person }) {
 /** Listing photos (business, wedding services) — no limit on count or size; uploads a few at a time. */
 export function PhotoUploader({ value = [], onChange, endpoint }) {
   const [progress, setProgress] = useState(null); // { done, total } while uploading
+  const [drag, setDrag] = useState(null); // index being dragged (computers); phones use the arrow buttons
+  const [over, setOver] = useState(null);
   const busy = Boolean(progress);
+  const move = (from, to) => {
+    if (to < 0 || to >= value.length || from === to) return;
+    const next = [...value];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    onChange(next);
+  };
   const pick = async (files) => {
     const list = [...files];
     if (!list.length) return;
@@ -145,13 +153,51 @@ export function PhotoUploader({ value = [], onChange, endpoint }) {
     }
   };
   return (
+    <div>
+      {value.length > 1 && (
+        <p className="mb-2 text-xs text-muted">
+          <b className="text-ink">Arrange your photos:</b> drag a photo (computer) or tap the arrows. The first photo is the cover shown on the card.
+        </p>
+      )}
     <div className="flex flex-wrap gap-3">
-      {value.map((url) => (
-        <motion.div key={url} layout initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative size-24">
-          <img src={url} alt="" className="size-full rounded-lg object-cover" />
-          <button type="button" onClick={() => onChange(value.filter((u) => u !== url))} className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-ink text-white" aria-label="Remove photo">
+      {value.map((url, i) => (
+        <motion.div
+          key={`${url}-${i}`}
+          layout
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          draggable
+          onDragStart={() => setDrag(i)}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setOver(i);
+          }}
+          onDragLeave={() => setOver((o) => (o === i ? null : o))}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (drag != null) move(drag, i);
+            setDrag(null);
+            setOver(null);
+          }}
+          onDragEnd={() => (setDrag(null), setOver(null))}
+          className={`relative size-24 cursor-grab overflow-hidden rounded-lg bg-sand ${drag === i ? 'opacity-40' : ''} ${over === i && drag !== i ? 'ring-2 ring-primary' : ''}`}
+        >
+          {/* the whole photo is shown, so you see what the card will show */}
+          <img src={url} alt={`Photo ${i + 1}`} draggable={false} className="size-full object-contain" />
+          {i === 0 && <span className="absolute top-1 left-1 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-white">Cover</span>}
+          <button type="button" onClick={() => onChange(value.filter((_, k) => k !== i))} className="absolute top-1 right-1 grid size-6 place-items-center rounded-full bg-ink/85 text-white" aria-label="Remove photo">
             <Icon name="close" size={12} />
           </button>
+          {value.length > 1 && (
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent p-1">
+              <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="grid size-7 place-items-center rounded-full bg-white/90 text-ink disabled:opacity-30" aria-label={`Move photo ${i + 1} left`}>
+                <Icon name="chevron-left" size={14} />
+              </button>
+              <button type="button" disabled={i === value.length - 1} onClick={() => move(i, i + 1)} className="grid size-7 place-items-center rounded-full bg-white/90 text-ink disabled:opacity-30" aria-label={`Move photo ${i + 1} right`}>
+                <Icon name="chevron-right" size={14} />
+              </button>
+            </div>
+          )}
         </motion.div>
       ))}
       <label className="grid size-24 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-center text-muted transition hover:border-primary hover:text-primary">
@@ -178,6 +224,7 @@ export function PhotoUploader({ value = [], onChange, endpoint }) {
           }}
         />
       </label>
+    </div>
     </div>
   );
 }

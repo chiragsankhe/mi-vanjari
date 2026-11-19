@@ -7,6 +7,7 @@ import { upload } from '../../middleware/upload.js';
 import { validate } from '../../middleware/validate.js';
 import { normalizePhone } from '../../utils/format.js';
 import { ApiError, h, pageResult, paginate } from '../../utils/http.js';
+import { mapUrlField } from '../../utils/maps.js';
 
 /**
  * Wedding services marketplace.
@@ -23,10 +24,11 @@ const phone = z.string().transform((v, ctx) => {
 const providerSchema = z.object({
   businessName: z.string().trim().min(2).max(100),
   categoryId: z.string().min(1, 'Choose a category'),
-  description: z.string().trim().max(1500).optional().nullable(),
+  description: z.string().trim().max(5000).optional().nullable(),
   phone,
   whatsapp: phone.optional().nullable().or(z.literal('').transform(() => null)),
-  location: z.string().trim().min(2).max(120),
+  location: z.string().trim().min(2).max(200),
+  mapUrl: mapUrlField,
   priceFrom: z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(0).max(100_000_000).nullable().optional()),
   experienceYears: z.preprocess((v) => (v === '' || v == null ? null : Number(v)), z.number().int().min(0).max(80).nullable().optional()),
   photos: z.array(z.string().url()).optional(),
@@ -37,11 +39,11 @@ const optText = (max) => z.string().trim().max(max).optional().nullable().transf
 const packageSchema = z.object({
   name: z.string().trim().min(2, 'Give the package a name').max(100),
   price: z.coerce.number({ invalid_type_error: 'Enter the price' }).int().min(0).max(100_000_000),
-  description: optText(1500),
-  photos: z.array(z.string().url()).max(12).optional(),
+  description: optText(3000),
+  photos: z.array(z.string().url()).max(40).optional(),
   includes: z.array(z.string().trim().min(1).max(120)).max(30).optional(),
   duration: optText(60),
-  details: optText(1500),
+  details: optText(3000),
 });
 const MAX_PACKAGES = 30;
 
@@ -57,6 +59,7 @@ const providerSelect = {
   businessName: true,
   description: true,
   location: true,
+  mapUrl: true,
   priceFrom: true,
   photos: true,
   isFeatured: true,
@@ -214,6 +217,7 @@ router.get(
       phone: req.user && !p.user?.profile?.isDemo ? p.phone : null,
       whatsapp: req.user && !p.user?.profile?.isDemo ? p.whatsapp : null,
       isOwner,
+      canEdit: Boolean(isOwner || isAdminSession(req.user)),
       reviews: p.reviews.map((r) => ({ ...r, user: { fullName: r.user.profile?.fullName || 'Member', photoUrl: r.user.profile?.profilePhotoUrl } })),
       myReview: req.user ? p.reviews.find((r) => r.userId === req.user.id) || null : null,
     });

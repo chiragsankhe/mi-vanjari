@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth } from '../../middleware/auth.js';
 import { upload } from '../../middleware/upload.js';
 import { validate } from '../../middleware/validate.js';
@@ -38,6 +39,9 @@ router.get('/me/stats', h(async (req, res) => res.json(await users.myStats(req.u
 
 /** POST /users/me/photos — multipart "photos" (max 5 total; any size — compressed on upload) */
 router.post('/me/photos', upload.array('photos'), h(async (req, res) => res.json(await users.addPhotos(req.user.id, req.files))));
+
+/** PUT /users/me/photos/order { ids: [photoId, …] } — arrange the photos (first = profile picture) */
+router.put('/me/photos/order', validate({ body: z.object({ ids: z.array(z.string().min(1)).min(1).max(200) }) }), h(async (req, res) => res.json(await users.reorderPhotos(req.user.id, req.body.ids))));
 
 /** PUT /users/me/photos/:photoId/primary */
 router.put('/me/photos/:photoId/primary', h(async (req, res) => res.json(await users.makePrimaryPhoto(req.user.id, req.params.photoId))));

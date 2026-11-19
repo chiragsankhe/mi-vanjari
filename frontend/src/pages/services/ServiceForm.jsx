@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { PhotoUploader } from '../../components/common/Listing';
 import { Field, Icon, PageHeader, Spinner } from '../../components/ui';
 import { errorMessage, get, post, put } from '../../lib/api';
+import { onInvalid } from '../../lib/formErrors';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../store/auth';
 
@@ -15,10 +16,11 @@ const phone = z.string().regex(/^(\+?91)?[6-9]\d{9}$/, 'Enter a valid 10-digit m
 const schema = z.object({
   businessName: z.string().trim().min(2, 'Name is required'),
   categoryId: z.string().min(1, 'Choose a category'),
-  description: z.string().max(1500).optional(),
+  description: z.string().max(5000, 'Description is too long — please keep it under 5000 letters').optional(),
   phone,
   whatsapp: phone.optional().or(z.literal('')),
-  location: z.string().trim().min(2, 'Location is required'),
+  location: z.string().trim().min(2, 'Location is required').max(200, 'Location is too long'),
+  mapUrl: z.string().trim().max(600).refine((v) => !v || /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/)/i.test(v), 'Paste a Google Maps link (open the place in Google Maps → Share → Copy link)').optional(),
   priceFrom: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
 });
 
@@ -154,13 +156,15 @@ export default function ServiceForm() {
   const [subIds, setSubIds] = useState([]);
   const [saving, setSaving] = useState(false);
   const cats = useQuery({ queryKey: ['service-categories'], queryFn: () => get('/services/categories') });
-  const existing = useQuery({ queryKey: ['provider', id], queryFn: () => get(`/services/provider/${id}`), enabled: Boolean(id) });
+  const existing = useQuery({ queryKey: ['provider', id], queryFn: () => get(`/services/provider/${id}`), enabled: Boolean(id), staleTime: 0, refetchOnMount: 'always' });
+  const loadedId = useRef(null); // fill the form once — a background refresh must never wipe what is being typed
   const form = useForm({ resolver: zodResolver(schema), defaultValues: { phone: myPhone || '', categoryId: '' } });
   const e = form.formState.errors;
 
   useEffect(() => {
     const p = existing.data;
-    if (!p) return;
+    if (!p || loadedId.current === p.id) return;
+    loadedId.current = p.id;
     form.reset({
       businessName: p.businessName,
       categoryId: p.category.id,
@@ -168,6 +172,7 @@ export default function ServiceForm() {
       phone: p.phone.slice(-10),
       whatsapp: p.whatsapp?.slice(-10) || '',
       location: p.location,
+      mapUrl: p.mapUrl || '',
       priceFrom: p.priceFrom ?? '',
     });
     setPhotos(p.photos || []);
@@ -178,9 +183,11 @@ export default function ServiceForm() {
     setSaving(true);
     try {
       if (v.categoryId === NEW) throw new Error('Add the new category first (type its name and press Add)');
-      const body = { ...v, whatsapp: v.whatsapp || null, priceFrom: v.priceFrom === '' ? null : v.priceFrom, photos, subcategoryIds: subIds };
+      const body = { ...v, mapUrl: v.mapUrl || null, whatsapp: v.whatsapp || null, priceFrom: v.priceFrom === '' ? null : v.priceFrom, photos, subcategoryIds: subIds };
       const saved = id ? await put(`/services/${id}`, body) : await post('/services', body);
-      qc.invalidateQueries({ queryKey: ['my-services'] });
+      // the listing page, the category lists and the member's own list all show this data: make them all ask again
+      // (before, the page opened after saving still showed the OLD description for up to 30 seconds)
+      ['provider', 'providers', 'my-services', 'service-categories', 'services-featured'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
       toast.success(saved.status === 'APPROVED' ? 'Listing saved' : 'Submitted! Your listing is awaiting approval.');
       navigate(`/services/provider/${saved.id}`, { state: { justSaved: !id } });
     } catch (err) {
@@ -188,7 +195,7 @@ export default function ServiceForm() {
     } finally {
       setSaving(false);
     }
-  });
+  }, onInvalid(form, { businessName: 'Business name', categoryId: 'Category', description: 'Description', phone: 'Phone', whatsapp: 'WhatsApp', location: 'Location', mapUrl: 'Google Maps link', priceFrom: 'Starting price' }));
 
   return (
     <>
@@ -198,10 +205,14 @@ export default function ServiceForm() {
           <Field label="Business name *" error={e.businessName?.message} {...form.register('businessName')} className="sm:col-span-2" />
           <CategoryPicker form={form} cats={cats.data ?? []} subIds={subIds} setSubIds={setSubIds} />
           <Field label="Starting price (₹)" type="number" inputMode="numeric" placeholder="e.g. 25000" {...form.register('priceFrom')} />
-          <Field label="Location served *" placeholder="e.g. Palghar, Boisar" error={e.location?.message} {...form.register('location')} />
+          <Field label="Location / address *" placeholder="e.g. Dandi Rd, Navapur, Palghar 401501" hint="People can tap it to open Google Maps." error={e.location?.message} {...form.register('location')} />
+          <Field label="Google Maps link (optional)" type="text" inputMode="url" placeholder="https://maps.app.goo.gl/…" hint="For the exact spot: open your place in Google Maps → Share → Copy link, and paste it here." error={e.mapUrl?.message} {...form.register('mapUrl')} />
           <Field label="Phone *" inputMode="numeric" error={e.phone?.message} {...form.register('phone')} />
           <Field label="WhatsApp" inputMode="numeric" placeholder="Same as phone if empty" error={e.whatsapp?.message} {...form.register('whatsapp')} />
-          <Field as="textarea" label="Description" placeholder="What do you offer? Experience, capacity, specialities…" {...form.register('description')} className="sm:col-span-2" />
+          <div className="sm:col-span-2">
+            <Field as="textarea" rows={7} label="Description" placeholder="What do you offer? Rooms, capacity, facilities, rules, experience, specialities…" error={e.description?.message} {...form.register('description')} />
+            <p className={cn('mt-1 text-right text-[11px]', (form.watch('description') || '').length > 5000 ? 'text-primary' : 'text-muted')}>{(form.watch('description') || '').length} / 5000</p>
+          </div>
           <div className="sm:col-span-2">
             <span className="field-label">Photos — add as many as you like</span>
             <PhotoUploader value={photos} onChange={setPhotos} endpoint="/services/upload" />

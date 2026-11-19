@@ -478,6 +478,8 @@ model ServiceProvider {
   phone       String
   whatsapp    String?
   location    String // areas served, e.g. "Palghar, Boisar, Dahanu"
+  /// Google Maps link to the exact place (optional)
+  mapUrl String?
   priceFrom   Int? // in INR
   experienceYears Int?
   photos      String[]
@@ -562,6 +564,8 @@ model Business {
   phone       String
   /// more contact numbers (a business often has several) — shown after the main number
   extraPhones String[] @default([])
+  /// Google Maps link to the exact place (optional) — otherwise the address text is searched on Google Maps
+  mapUrl      String?
   /// who answers the main number, and who answers each extra number (same order as extraPhones)
   contactName String?
   extraNames  String[] @default([])
